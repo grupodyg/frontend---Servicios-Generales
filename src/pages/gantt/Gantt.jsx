@@ -169,17 +169,17 @@ const Gantt = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Diagrama Gantt</h1>
-          <p className="text-gray-600">Vista temporal de órdenes de trabajo</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Diagrama Gantt</h1>
+          <p className="text-sm text-gray-600">Vista temporal de órdenes de trabajo</p>
         </div>
 
-        <div className="flex space-x-4">
+        <div className="grid grid-cols-2 sm:flex sm:space-x-4 gap-2 sm:gap-0">
           <select
             value={selectedFilter}
             onChange={(e) => setSelectedFilter(e.target.value)}
-            className="input-field min-w-32"
+            className="input-field min-w-0 sm:min-w-32"
           >
             <option value="all">Todas</option>
             <option value="pending">Pendientes</option>
@@ -190,7 +190,7 @@ const Gantt = () => {
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="input-field min-w-40"
+            className="input-field min-w-0 sm:min-w-40"
           >
             <option value="all">Todos los Clientes</option>
             {clientesUnicos.map((cliente) => (
@@ -203,7 +203,7 @@ const Gantt = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(Number(e.target.value))}
-            className="input-field min-w-32"
+            className="input-field min-w-0 sm:min-w-32 col-span-2 sm:col-span-1"
           >
             <option value={15}>15 días</option>
             <option value={30}>30 días</option>
@@ -216,7 +216,7 @@ const Gantt = () => {
       {/* Legend */}
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Leyenda</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 bg-green-500 rounded"></div>
             <span className="text-sm text-gray-600">Completadas</span>
@@ -367,10 +367,10 @@ const Gantt = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         <div className="card">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Órdenes de trabajo Activas</h3>
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-xl sm:text-2xl font-bold text-blue-600">
             {ganttData.filter(o => o.estado !== 'completed').length}
           </div>
           <p className="text-xs text-gray-500 mt-1">
@@ -380,7 +380,7 @@ const Gantt = () => {
 
         <div className="card">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Próximos Vencimientos</h3>
-          <div className="text-2xl font-bold text-yellow-600">
+          <div className="text-xl sm:text-2xl font-bold text-yellow-600">
             {ganttData.filter(o => o.diasRestantes <= 3 && o.diasRestantes >= 0).length}
           </div>
           <p className="text-xs text-gray-500 mt-1">
@@ -389,8 +389,8 @@ const Gantt = () => {
         </div>
 
         <div className="card">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Órdenes de trabajo Vencidas</h3>
-          <div className="text-2xl font-bold text-red-600">
+          <h3 className="text-sm font-medium text-gray-700 mb-2 col-span-2 md:col-span-1">Órdenes de trabajo Vencidas</h3>
+          <div className="text-xl sm:text-2xl font-bold text-red-600">
             {ganttData.filter(o => o.diasRestantes < 0).length}
           </div>
           <p className="text-xs text-gray-500 mt-1">

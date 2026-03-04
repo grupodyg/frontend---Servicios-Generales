@@ -160,10 +160,10 @@ const VisitaTecnicaNueva = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nueva Visita Técnica</h1>
-          <p className="text-gray-600">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nueva Visita Técnica</h1>
+          <p className="text-sm sm:text-base text-gray-600">
             Programar una nueva visita técnica para evaluación
           </p>
         </div>
@@ -466,7 +466,7 @@ const VisitaTecnicaNueva = () => {
         </div>
 
         {/* Nota informativa */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <span className="text-blue-400 text-xl">ℹ️</span>
@@ -485,18 +485,18 @@ const VisitaTecnicaNueva = () => {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end space-x-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-4">
           <button
             type="button"
             onClick={() => navigate('/visitas-tecnicas')}
-            className="btn-secondary"
+            className="btn-secondary w-full sm:w-auto"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className={`btn-primary ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn-primary w-full sm:w-auto ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isLoading ? 'Creando...' : 'Crear Visita Técnica'}
           </button>

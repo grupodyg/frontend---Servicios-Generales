@@ -728,25 +728,25 @@ const Materiales = () => {
     : allTabs
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Materiales</h1>
-          <p className="text-gray-600">Inventario y solicitudes de materiales</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gestión de Materiales</h1>
+          <p className="text-gray-600 text-sm sm:text-base hidden sm:block">Inventario y solicitudes de materiales</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3 w-full sm:w-auto">
           {user?.role === 'admin' && (
             <>
               <button
                 onClick={() => setShowCategoriasModal(true)}
-                className="btn-secondary"
+                className="btn-secondary text-sm"
               >
                 🏷️ Categorías
               </button>
               <button
                 onClick={() => setShowNuevoMaterialModal(true)}
-                className="btn-secondary"
+                className="btn-secondary text-sm"
               >
                 📦 Agregar Material
               </button>
@@ -754,7 +754,7 @@ const Materiales = () => {
           )}
           <button
             onClick={() => setShowSolicitudModal(true)}
-            className="btn-primary"
+            className="btn-primary text-sm"
           >
             ➕ Nueva Solicitud
           </button>
@@ -781,59 +781,59 @@ const Materiales = () => {
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="card p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Materiales</p>
-              <p className="text-2xl font-bold text-gray-900">{estadisticas.totalMateriales}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Materiales</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.totalMateriales}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">📦</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <span className="text-lg sm:text-xl">📦</span>
             </div>
           </div>
         </div>
 
-        <div className="card">
+        <div className="card p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Requieren Atención</p>
-              <p className="text-2xl font-bold text-yellow-600">
+              <p className="text-xs sm:text-sm text-gray-600">Requieren Atención</p>
+              <p className="text-xl sm:text-2xl font-bold text-yellow-600">
                 {(estadisticas.materialesBajoStock || 0) + (estadisticas.materialesSinStock || 0)}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1 hidden sm:block">
                 {estadisticas.materialesSinStock > 0 && <span className="text-red-500">{estadisticas.materialesSinStock} sin stock</span>}
                 {estadisticas.materialesSinStock > 0 && estadisticas.materialesBajoStock > 0 && ' · '}
                 {estadisticas.materialesBajoStock > 0 && <span className="text-yellow-600">{estadisticas.materialesBajoStock} bajo</span>}
               </p>
             </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">⚠️</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <span className="text-lg sm:text-xl">⚠️</span>
             </div>
           </div>
         </div>
 
-        <div className="card">
+        <div className="card p-3 sm:p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Solicitudes Pendientes</p>
-              <p className="text-2xl font-bold text-red-600">{estadisticas.solicitudesPendientes}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Solicitudes Pendientes</p>
+              <p className="text-xl sm:text-2xl font-bold text-red-600">{estadisticas.solicitudesPendientes}</p>
             </div>
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">📝</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <span className="text-lg sm:text-xl">📝</span>
             </div>
           </div>
         </div>
 
         {user?.role === 'admin' && (
-          <div className="card">
+          <div className="card p-3 sm:p-4 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Valor Inventario</p>
-                <p className="text-2xl font-bold text-green-600">S/ {estadisticas.valorInventario}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Valor Inventario</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">S/ {estadisticas.valorInventario}</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-xl">💰</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="text-lg sm:text-xl">💰</span>
               </div>
             </div>
           </div>
@@ -841,22 +841,22 @@ const Materiales = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'border-corporate-blue text-corporate-blue'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span className="mr-2">{tab.icon}</span>
+              <span className="mr-1 sm:mr-2">{tab.icon}</span>
               {tab.name}
               {tab.count !== undefined && (
-                <span className="ml-2 bg-gray-100 text-gray-600 py-1 px-2 rounded-full text-xs">
+                <span className="ml-1 sm:ml-2 bg-gray-100 text-gray-600 py-1 px-2 rounded-full text-xs">
                   {tab.count}
                 </span>
               )}
@@ -1096,7 +1096,7 @@ const Materiales = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                 {/* Filtro por Estado */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1217,20 +1217,20 @@ const Materiales = () => {
             ) : (
               <div className="space-y-4">
                 {solicitudes.map((solicitud) => (
-              <div key={solicitud.id} className="card">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Solicitud #{solicitud.id}</h3>
+              <div key={solicitud.id} className="card p-3 sm:p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0 mb-4">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Solicitud #{solicitud.id}</h3>
                     {solicitud.ordenId && (
-                      <p className="text-sm text-blue-600 font-medium">
+                      <p className="text-xs sm:text-sm text-blue-600 font-medium">
                         📋 Orden de Trabajo: {solicitud.ordenId}
                       </p>
                     )}
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500 break-words">
                       Solicitado por: {solicitud.solicitante || solicitud.tecnicoNombre || 'Sin asignar'} • {solicitud.fechaSolicitud ? new Date(solicitud.fechaSolicitud).toLocaleDateString('es-ES') : solicitud.fechaCreacion ? new Date(solicitud.fechaCreacion).toLocaleDateString('es-ES') : 'Sin fecha'}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     <span className={`status-badge ${
                       solicitud.estado === 'pending' ? 'status-pending' :
                       solicitud.estado === 'approved' ? 'status-completed' :
@@ -1261,9 +1261,9 @@ const Materiales = () => {
                   <div className="space-y-2">
                     {solicitud.items && solicitud.items.length > 0 ? (
                       solicitud.items.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center bg-gray-50 rounded p-2">
-                          <span className="text-sm text-gray-900">{item.material_name || item.nombre}</span>
-                          <div className="text-sm text-gray-600">
+                        <div key={index} className="flex flex-col sm:flex-row justify-between sm:items-center bg-gray-50 rounded p-2 gap-1">
+                          <span className="text-xs sm:text-sm text-gray-900 font-medium">{item.material_name || item.nombre}</span>
+                          <div className="text-xs sm:text-sm text-gray-600 flex-shrink-0">
                             Solicitado: {item.requested_quantity || item.cantidadSolicitada} {item.unit || ''}
                             {item.approved_quantity !== null && item.approved_quantity !== undefined && (
                               <span className="ml-2 text-green-600">
@@ -1289,16 +1289,16 @@ const Materiales = () => {
                 )}
 
                 {user?.role === 'admin' && solicitud.estado === 'pending' && (
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3">
                     <button
                       onClick={() => handleSolicitudAprobacion(solicitud.id, 'approved')}
-                      className="btn-primary bg-green-600 hover:bg-green-700"
+                      className="btn-primary bg-green-600 hover:bg-green-700 text-sm"
                     >
                       ✅ Aprobar
                     </button>
                     <button
                       onClick={() => handleSolicitudAprobacion(solicitud.id, 'rejected')}
-                      className="btn-secondary bg-red-50 text-red-700 hover:bg-red-100"
+                      className="btn-secondary bg-red-50 text-red-700 hover:bg-red-100 text-sm"
                     >
                       ❌ Rechazar
                     </button>
@@ -1383,9 +1383,9 @@ const Materiales = () => {
       {showSolicitudModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   ➕ Nueva Solicitud de Materiales
                 </h3>
                 <button
@@ -1402,7 +1402,7 @@ const Materiales = () => {
               </div>
 
               {/* Request Info */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
                 <div className="lg:col-span-1">
                   <div className="space-y-4">
                     <div>
@@ -1567,7 +1567,7 @@ const Materiales = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end space-x-3 pt-6 border-t">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-4 sm:pt-6 border-t">
                 <button
                   onClick={() => {
                     setShowSolicitudModal(false)
@@ -1575,13 +1575,13 @@ const Materiales = () => {
                     setSelectedMaterials([])
                     setBusquedaMaterialesModal('')
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSubmitNuevaSolicitud}
-                  className="btn-primary"
+                  className="btn-primary text-sm"
                   disabled={!nuevaSolicitud.ordenId || selectedMaterials.length === 0}
                 >
                   Crear Solicitud
@@ -1594,11 +1594,11 @@ const Materiales = () => {
 
       {/* Nuevo Material Modal */}
       {showNuevoMaterialModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   📦 Agregar Nuevo Material
                 </h3>
                 <button
@@ -1788,11 +1788,11 @@ const Materiales = () => {
 
       {/* Actualizar Stock Modal */}
       {showActualizarStockModal && materialParaActualizar && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-lg w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   📊 Actualizar Stock
                 </h3>
                 <button
@@ -1931,11 +1931,11 @@ const Materiales = () => {
 
       {/* Gestión de Categorías Modal */}
       {showCategoriasModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   🏷️ Gestión de Categorías
                 </h3>
                 <button
@@ -2010,7 +2010,7 @@ const Materiales = () => {
                           {categoriaEditando?.id === categoria.id ? (
                             // Edit mode
                             <div className="flex-1 flex flex-col space-y-2">
-                              <div className="flex space-x-3">
+                              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3">
                                 <div className="flex-1">
                                   <label className="block text-xs text-gray-600 mb-1">Nombre</label>
                                   <input
@@ -2022,7 +2022,7 @@ const Materiales = () => {
                                     autoFocus
                                   />
                                 </div>
-                                <div className="w-32">
+                                <div className="w-full sm:w-32">
                                   <label className="block text-xs text-gray-600 mb-1">Prefijo</label>
                                   <input
                                     type="text"
@@ -2053,10 +2053,10 @@ const Materiales = () => {
                           ) : (
                             // Display mode
                             <>
-                              <div className="flex-1">
+                              <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2">
-                                  <h5 className="font-medium text-gray-900">{categoria.nombre}</h5>
-                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-mono rounded">
+                                  <h5 className="font-medium text-gray-900 truncate">{categoria.nombre}</h5>
+                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-mono rounded flex-shrink-0">
                                     {categoria.prefijo}
                                   </span>
                                 </div>
@@ -2064,21 +2064,21 @@ const Materiales = () => {
                                   {materialesEnCategoria} material{materialesEnCategoria !== 1 ? 'es' : ''}
                                 </p>
                               </div>
-                              <div className="flex space-x-2">
+                              <div className="flex space-x-2 flex-shrink-0">
                                 <button
                                   onClick={() => startEditCategoria(categoria)}
-                                  className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
                                   title="Editar categoría"
                                 >
-                                  ✏️ Editar
+                                  ✏️ <span className="hidden sm:inline">Editar</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteCategoria(categoria.id)}
-                                  className="text-sm px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
                                   title="Eliminar categoría"
                                   disabled={materialesEnCategoria > 0}
                                 >
-                                  🗑️ Eliminar
+                                  🗑️ <span className="hidden sm:inline">Eliminar</span>
                                 </button>
                               </div>
                             </>
@@ -2117,15 +2117,15 @@ const Materiales = () => {
 
       {/* Material Detail Modal */}
       {showMaterialDetailModal && materialParaVer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="min-w-0 flex-1 mr-2">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
                     {materialParaVer.nombre}
                   </h3>
-                  <p className="text-gray-600">{materialParaVer.categoriaNombre}</p>
+                  <p className="text-gray-600 text-sm">{materialParaVer.categoriaNombre}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -2138,7 +2138,7 @@ const Materiales = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                 {/* Material Image */}
                 <div className="space-y-4">
                   <div className="relative rounded-lg overflow-hidden bg-gray-100">
@@ -2146,16 +2146,16 @@ const Materiales = () => {
                       <img
                         src={materialParaVer.imagen}
                         alt={materialParaVer.nombre}
-                        className="w-full h-80 object-cover"
+                        className="w-full h-48 sm:h-64 md:h-80 object-cover"
                         onError={(e) => {
                           e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgMTIwVjE4MEgxNDBWMTIwSDE3NVpNMjI1IDEyMFYxODBIMTkwVjEyMEgyMjVaTTI3NSAxMjBWMTgwSDI0MFYxMjBIMjc1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
                         }}
                       />
                     ) : (
-                      <div className="w-full h-80 flex items-center justify-center bg-gray-200">
+                      <div className="w-full h-48 sm:h-64 md:h-80 flex items-center justify-center bg-gray-200">
                         <div className="text-center text-gray-500">
-                          <span className="text-6xl block mb-4">📦</span>
-                          <span className="text-lg">Sin imagen disponible</span>
+                          <span className="text-4xl sm:text-6xl block mb-2 sm:mb-4">📦</span>
+                          <span className="text-sm sm:text-lg">Sin imagen disponible</span>
                         </div>
                       </div>
                     )}
@@ -2200,13 +2200,13 @@ const Materiales = () => {
                   <div>
                     <h4 className="text-lg font-semibold text-gray-900 mb-4">Información del Material</h4>
                     <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                         <dt className="text-sm font-medium text-gray-500">Código</dt>
                         <dd className="text-sm text-gray-900 col-span-2 font-mono bg-gray-100 px-2 py-1 rounded">
                           {materialParaVer.id}
                         </dd>
                       </div>
-                      <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                         <dt className="text-sm font-medium text-gray-500">Categoría</dt>
                         <dd className="text-sm text-gray-900 col-span-2">
                           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
@@ -2214,14 +2214,14 @@ const Materiales = () => {
                           </span>
                         </dd>
                       </div>
-                      <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                         <dt className="text-sm font-medium text-gray-500">Unidad</dt>
                         <dd className="text-sm text-gray-900 col-span-2 capitalize">
                           {materialParaVer.unidadMedida}
                         </dd>
                       </div>
                       {materialParaVer.proveedor && (
-                        <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                           <dt className="text-sm font-medium text-gray-500">Proveedor</dt>
                           <dd className="text-sm text-gray-900 col-span-2">
                             {materialParaVer.proveedor}
@@ -2229,7 +2229,7 @@ const Materiales = () => {
                         </div>
                       )}
                       {materialParaVer.ubicacion && (
-                        <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                           <dt className="text-sm font-medium text-gray-500">Ubicación</dt>
                           <dd className="text-sm text-gray-900 col-span-2">
                             {materialParaVer.ubicacion}
@@ -2237,7 +2237,7 @@ const Materiales = () => {
                         </div>
                       )}
                       {canViewPrices(user) && (
-                        <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                           <dt className="text-sm font-medium text-gray-500">Precio Unitario</dt>
                           <dd className="text-sm text-gray-900 col-span-2 font-semibold text-green-600">
                             S/ {materialParaVer.precioUnitario.toFixed(2)}
@@ -2245,7 +2245,7 @@ const Materiales = () => {
                         </div>
                       )}
                       {canViewPrices(user) && (
-                        <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                           <dt className="text-sm font-medium text-gray-500">Valor Total Stock</dt>
                           <dd className="text-sm text-gray-900 col-span-2 font-semibold text-green-600">
                             S/ {(materialParaVer.stockActual * materialParaVer.precioUnitario).toFixed(2)}
@@ -2253,7 +2253,7 @@ const Materiales = () => {
                         </div>
                       )}
                       {materialParaVer.fechaUltimaCompra && (
-                        <div className="grid grid-cols-3 gap-4 py-3 border-b">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 py-3 border-b">
                           <dt className="text-sm font-medium text-gray-500">Última Compra</dt>
                           <dd className="text-sm text-gray-900 col-span-2">
                             {new Date(materialParaVer.fechaUltimaCompra).toLocaleDateString('es-ES')}
@@ -2285,13 +2285,13 @@ const Materiales = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end space-x-3 pt-8 border-t mt-8">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-4 sm:pt-8 border-t mt-4 sm:mt-8">
                 <button
                   onClick={() => {
                     setShowMaterialDetailModal(false)
                     setMaterialParaVer(null)
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm"
                 >
                   Cerrar
                 </button>
@@ -2302,7 +2302,7 @@ const Materiales = () => {
                       setShowMaterialDetailModal(false)
                       setMaterialParaVer(null)
                     }}
-                    className="btn-primary bg-green-600 hover:bg-green-700"
+                    className="btn-primary bg-green-600 hover:bg-green-700 text-sm"
                   >
                     📊 Actualizar Stock
                   </button>
@@ -2315,11 +2315,11 @@ const Materiales = () => {
 
       {/* Edit Material Modal */}
       {showEditMaterialModal && materialParaEditar && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   ✏️ Editar Material
                 </h3>
                 <button

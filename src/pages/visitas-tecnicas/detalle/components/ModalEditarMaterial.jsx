@@ -10,9 +10,9 @@ const ModalEditarMaterial = memo(({
   if (!mostrarModalEditarMaterial || !materialEditando) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-lg font-semibold mb-4">Editar Material</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3">
+      <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
+        <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Editar Material</h3>
 
         <div className="space-y-4">
           {/* Nombre */}
@@ -79,16 +79,16 @@ const ModalEditarMaterial = memo(({
         </div>
 
         {/* Botones */}
-        <div className="flex justify-end gap-2 mt-6">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-4 sm:mt-6">
           <button
             onClick={handleCerrarModalEditarMaterial}
-            className="btn-secondary"
+            className="btn-secondary w-full sm:w-auto"
           >
             Cancelar
           </button>
           <button
             onClick={handleGuardarMaterialEditado}
-            className="btn-primary"
+            className="btn-primary w-full sm:w-auto"
           >
             Guardar Cambios
           </button>

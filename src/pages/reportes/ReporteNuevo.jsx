@@ -295,7 +295,7 @@ const ReporteNuevo = () => {
   // Mostrar indicador de carga mientras se obtienen los datos
   if (cargandoReportes) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
@@ -307,10 +307,10 @@ const ReporteNuevo = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Nuevo Reporte Diario</h1>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nuevo Reporte Diario</h1>
         {porcentajeAnterior > 0 && (
           <p className="text-sm text-gray-600 mt-1">
             Continuando desde el último reporte con {porcentajeAnterior}% de avance
@@ -323,12 +323,12 @@ const ReporteNuevo = () => {
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
         {/* Información General */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Información General</h2>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Información General</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Hora de Inicio */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -454,18 +454,18 @@ const ReporteNuevo = () => {
         </div>
 
         {/* Documentos ATS, Aspectos Ambientales y PTR */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {/* ATS */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
               📋 ATS (Análisis de Trabajo Seguro) *
             </h3>
-            <div className={`border-2 border-dashed rounded-lg p-8 text-center ${
+            <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center ${
               atsDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'
             }`}>
               {atsDoc ? (
                 <div className="space-y-2">
-                  <span className="text-green-600 text-2xl">✓</span>
+                  <span className="text-green-600 text-xl sm:text-2xl">✓</span>
                   <p className="text-sm font-medium text-gray-700 break-all line-clamp-2" title={atsDoc.name}>
                     {atsDoc.name}
                   </p>
@@ -498,11 +498,11 @@ const ReporteNuevo = () => {
           </div>
 
           {/* Aspectos Ambientales */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
               🌱 Aspectos Ambientales
             </h3>
-            <div className={`border-2 border-dashed rounded-lg p-8 text-center ${
+            <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center ${
               aspectosAmbientalesDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'
             }`}>
               {aspectosAmbientalesDoc ? (
@@ -540,11 +540,11 @@ const ReporteNuevo = () => {
           </div>
 
           {/* PTR */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
               ⚠️ PTR (Permiso de Trabajo de Riesgo) {trabajoEnAltura && '*'}
             </h3>
-            <div className={`border-2 border-dashed rounded-lg p-8 text-center ${
+            <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center ${
               ptrDoc ? 'border-green-300 bg-green-50' : 
               trabajoEnAltura ? 'border-orange-300 bg-orange-50' : 
               'border-gray-300 bg-gray-50'
@@ -593,8 +593,8 @@ const ReporteNuevo = () => {
         </div>
 
         {/* Descripción del Trabajo */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             Descripción del Trabajo Realizado
           </h2>
           <textarea
@@ -612,9 +612,9 @@ const ReporteNuevo = () => {
         </div>
 
         {/* Observaciones y Próximas Tareas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
               Observaciones
             </h2>
             <textarea
@@ -625,8 +625,8 @@ const ReporteNuevo = () => {
             />
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
               Próximas Tareas
             </h2>
             <textarea
@@ -639,8 +639,8 @@ const ReporteNuevo = () => {
         </div>
 
         {/* Materiales Utilizados */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             🧱 Materiales Utilizados
           </h2>
           
@@ -658,10 +658,10 @@ const ReporteNuevo = () => {
         </div>
 
         {/* Fotografías */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Fotos Antes */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
               📷 Fotos Antes del Trabajo
             </h2>
             <PhotoUpload
@@ -673,9 +673,9 @@ const ReporteNuevo = () => {
           </div>
 
           {/* Fotos Después */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              📷 Fotos Después del Trabajo  
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+              📷 Fotos Después del Trabajo
             </h2>
             <PhotoUpload
               photos={fotosDespues}
@@ -687,18 +687,18 @@ const ReporteNuevo = () => {
         </div>
 
         {/* Botones de Acción */}
-        <div className="flex justify-end space-x-4 pt-6">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-4 pt-4 sm:pt-6">
           <button
             type="button"
             onClick={() => navigate('/reportes')}
-            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
           >
             {isLoading ? 'Guardando...' : 'Guardar Reporte'}
           </button>

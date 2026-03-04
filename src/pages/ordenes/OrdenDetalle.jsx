@@ -74,8 +74,8 @@ const OrdenDetalle = () => {
         `,
         showCloseButton: true,
         showConfirmButton: false,
-        width: '800px',
-        padding: '20px',
+        width: window.innerWidth < 640 ? '95%' : '800px',
+        padding: window.innerWidth < 640 ? '12px' : '20px',
         showDenyButton: !esPrimeraFoto,
         showCancelButton: !esUltimaFoto,
         denyButtonText: '← Anterior',
@@ -438,7 +438,7 @@ const OrdenDetalle = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           {/* Izquierda: ID y Estado */}
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">{orden.id}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{orden.id}</h1>
             {getEstadoBadge(orden.estado)}
           </div>
 
@@ -542,12 +542,12 @@ const OrdenDetalle = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Progreso</p>
-              <p className="text-2xl font-bold text-corporate-blue">{orden.porcentajeAvance}%</p>
+              <p className="text-xl sm:text-2xl font-bold text-corporate-blue">{orden.porcentajeAvance}%</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <span className="text-xl">📊</span>
@@ -582,7 +582,7 @@ const OrdenDetalle = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Costo Estimado</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-xl sm:text-2xl font-bold text-green-600">
                   S/{(() => {
                     const totalMateriales = recursosServicio.materiales?.reduce((total, mat) =>
                       total + ((parseFloat(mat.cantidad) || 0) * (parseFloat(mat.precio) || 0)), 0
@@ -637,7 +637,7 @@ const OrdenDetalle = () => {
       )}
 
       {/* Badge de tipo de visita */}
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
         {(() => {
           const tieneVisitaTecnica = orden.tipoVisita === 'con_visita' || orden.basadoEnVisitaTecnica || orden.visitaTecnicaId
           return (
@@ -668,12 +668,12 @@ const OrdenDetalle = () => {
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex overflow-x-auto space-x-4 sm:space-x-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`flex-shrink-0 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-corporate-blue text-corporate-blue'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -950,7 +950,7 @@ const OrdenDetalle = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h4 className="font-medium text-blue-900">Materiales</h4>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-xl sm:text-2xl font-bold text-blue-600">
                       {recursosServicio.materiales?.length || 0}
                     </p>
                     {canViewPrices(user) && (
@@ -963,7 +963,7 @@ const OrdenDetalle = () => {
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg">
                     <h4 className="font-medium text-yellow-900">Herramientas</h4>
-                    <p className="text-2xl font-bold text-yellow-600">
+                    <p className="text-xl sm:text-2xl font-bold text-yellow-600">
                       {recursosServicio.herramientas?.length || 0}
                     </p>
                     <p className="text-sm text-yellow-700">
@@ -974,7 +974,7 @@ const OrdenDetalle = () => {
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
                     <h4 className="font-medium text-green-900">Personal</h4>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-xl sm:text-2xl font-bold text-green-600">
                       {recursosServicio.manoObra?.personal?.length || 0}
                     </p>
                     <p className="text-sm text-green-700">
@@ -991,9 +991,9 @@ const OrdenDetalle = () => {
           <div className="space-y-6">
             {/* Header de la sección combinada */}
             <div className="card">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                     📊📸 Reportes y Fotografías Consolidados
                   </h3>
                   <p className="text-gray-600 mt-1">
@@ -1013,24 +1013,24 @@ const OrdenDetalle = () => {
               </div>
 
               {/* Estadísticas rápidas */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
                   <div className="flex items-center">
-                    <span className="text-2xl mr-3">📊</span>
+                    <span className="text-xl sm:text-2xl mr-2 sm:mr-3">📊</span>
                     <div>
                       <p className="text-sm text-blue-600">Total Reportes</p>
-                      <p className="text-xl font-bold text-blue-900">
+                      <p className="text-lg sm:text-xl font-bold text-blue-900">
                         {reportes.length || 0}
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg">
+                <div className="bg-green-50 p-3 sm:p-4 rounded-lg">
                   <div className="flex items-center">
-                    <span className="text-2xl mr-3">📸</span>
+                    <span className="text-xl sm:text-2xl mr-2 sm:mr-3">📸</span>
                     <div>
                       <p className="text-sm text-green-600">Total Fotografías</p>
-                      <p className="text-xl font-bold text-green-900">
+                      <p className="text-lg sm:text-xl font-bold text-green-900">
                         {reportes.reduce((total, reporte) =>
                           total + (reporte.fotosAntes?.length || 0) + (reporte.fotosDespues?.length || 0), 0
                         ) || 0}
@@ -1038,12 +1038,12 @@ const OrdenDetalle = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="bg-purple-50 p-3 sm:p-4 rounded-lg">
                   <div className="flex items-center">
-                    <span className="text-2xl mr-3">⏱️</span>
+                    <span className="text-xl sm:text-2xl mr-2 sm:mr-3">⏱️</span>
                     <div>
                       <p className="text-sm text-purple-600">Horas Totales</p>
-                      <p className="text-xl font-bold text-purple-900">
+                      <p className="text-lg sm:text-xl font-bold text-purple-900">
                         {reportes.reduce((total, reporte) => {
                           if (reporte.horasIniciales && reporte.horasFinales) {
                             const inicio = new Date(`2000-01-01 ${reporte.horasIniciales}`)
@@ -1056,12 +1056,12 @@ const OrdenDetalle = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
+                <div className="bg-orange-50 p-3 sm:p-4 rounded-lg">
                   <div className="flex items-center">
-                    <span className="text-2xl mr-3">📈</span>
+                    <span className="text-xl sm:text-2xl mr-2 sm:mr-3">📈</span>
                     <div>
                       <p className="text-sm text-orange-600">Progreso Promedio</p>
-                      <p className="text-xl font-bold text-orange-900">
+                      <p className="text-lg sm:text-xl font-bold text-orange-900">
                         {reportes.length > 0
                           ? Math.round(reportes.reduce((sum, r) => sum + r.porcentajeAvance, 0) / reportes.length)
                           : 0}%
@@ -1079,10 +1079,10 @@ const OrdenDetalle = () => {
                   <div key={reporte.id} className="card">
                     <div className="border-l-4 border-blue-500 pl-4">
                       {/* Header del reporte */}
-                      <div className="flex items-start justify-between mb-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-900">{reporte.id}</h4>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                          <h4 className="text-base sm:text-lg font-semibold text-gray-900">{reporte.id}</h4>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                             <span>📅 {reporte.fecha}</span>
                             <span>👨‍🔧 {reporte.tecnico}</span>
                             <span>⏰ {reporte.horasIniciales} - {reporte.horasFinales}</span>
@@ -1140,20 +1140,20 @@ const OrdenDetalle = () => {
                       )}
 
                       {/* Sección de fotografías integrada */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                         {/* Fotos Antes */}
                         {reporte.fotosAntes?.length > 0 && (
                           <div>
                             <h5 className="font-medium text-gray-900 mb-3 flex items-center">
                               📸 Fotos ANTES ({reporte.fotosAntes?.length || 0})
                             </h5>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2 sm:gap-3">
                               {reporte.fotosAntes.map((foto, idx) => (
                                 <div key={idx} className="relative group">
                                   <img
                                     src={`${API_BASE_URL}${foto.url || foto}`}
                                     alt={`Antes - ${idx + 1}`}
-                                    className="w-full h-32 object-cover rounded-lg border-2 border-red-200 cursor-pointer hover:border-red-400 transition-colors"
+                                    className="w-full h-24 sm:h-32 object-cover rounded-lg border-2 border-red-200 cursor-pointer hover:border-red-400 transition-colors"
                                     onClick={() => mostrarGaleriaFotos(reporte.fotosAntes, idx, reporte.id, 'antes')}
                                   />
                                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-200 flex items-center justify-center pointer-events-none">
@@ -1181,13 +1181,13 @@ const OrdenDetalle = () => {
                             <h5 className="font-medium text-gray-900 mb-3 flex items-center">
                               📸 Fotos DESPUÉS ({reporte.fotosDespues?.length || 0})
                             </h5>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2 sm:gap-3">
                               {reporte.fotosDespues.map((foto, idx) => (
                                 <div key={idx} className="relative group">
                                   <img
                                     src={`${API_BASE_URL}${foto.url || foto}`}
                                     alt={`Después - ${idx + 1}`}
-                                    className="w-full h-32 object-cover rounded-lg border-2 border-green-200 cursor-pointer hover:border-green-400 transition-colors"
+                                    className="w-full h-24 sm:h-32 object-cover rounded-lg border-2 border-green-200 cursor-pointer hover:border-green-400 transition-colors"
                                     onClick={() => mostrarGaleriaFotos(reporte.fotosDespues, idx, reporte.id, 'despues')}
                                   />
                                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-200 flex items-center justify-center pointer-events-none">
@@ -1225,7 +1225,7 @@ const OrdenDetalle = () => {
                           Documentación de Seguridad y Medio Ambiente
                         </h4>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                           {/* ATS */}
                           <div className={`border rounded-lg p-4 ${reporte.atsDoc ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
                             <div className="flex items-start justify-between">
@@ -1334,7 +1334,7 @@ const OrdenDetalle = () => {
               ) : (
                 <div className="card text-center py-12">
                   <div className="text-6xl text-gray-400 mb-4">📊📸</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                     No hay reportes disponibles
                   </h3>
                   <p className="text-gray-600 mb-6">
@@ -1365,14 +1365,14 @@ const OrdenDetalle = () => {
       {showMaterialModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-start sm:items-center justify-between gap-3 mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   📦 Solicitar Materiales - {orden?.id}
                 </h3>
                 <button
                   onClick={() => setShowMaterialModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="flex-shrink-0 text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -1387,8 +1387,8 @@ const OrdenDetalle = () => {
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {materiales.map((material) => (
                       <div key={material.id} className="bg-gray-50 p-4 rounded-lg border">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
                             <h5 className="font-medium text-gray-900">{material.nombre}</h5>
                             <p className="text-sm text-gray-600">{material.categoria}</p>
                             <p className="text-sm text-gray-500">
@@ -1402,7 +1402,7 @@ const OrdenDetalle = () => {
                           </div>
                           <button
                             onClick={() => handleAddMaterial(material)}
-                            className="btn-secondary text-sm"
+                            className="btn-secondary text-sm flex-shrink-0 self-start"
                             disabled={material.stockActual <= 0}
                           >
                             {material.stockActual <= 0 ? 'Sin stock' : '+ Agregar'}
@@ -1435,7 +1435,7 @@ const OrdenDetalle = () => {
                               ✕
                             </button>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <label className="text-sm font-medium text-gray-700">Cantidad:</label>
                             <input
                               type="number"
@@ -1491,7 +1491,7 @@ const OrdenDetalle = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-6 border-t">
                 <button
                   onClick={() => setShowMaterialModal(false)}
                   className="btn-secondary"
@@ -1514,7 +1514,7 @@ const OrdenDetalle = () => {
       {showEstimacionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <EstimacionTecnico
                 orden={orden}
                 onClose={() => {

@@ -184,12 +184,12 @@ const Aprobaciones = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Aprobaciones de Proyectos</h1>
-        <p className="text-gray-600">Gestiona las aprobaciones de órdenes de trabajo</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Aprobaciones de Proyectos</h1>
+        <p className="text-sm text-gray-600">Gestiona las aprobaciones de órdenes de trabajo</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -198,10 +198,10 @@ const Aprobaciones = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-yellow-600">Pendientes</p>
-              <p className="text-3xl font-bold text-yellow-900">{stats.pendientes}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-yellow-900">{stats.pendientes}</p>
             </div>
-            <div className="w-12 h-12 bg-yellow-200 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">⏳</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-200 rounded-lg flex items-center justify-center">
+              <span className="text-xl sm:text-2xl">⏳</span>
             </div>
           </div>
         </motion.div>
@@ -215,10 +215,10 @@ const Aprobaciones = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-green-600">Aprobadas</p>
-              <p className="text-3xl font-bold text-green-900">{stats.aprobadas}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-green-900">{stats.aprobadas}</p>
             </div>
-            <div className="w-12 h-12 bg-green-200 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">✅</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-200 rounded-lg flex items-center justify-center">
+              <span className="text-xl sm:text-2xl">✅</span>
             </div>
           </div>
         </motion.div>
@@ -227,15 +227,15 @@ const Aprobaciones = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="card bg-red-50 border-red-200"
+          className="card bg-red-50 border-red-200 col-span-2 md:col-span-1"
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-red-600">Rechazadas</p>
-              <p className="text-3xl font-bold text-red-900">{stats.rechazadas}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-red-900">{stats.rechazadas}</p>
             </div>
-            <div className="w-12 h-12 bg-red-200 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">❌</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-200 rounded-lg flex items-center justify-center">
+              <span className="text-xl sm:text-2xl">❌</span>
             </div>
           </div>
         </motion.div>
@@ -254,10 +254,10 @@ const Aprobaciones = () => {
             />
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFiltro('pendientes')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
                 filtro === 'pendientes'
                   ? 'bg-yellow-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -267,7 +267,7 @@ const Aprobaciones = () => {
             </button>
             <button
               onClick={() => setFiltro('aprobadas')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
                 filtro === 'aprobadas'
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -277,7 +277,7 @@ const Aprobaciones = () => {
             </button>
             <button
               onClick={() => setFiltro('rechazadas')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
                 filtro === 'rechazadas'
                   ? 'bg-red-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -289,8 +289,61 @@ const Aprobaciones = () => {
         </div>
       </div>
 
-      {/* Lista de Órdenes de trabajo */}
-      <div className="card">
+      {/* Lista de Ordenes - Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {ordenesParaAprobacion.length === 0 ? (
+          <div className="card text-center py-8">
+            <p className="text-gray-500">No hay órdenes {filtro} para mostrar</p>
+          </div>
+        ) : (
+          ordenesParaAprobacion.map((orden) => (
+            <motion.div
+              key={orden.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="card"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-xs text-gray-500">{orden.id}</span>
+                {getEstadoBadge(orden.estadoAprobacion)}
+              </div>
+              <p className="font-medium text-gray-900 mb-1">{orden.cliente}</p>
+              <p className="text-sm text-gray-600 mb-1">{orden.tipoServicio}</p>
+              <p className="text-xs text-gray-500 mb-1">Técnico: {orden.tecnicoAsignado?.split(' - ')[0] || 'Sin asignar'}</p>
+              <p className="text-xs text-gray-500 mb-2">Tiempo: {orden.tiempoEstimado?.descripcion || '-'}</p>
+              <div className="flex gap-3 pt-3 border-t border-gray-100">
+                {orden.estadoAprobacion === 'pendiente_aprobacion' && (
+                  <>
+                    <button onClick={() => handleAprobar(orden)} className="text-green-600 hover:text-green-800 font-medium text-sm">Aprobar</button>
+                    <button onClick={() => handleRechazar(orden)} className="text-red-600 hover:text-red-800 font-medium text-sm">Rechazar</button>
+                  </>
+                )}
+                {orden.estadoAprobacion === 'aprobado' && (
+                  <span className="text-sm text-gray-500">Por: {orden.aprobadoPor}</span>
+                )}
+                {orden.estadoAprobacion === 'rechazado' && (
+                  <button
+                    onClick={() => {
+                      MySwal.fire({
+                        title: 'Motivo del rechazo',
+                        html: `<div class="text-left"><p class="font-medium mb-2">Rechazado por: ${orden.rechazadoPor}</p><div class="bg-red-50 border border-red-200 rounded-lg p-3"><p class="text-sm text-red-800">${orden.motivoRechazo}</p></div></div>`,
+                        icon: 'info',
+                        confirmButtonColor: '#1e40af'
+                      })
+                    }}
+                    className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                  >
+                    Ver motivo
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+
+      {/* Lista de Ordenes - Desktop table */}
+      <div className="hidden md:block card">
         {ordenesParaAprobacion.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">No hay órdenes {filtro} para mostrar</p>

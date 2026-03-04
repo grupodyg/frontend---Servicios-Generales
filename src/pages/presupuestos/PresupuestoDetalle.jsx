@@ -90,95 +90,146 @@ const CategoriaCard = ({ categoria, items, config, showPrices, index }) => {
       className={`rounded-xl border-2 ${config.borderColor} overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300`}
     >
       {/* Header de categoría */}
-      <div className={`${config.headerBg} px-5 py-4 text-white`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+      <div className={`${config.headerBg} px-3 sm:px-5 py-3 sm:py-4 text-white`}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg backdrop-blur-sm">
               {config.icono}
             </div>
             <div>
-              <h4 className="font-bold text-lg">{config.titulo}</h4>
-              <p className="text-white/80 text-sm">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
+              <h4 className="font-bold text-sm sm:text-lg">{config.titulo}</h4>
+              <p className="text-white/80 text-xs sm:text-sm">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
             </div>
           </div>
           {showPrices && (
             <div className="text-right">
-              <p className="text-white/70 text-xs uppercase tracking-wide">Subtotal</p>
-              <p className="font-bold text-xl">S/ {subtotalCategoria.toFixed(2)}</p>
+              <p className="text-white/70 text-[10px] sm:text-xs uppercase tracking-wide">Subtotal</p>
+              <p className="font-bold text-base sm:text-xl">S/ {subtotalCategoria.toFixed(2)}</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Tabla de items */}
-      <div className={`${config.bgLight}`}>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Cant.</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Unidad</th>
-              {showPrices && (
-                <>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">P. Unit.</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Subtotal</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {items.map((item, idx) => (
-              <motion.tr
-                key={item.id || idx}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 + idx * 0.05 }}
-                className="hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full ${config.bgLight} ${config.textColor} text-sm font-medium`}>
-                    {idx + 1}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
+      {/* Items - Vista tarjetas para movil */}
+      <div className={`${config.bgLight} md:hidden`}>
+        <div className="divide-y divide-gray-100">
+          {items.map((item, idx) => (
+            <motion.div
+              key={item.id || idx}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 + idx * 0.05 }}
+              className="p-3 bg-white"
+            >
+              <div className="flex items-start gap-2">
+                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${config.bgLight} ${config.textColor} text-xs font-medium flex-shrink-0 mt-0.5`}>
+                  {idx + 1}
+                </span>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">{item.descripcion}</p>
                   {item.descripcionMateriales && item.descripcionMateriales !== item.descripcion && (
-                    <p className="text-xs text-gray-500 mt-1">{item.descripcionMateriales}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{item.descripcionMateriales}</p>
                   )}
                   {item.manoObra && (
-                    <p className="text-xs text-amber-600 mt-1">
+                    <p className="text-xs text-amber-600 mt-0.5">
                       <span className="font-medium">Personal:</span> {item.manoObra}
                     </p>
                   )}
                   {item.equiposServicio && (
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-blue-600 mt-0.5">
                       <span className="font-medium">Equipo:</span> {item.equiposServicio}
                     </p>
                   )}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm font-medium">
-                    {item.cantidad}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-center text-sm text-gray-600">{item.unidad}</td>
-                {showPrices && (
-                  <>
-                    <td className="px-4 py-3 text-right text-sm text-gray-700 font-mono">
-                      S/ {(item.precioUnitario || 0).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className={`font-semibold ${config.textColor} font-mono`}>
+                  <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-600">
+                    <span>Cant: <span className="font-medium text-gray-800">{item.cantidad}</span></span>
+                    <span>Und: <span className="font-medium text-gray-800">{item.unidad}</span></span>
+                  </div>
+                  {showPrices && (
+                    <div className="flex items-center justify-between mt-1.5 text-xs">
+                      <span className="text-gray-500">P.U: S/ {(item.precioUnitario || 0).toFixed(2)}</span>
+                      <span className={`font-semibold ${config.textColor}`}>
                         S/ {(item.subtotal || 0).toFixed(2)}
                       </span>
-                    </td>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Items - Tabla para desktop */}
+      <div className={`${config.bgLight} hidden md:block`}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripcion</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Cant.</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Unidad</th>
+                {showPrices && (
+                  <>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">P. Unit.</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Subtotal</th>
                   </>
                 )}
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {items.map((item, idx) => (
+                <motion.tr
+                  key={item.id || idx}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 + idx * 0.05 }}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full ${config.bgLight} ${config.textColor} text-sm font-medium`}>
+                      {idx + 1}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-medium text-gray-900">{item.descripcion}</p>
+                    {item.descripcionMateriales && item.descripcionMateriales !== item.descripcion && (
+                      <p className="text-xs text-gray-500 mt-1">{item.descripcionMateriales}</p>
+                    )}
+                    {item.manoObra && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        <span className="font-medium">Personal:</span> {item.manoObra}
+                      </p>
+                    )}
+                    {item.equiposServicio && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        <span className="font-medium">Equipo:</span> {item.equiposServicio}
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm font-medium">
+                      {item.cantidad}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center text-sm text-gray-600">{item.unidad}</td>
+                  {showPrices && (
+                    <>
+                      <td className="px-4 py-3 text-right text-sm text-gray-700 font-mono">
+                        S/ {(item.precioUnitario || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={`font-semibold ${config.textColor} font-mono`}>
+                          S/ {(item.subtotal || 0).toFixed(2)}
+                        </span>
+                      </td>
+                    </>
+                  )}
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </motion.div>
   )
@@ -192,32 +243,32 @@ const ResumenVisual = ({ itemsAgrupados, totales, showPrices }) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl"
+      className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 text-white shadow-xl"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-white/10 rounded-lg">
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="p-1.5 sm:p-2 bg-white/10 rounded-lg">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold">Resumen del Presupuesto</h3>
+        <h3 className="text-base sm:text-lg font-bold">Resumen del Presupuesto</h3>
       </div>
 
       {/* Grid de categorías */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
         {categorias.map(([categoria, items]) => {
           const config = CATEGORIAS_CONFIG[categoria]
           const subtotal = items.reduce((sum, item) => sum + (item.subtotal || 0), 0)
           return (
             <div
               key={categoria}
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10"
+              className="bg-white/5 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-white/10"
             >
-              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${config.gradiente} flex items-center justify-center mb-3`}>
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${config.gradiente} flex items-center justify-center mb-2 sm:mb-3`}>
                 {config.icono}
               </div>
-              <p className="text-white/60 text-xs uppercase tracking-wide mb-1">{config.titulo}</p>
-              <p className="text-2xl font-bold">{items.length}</p>
+              <p className="text-white/60 text-[10px] sm:text-xs uppercase tracking-wide mb-1">{config.titulo}</p>
+              <p className="text-xl sm:text-2xl font-bold">{items.length}</p>
               {showPrices && (
                 <p className="text-white/70 text-sm mt-1">S/ {subtotal.toFixed(2)}</p>
               )}
@@ -239,7 +290,7 @@ const ResumenVisual = ({ itemsAgrupados, totales, showPrices }) => {
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-white/10">
             <span className="text-lg font-bold">TOTAL</span>
-            <span className="text-2xl font-bold text-emerald-400 font-mono">
+            <span className="text-xl sm:text-2xl font-bold text-emerald-400 font-mono">
               S/ {(totales.total || 0).toFixed(2)}
             </span>
           </div>
@@ -506,17 +557,17 @@ const PresupuestoDetalle = () => {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
+        className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6"
       >
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <svg className="w-5 h-5 sm:w-7 sm:h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
                 {presupuesto.numero}
               </h1>
               <p className="text-gray-500 mt-1">
@@ -555,15 +606,15 @@ const PresupuestoDetalle = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
+        className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4"
       >
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {generatePresupuestoReport(presupuesto, user?.role)}
 
           {/* Toggle vista */}
           <button
             onClick={() => setVistaCompacta(!vistaCompacta)}
-            className="inline-flex items-center px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+            className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-xs sm:text-sm font-medium"
           >
             {vistaCompacta ? (
               <>
@@ -587,7 +638,7 @@ const PresupuestoDetalle = () => {
           {presupuesto.estado === 'pendiente' && !tienePrecios && user?.role === 'admin' && (
             <button
               onClick={() => navigate(`/presupuestos/${id}/agregar-precios`)}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-sm hover:shadow-md transition-all text-sm"
+              className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
             >
               <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -600,7 +651,7 @@ const PresupuestoDetalle = () => {
             <>
               <button
                 onClick={handleAprobar}
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-white font-medium shadow-sm hover:shadow-md transition-all text-sm"
+                className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-white font-medium shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -610,7 +661,7 @@ const PresupuestoDetalle = () => {
 
               <button
                 onClick={handleRechazar}
-                className="inline-flex items-center px-4 py-2 rounded-lg border-2 border-red-200 text-red-600 font-medium hover:bg-red-50 transition-all text-sm"
+                className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border-2 border-red-200 text-red-600 font-medium hover:bg-red-50 transition-all text-xs sm:text-sm"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -623,7 +674,7 @@ const PresupuestoDetalle = () => {
           {presupuesto.estado === 'aprobado' && !presupuesto.ordenGenerada && (
             <button
               onClick={handleGenerarOrden}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-slate-700 to-slate-900 text-white font-medium shadow-sm hover:shadow-md transition-all text-sm"
+              className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-slate-700 to-slate-900 text-white font-medium shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
             >
               <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -635,7 +686,7 @@ const PresupuestoDetalle = () => {
       </motion.div>
 
       {/* Contenido principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Columna izquierda - Info del cliente y resumen */}
         <div className="space-y-6">
           {/* Datos del cliente */}
@@ -643,10 +694,10 @@ const PresupuestoDetalle = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-5"
+            className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -707,7 +758,7 @@ const PresupuestoDetalle = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4"
+            className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 space-y-3 sm:space-y-4"
           >
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Válido hasta</p>
@@ -742,7 +793,7 @@ const PresupuestoDetalle = () => {
         </div>
 
         {/* Columna derecha - Detalle de items */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-3 sm:space-y-4">
           <AnimatePresence mode="wait">
             {vistaCompacta ? (
               /* Vista compacta - tabla tradicional */
@@ -753,8 +804,8 @@ const PresupuestoDetalle = () => {
                 exit={{ opacity: 0 }}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
               >
-                <div className="px-5 py-4 border-b border-gray-100">
-                  <h3 className="font-bold text-gray-900">Detalle de Items</h3>
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">Detalle de Items</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -837,10 +888,10 @@ const PresupuestoDetalle = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 rounded-xl p-6"
+          className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 rounded-xl p-4 sm:p-6"
         >
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>

@@ -682,7 +682,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
           {/* Información del informe */}
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-4">Información General</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
               <div>
                 <p className="text-gray-500">ID del Informe</p>
                 <p className="font-mono">{informeFinal.id}</p>
@@ -712,7 +712,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-blue-600">Total Reportes</p>
-                  <p className="text-2xl font-bold text-blue-900">{informeFinal.resumen?.totalReportes || 0}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-900">{informeFinal.resumen?.totalReportes || 0}</p>
                 </div>
                 <span className="text-3xl">📋</span>
               </div>
@@ -727,7 +727,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-green-600">Técnicos</p>
-                  <p className="text-2xl font-bold text-green-900">{informeFinal.resumen?.tecnicos?.length || 0}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-900">{informeFinal.resumen?.tecnicos?.length || 0}</p>
                 </div>
                 <span className="text-3xl">👷</span>
               </div>
@@ -742,7 +742,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-purple-600">Materiales</p>
-                  <p className="text-2xl font-bold text-purple-900">{informeFinal.resumen?.materialesUtilizados?.length || 0}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-purple-900">{informeFinal.resumen?.materialesUtilizados?.length || 0}</p>
                 </div>
                 <span className="text-3xl">🔧</span>
               </div>
@@ -757,7 +757,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-orange-600">Fotografías</p>
-                  <p className="text-2xl font-bold text-orange-900">{informeFinal.resumen?.totalFotos || 0}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-900">{informeFinal.resumen?.totalFotos || 0}</p>
                 </div>
                 <span className="text-3xl">📸</span>
               </div>
@@ -827,7 +827,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                       {/* Sección de Documentos de Seguridad y Medio Ambiente */}
                       <div className="border-t pt-3 mt-3">
                         <p className="text-sm font-medium text-gray-700 mb-2">📄 Documentos de Seguridad:</p>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           {reporte.atsDoc && (
                             <div className="bg-green-50 p-2 rounded">
                               <p className="text-xs font-medium text-gray-600">ATS:</p>

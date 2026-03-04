@@ -21,15 +21,15 @@ const MySwal = withReactContent(Swal)
 
 // Stepper visual para navegación
 const Stepper = ({ currentStep, steps, onStepClick }) => (
-  <div className="flex items-center justify-center mb-8">
+  <div className="flex items-center justify-center mb-4 sm:mb-8 overflow-x-auto">
     {steps.map((step, index) => (
       <div key={step.id} className="flex items-center">
         <motion.button
           type="button"
           onClick={() => onStepClick(index)}
           className={`
-            relative flex items-center justify-center w-10 h-10 rounded-full
-            transition-all duration-300 font-semibold text-sm
+            relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full
+            transition-all duration-300 font-semibold text-xs sm:text-sm
             ${currentStep === index
               ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/30'
               : currentStep > index
@@ -49,7 +49,7 @@ const Stepper = ({ currentStep, steps, onStepClick }) => (
           )}
         </motion.button>
 
-        <div className="hidden sm:flex flex-col ml-3 mr-8">
+        <div className="hidden md:flex flex-col ml-3 mr-8">
           <span className={`text-xs font-medium uppercase tracking-wider ${
             currentStep >= index ? 'text-blue-600' : 'text-gray-400'
           }`}>
@@ -63,7 +63,7 @@ const Stepper = ({ currentStep, steps, onStepClick }) => (
         </div>
 
         {index < steps.length - 1 && (
-          <div className={`hidden sm:block w-16 h-0.5 mr-4 rounded-full transition-colors duration-300 ${
+          <div className={`hidden md:block w-16 h-0.5 mr-4 rounded-full transition-colors duration-300 ${
             currentStep > index ? 'bg-emerald-500' : 'bg-gray-200'
           }`} />
         )}
@@ -305,7 +305,7 @@ const TotalesPanel = ({ totales, margenGanancia, userRole, user, isEditing }) =>
     <motion.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-5 sticky top-4"
+      className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-4 sm:p-5 lg:sticky lg:top-4"
     >
       <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
         <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -348,7 +348,7 @@ const TotalesPanel = ({ totales, margenGanancia, userRole, user, isEditing }) =>
         <div className="pt-3 mt-2 border-t-2 border-gray-200">
           <div className="flex justify-between items-center">
             <span className="text-lg font-bold text-gray-800">TOTAL</span>
-            <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-xl sm:text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               S/ {totales.total.toFixed(2)}
             </span>
           </div>
@@ -719,8 +719,8 @@ const PresupuestoNuevo = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-800">Seleccionar Cliente</h2>
-        <p className="text-gray-500 mt-1">Busque y seleccione el cliente para este presupuesto</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Seleccionar Cliente</h2>
+        <p className="text-sm sm:text-base text-gray-500 mt-1">Busque y seleccione el cliente para este presupuesto</p>
       </div>
 
       {/* Buscador de clientes */}
@@ -838,7 +838,7 @@ const PresupuestoNuevo = () => {
         {/* Panel principal de items */}
         <div className="flex-1 space-y-6">
           {/* Tabs de categorías */}
-          <div className="bg-gray-100 p-1.5 rounded-xl inline-flex">
+          <div className="bg-gray-100 p-1 sm:p-1.5 rounded-xl inline-flex flex-wrap sm:flex-nowrap gap-0.5">
             {[
               { id: 'material', label: 'Materiales', icon: '📦' },
               { id: 'herramienta', label: 'Herramientas', icon: '🔧' },
@@ -848,7 +848,7 @@ const PresupuestoNuevo = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 ${
                   activeTab === tab.id
                     ? 'bg-white text-gray-800 shadow-md'
                     : 'text-gray-500 hover:text-gray-700'
@@ -861,8 +861,8 @@ const PresupuestoNuevo = () => {
           </div>
 
           {/* Buscador según tab activo */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          <div className="bg-white rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">
               Agregar {activeTab === 'material' ? 'Material' : activeTab === 'herramienta' ? 'Herramienta' : 'Mano de Obra'}
             </h3>
 
@@ -981,13 +981,13 @@ const PresupuestoNuevo = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-800">Revisar y Confirmar</h2>
-        <p className="text-gray-500 mt-1">Verifique los datos antes de crear el presupuesto</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Revisar y Confirmar</h2>
+        <p className="text-sm sm:text-base text-gray-500 mt-1">Verifique los datos antes de crear el presupuesto</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
         {/* Resumen del cliente */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Cliente</h3>
           {clienteSeleccionado && (
             <div className="flex items-center gap-4">
@@ -1004,7 +1004,7 @@ const PresupuestoNuevo = () => {
         </div>
 
         {/* Configuración */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Configuración</h3>
           <div className="space-y-4">
             <div>
@@ -1054,7 +1054,7 @@ const PresupuestoNuevo = () => {
         </div>
 
         {/* Resumen de items */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Items ({items.length})</h3>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {items.map((item, idx) => (
@@ -1082,7 +1082,7 @@ const PresupuestoNuevo = () => {
 
         {/* Total final */}
         {canViewPrices(user) ? (
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white">
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 sm:p-6 text-white">
             <h3 className="text-sm font-semibold text-blue-100 uppercase tracking-wider mb-4">Total</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-blue-100">
@@ -1100,7 +1100,7 @@ const PresupuestoNuevo = () => {
               <div className="pt-3 mt-3 border-t border-blue-400/30">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Total Final</span>
-                  <span className="text-3xl font-black">S/ {totales.total.toFixed(2)}</span>
+                  <span className="text-xl sm:text-3xl font-black">S/ {totales.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -1156,7 +1156,7 @@ const PresupuestoNuevo = () => {
             Volver a presupuestos
           </button>
 
-          <h1 className="text-3xl font-black text-gray-800">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-800">
             {isEditing ? `Editar Presupuesto ${presupuestoExistente?.numero || ''}` : 'Nuevo Presupuesto'}
           </h1>
           <p className="text-gray-500 mt-1">
@@ -1173,7 +1173,7 @@ const PresupuestoNuevo = () => {
 
         {/* Contenido del paso actual */}
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-6 sm:p-8 mb-6">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl shadow-gray-200/50 p-3 sm:p-6 md:p-8 mb-4 sm:mb-6">
             <AnimatePresence mode="wait">
               {currentStep === 0 && renderStep0()}
               {currentStep === 1 && renderStep1()}
@@ -1185,12 +1185,12 @@ const PresupuestoNuevo = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex justify-between items-center"
+            className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-3"
           >
             <button
               type="button"
               onClick={() => currentStep > 0 ? setCurrentStep(currentStep - 1) : navigate('/presupuestos')}
-              className="px-6 py-3 text-gray-600 font-medium hover:text-gray-800 transition-colors flex items-center gap-2"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 text-gray-600 font-medium hover:text-gray-800 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1207,7 +1207,7 @@ const PresupuestoNuevo = () => {
                   setCurrentStep(currentStep + 1)
                 }}
                 disabled={!canProceed()}
-                className={`px-8 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 ${
+                className={`w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 text-sm sm:text-base ${
                   canProceed()
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -1224,7 +1224,7 @@ const PresupuestoNuevo = () => {
               <motion.button
                 type="submit"
                 disabled={isLoading}
-                className={`px-8 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 ${
+                className={`w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 text-sm sm:text-base ${
                   isLoading
                     ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40'

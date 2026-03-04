@@ -96,44 +96,42 @@ const MisVisitasTecnicas = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mis Visitas Técnicas</h1>
-          <p className="text-gray-600">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Mis Visitas Técnicas</h1>
+          <p className="text-sm sm:text-base text-gray-600">
             Visitas asignadas a {user?.name}
           </p>
         </div>
-        
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Filtrar:</span>
-            <select
-              className="input-field"
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-            >
-              <option value="todos">Todos los estados</option>
-              <option value={VISITA_ESTADOS.PENDING}>Pendientes</option>
-              <option value={VISITA_ESTADOS.IN_PROGRESS}>En Progreso</option>
-              <option value={VISITA_ESTADOS.COMPLETED}>Completadas</option>
-              <option value={VISITA_ESTADOS.APPROVED}>Aprobadas</option>
-              <option value={VISITA_ESTADOS.REJECTED}>Rechazadas</option>
-              <option value={VISITA_ESTADOS.CANCELLED}>Canceladas</option>
-            </select>
-          </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700 hidden sm:inline">Filtrar:</span>
+          <select
+            className="input-field w-full sm:w-auto"
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+          >
+            <option value="todos">Todos los estados</option>
+            <option value={VISITA_ESTADOS.PENDING}>Pendientes</option>
+            <option value={VISITA_ESTADOS.IN_PROGRESS}>En Progreso</option>
+            <option value={VISITA_ESTADOS.COMPLETED}>Completadas</option>
+            <option value={VISITA_ESTADOS.APPROVED}>Aprobadas</option>
+            <option value={VISITA_ESTADOS.REJECTED}>Rechazadas</option>
+            <option value={VISITA_ESTADOS.CANCELLED}>Canceladas</option>
+          </select>
         </div>
       </div>
 
       {/* Resumen */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div className="card">
           <div className="flex items-center">
-            <div className="p-3 rounded-full bg-yellow-100 text-yellow-800">
-              <span className="text-xl">🕐</span>
+            <div className="p-2 sm:p-3 rounded-full bg-yellow-100 text-yellow-800">
+              <span className="text-lg sm:text-xl">🕐</span>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Pendientes</p>
-              <p className="text-2xl font-semibold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Pendientes</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">
                 {misVisitas.filter(v => [VISITA_ESTADOS.PENDING, VISITA_ESTADOS.ASSIGNED, VISITA_ESTADOS.IN_PROGRESS].includes(v.estado)).length}
               </p>
             </div>
@@ -142,12 +140,12 @@ const MisVisitasTecnicas = () => {
         
         <div className="card">
           <div className="flex items-center">
-            <div className="p-3 rounded-full bg-green-100 text-green-800">
-              <span className="text-xl">✅</span>
+            <div className="p-2 sm:p-3 rounded-full bg-green-100 text-green-800">
+              <span className="text-lg sm:text-xl">✅</span>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Completadas</p>
-              <p className="text-2xl font-semibold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Completadas</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">
                 {misVisitas.filter(v => v.estado === VISITA_ESTADOS.COMPLETED).length}
               </p>
             </div>
@@ -156,12 +154,12 @@ const MisVisitasTecnicas = () => {
         
         <div className="card">
           <div className="flex items-center">
-            <div className="p-3 rounded-full bg-blue-100 text-blue-800">
-              <span className="text-xl">📋</span>
+            <div className="p-2 sm:p-3 rounded-full bg-blue-100 text-blue-800">
+              <span className="text-lg sm:text-xl">📋</span>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total</p>
-              <p className="text-2xl font-semibold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Total</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">
                 {misVisitas.length}
               </p>
             </div>
@@ -170,12 +168,12 @@ const MisVisitasTecnicas = () => {
         
         <div className="card">
           <div className="flex items-center">
-            <div className="p-3 rounded-full bg-orange-100 text-orange-800">
-              <span className="text-xl">📅</span>
+            <div className="p-2 sm:p-3 rounded-full bg-orange-100 text-orange-800">
+              <span className="text-lg sm:text-xl">📅</span>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Esta semana</p>
-              <p className="text-2xl font-semibold text-gray-900">
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-500">Esta semana</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">
                 {misVisitas.filter(v => {
                   const fechaVisita = new Date(v.fechaVisita)
                   const hoy = getCurrentDate()
@@ -206,16 +204,16 @@ const MisVisitasTecnicas = () => {
                 className="card hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => handleIniciarVisita(visita)}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                         {visita.id}
                       </h3>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${estadoBadge.color}`}>
+                      <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${estadoBadge.color}`}>
                         {estadoBadge.icon} {estadoBadge.label}
                       </span>
-                      <span className={`text-sm font-medium ${prioridad.color}`}>
+                      <span className={`text-xs sm:text-sm font-medium ${prioridad.color}`}>
                         {prioridad.label}
                       </span>
                     </div>
@@ -224,7 +222,7 @@ const MisVisitasTecnicas = () => {
                     <p className="text-gray-600 text-sm mb-2">{visita.direccion}</p>
                     <p className="text-gray-700 text-sm mb-3">{visita.descripcionServicio}</p>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-sm">
                       <div>
                         <span className="text-gray-500">Fecha y hora:</span>
                         <p className="font-medium">
@@ -263,7 +261,7 @@ const MisVisitasTecnicas = () => {
                     )}
                   </div>
                   
-                  <div className="flex flex-col items-end space-y-2 ml-4">
+                  <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:space-y-2 sm:ml-4">
                     {[VISITA_ESTADOS.PENDING, VISITA_ESTADOS.ASSIGNED].includes(visita.estado) ? (
                       <button
                         onClick={(e) => {

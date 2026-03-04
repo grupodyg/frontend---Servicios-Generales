@@ -88,12 +88,12 @@ const ClienteNuevo = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nuevo Cliente</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nuevo Cliente</h1>
           <p className="text-gray-600">Registra un nuevo cliente en el sistema</p>
         </div>
-        
+
         <Link to="/clientes" className="btn-secondary">
           ← Volver
         </Link>
@@ -106,7 +106,7 @@ const ClienteNuevo = () => {
             Tipo de Cliente
           </h3>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
               type="button"
               onClick={() => setTipoCliente('empresa')}
@@ -120,7 +120,7 @@ const ClienteNuevo = () => {
               <p className="font-medium text-gray-900">Empresa</p>
               <p className="text-sm text-gray-500">Persona jurídica con RUC</p>
             </button>
-            
+
             <button
               type="button"
               onClick={() => setTipoCliente('persona')}
@@ -343,8 +343,8 @@ const ClienteNuevo = () => {
         </div>
 
         {/* Acciones */}
-        <div className="flex justify-end space-x-3">
-          <Link to="/clientes" className="btn-secondary">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <Link to="/clientes" className="btn-secondary text-center">
             Cancelar
           </Link>
           <button

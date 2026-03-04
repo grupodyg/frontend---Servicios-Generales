@@ -15,6 +15,7 @@ const Boletas = () => {
     isLoading,
     fetchBoletas,
     subirBoleta,
+    uploadBoletaFile,
     marcarComoVista,
     obtenerBoletasPorEmpleado,
     obtenerBoletasPorPeriodo,
@@ -132,6 +133,18 @@ const Boletas = () => {
 
       const montoNeto = salarioBase + bonificaciones + montoHorasExtras - deducciones
 
+      // Subir archivo a S3 primero
+      let archivoUrl = null
+      let archivoNombre = null
+      let archivoTamaño = null
+
+      if (formData.archivo?.file) {
+        const uploadResult = await uploadBoletaFile(formData.archivo.file)
+        archivoUrl = uploadResult.url
+        archivoNombre = uploadResult.name
+        archivoTamaño = uploadResult.size
+      }
+
       await subirBoleta({
         empleadoId: formData.empleadoId,
         empleadoNombre: formData.empleadoNombre,
@@ -144,9 +157,9 @@ const Boletas = () => {
         bonificaciones: bonificaciones,
         deducciones: deducciones,
         montoTotal: montoNeto,
-        archivoUrl: formData.archivo?.url || null,
-        archivoNombre: formData.archivo?.nombre || null,
-        archivoTamaño: formData.archivo?.tamaño || null
+        archivoUrl,
+        archivoNombre,
+        archivoTamaño
       })
 
       await notificationService.success(
@@ -242,20 +255,20 @@ const Boletas = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             {isAdmin ? 'Gestión de Boletas de Pago' : 'Mis Boletas de Pago'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm text-gray-600">
             {isAdmin ? 'Administra las boletas de pago del personal' : 'Consulta tus boletas de pago mensuales'}
           </p>
         </div>
-        
+
         {isAdmin && (
           <button
             onClick={handleNuevaBoleta}
-            className="btn-primary"
+            className="btn-primary self-start sm:self-auto"
           >
             + Subir Boleta
           </button>
@@ -264,7 +277,7 @@ const Boletas = () => {
 
       {/* Estadísticas - Solo para admin */}
       {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -273,9 +286,9 @@ const Boletas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-600">Total Boletas</p>
-                <p className="text-2xl font-bold text-blue-900">{estadisticas.total}</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-900">{estadisticas.total}</p>
               </div>
-              <span className="text-3xl">📊</span>
+              <span className="text-2xl sm:text-3xl">📊</span>
             </div>
           </motion.div>
 
@@ -288,9 +301,9 @@ const Boletas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-yellow-600">No Vistas</p>
-                <p className="text-2xl font-bold text-yellow-900">{estadisticas.nuevas}</p>
+                <p className="text-xl sm:text-2xl font-bold text-yellow-900">{estadisticas.nuevas}</p>
               </div>
-              <span className="text-3xl">👁️</span>
+              <span className="text-2xl sm:text-3xl">👁️</span>
             </div>
           </motion.div>
 
@@ -303,9 +316,9 @@ const Boletas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-600">Vistas</p>
-                <p className="text-2xl font-bold text-green-900">{estadisticas.vistas}</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-900">{estadisticas.vistas}</p>
               </div>
-              <span className="text-3xl">✅</span>
+              <span className="text-2xl sm:text-3xl">✅</span>
             </div>
           </motion.div>
 
@@ -318,9 +331,9 @@ const Boletas = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-purple-600">Este Mes</p>
-                <p className="text-2xl font-bold text-purple-900">{estadisticas.esteMes}</p>
+                <p className="text-xl sm:text-2xl font-bold text-purple-900">{estadisticas.esteMes}</p>
               </div>
-              <span className="text-3xl">📅</span>
+              <span className="text-2xl sm:text-3xl">📅</span>
             </div>
           </motion.div>
         </div>
@@ -328,7 +341,7 @@ const Boletas = () => {
 
       {/* Filtros */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {isAdmin && (
             <div>
               <input
@@ -380,8 +393,45 @@ const Boletas = () => {
         </div>
       </div>
 
-      {/* Lista de boletas */}
-      <div className="card">
+      {/* Lista de boletas - Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {boletasFiltradas.length === 0 ? (
+          <div className="card text-center py-8">
+            <p className="text-gray-500">No se encontraron boletas con los filtros aplicados</p>
+          </div>
+        ) : (
+          boletasFiltradas.map((boleta) => (
+            <motion.div
+              key={boleta.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="card"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-xs text-gray-500">{boleta.id}</span>
+                {getEstadoBadge(boleta)}
+              </div>
+              {isAdmin && <p className="font-medium text-gray-900 mb-1">{boleta.empleadoNombre}</p>}
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-gray-600">{boleta.periodo}</span>
+                <span className="font-semibold text-green-600">S/ {(boleta.montoTotal || 0).toFixed(2)}</span>
+              </div>
+              <div className="text-xs text-gray-500 mb-2">
+                {boleta.fechaCreacion ? new Date(boleta.fechaCreacion).toLocaleDateString() : 'N/A'}
+              </div>
+              <div className="flex gap-3 pt-3 border-t border-gray-100">
+                <button onClick={() => handleVerBoleta(boleta)} className="text-blue-600 hover:text-blue-800 font-medium text-sm">Ver detalles</button>
+                {isAdmin && (
+                  <button onClick={() => handleEliminar(boleta)} className="text-red-600 hover:text-red-800 font-medium text-sm">Eliminar</button>
+                )}
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+
+      {/* Lista de boletas - Desktop table */}
+      <div className="hidden md:block card">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -435,7 +485,7 @@ const Boletas = () => {
                       >
                         Ver detalles
                       </button>
-                      
+
                       {isAdmin && (
                         <>
                           <span className="text-gray-300">|</span>
@@ -453,7 +503,7 @@ const Boletas = () => {
               ))}
             </tbody>
           </table>
-          
+
           {boletasFiltradas.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No se encontraron boletas con los filtros aplicados</p>
@@ -519,7 +569,7 @@ const Boletas = () => {
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Mes *
@@ -556,7 +606,7 @@ const Boletas = () => {
                 <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                   <h4 className="font-medium text-gray-900">Detalles del Pago</h4>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Salario Base *
@@ -589,7 +639,7 @@ const Boletas = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Bonificaciones
@@ -636,7 +686,7 @@ const Boletas = () => {
                   )}
                 </div>
                 
-                <div className="flex justify-end space-x-3 pt-4 border-t">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4 border-t">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
@@ -683,7 +733,7 @@ const Boletas = () => {
 
               <div className="space-y-4">
                 {/* Informacion del empleado */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm font-medium text-gray-500">Empleado</p>
@@ -750,7 +800,7 @@ const Boletas = () => {
                 )}
 
                 <div className="border-t pt-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-gray-500 mb-1">Archivo Adjunto</p>
                       <div className="flex items-center gap-3">

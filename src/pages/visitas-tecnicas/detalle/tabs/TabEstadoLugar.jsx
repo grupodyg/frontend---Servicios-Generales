@@ -92,16 +92,16 @@ const TabEstadoLugar = memo(({
               )}
             </div>
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
               <button
                 onClick={() => setEditMode(false)}
-                className="btn-secondary"
+                className="btn-secondary w-full sm:w-auto"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleGuardarEstadoLugar}
-                className="btn-primary"
+                className="btn-primary w-full sm:w-auto"
               >
                 Guardar
               </button>
@@ -128,7 +128,7 @@ const TabEstadoLugar = memo(({
                     <h3 className="font-medium text-gray-900 mb-3">Fotografias del Lugar</h3>
                     <div className="border border-gray-200 rounded-lg p-4">
                       <p className="text-sm text-gray-500 mb-3">Total: {visitaActual.estadoLugar.fotos.length} fotografias</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         {visitaActual.estadoLugar.fotos.map((foto, index) => (
                           <div key={index} className="relative">
                             <img

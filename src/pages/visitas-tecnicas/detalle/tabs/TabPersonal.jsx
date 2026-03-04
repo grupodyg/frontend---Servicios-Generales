@@ -24,8 +24,8 @@ const TabPersonal = memo(({
   return (
     <div className="space-y-6">
       <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Personal Requerido</h2>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+          <h2 className="text-base sm:text-lg font-semibold">Personal Requerido</h2>
           {editMode && listaPersonal.length > 0 && (
             <button
               onClick={handleGuardarPersonal}
@@ -38,9 +38,9 @@ const TabPersonal = memo(({
 
         {/* Formulario para agregar personal */}
         {editMode && (
-          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+          <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4">
             <h3 className="text-sm font-medium text-gray-700 mb-3">Agregar Personal</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {/* Especialidad */}
               <div className="md:col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">Especialidad</label>

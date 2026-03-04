@@ -157,17 +157,17 @@ const VisitasTecnicas = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Visitas Técnicas</h1>
-          <p className="text-gray-600">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Visitas Técnicas</h1>
+          <p className="text-sm sm:text-base text-gray-600">
             Gestiona las visitas técnicas
           </p>
         </div>
-        
+
         <button
           onClick={handleCreateNew}
-          className="btn-primary"
+          className="btn-primary w-full sm:w-auto"
         >
           + Nueva Visita
         </button>
@@ -175,8 +175,8 @@ const VisitasTecnicas = () => {
 
       {/* Filtros */}
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Filtros</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Filtros</h2>
           <div className="flex items-center gap-3">
             {showFiltros && (
               <button
@@ -277,157 +277,238 @@ const VisitasTecnicas = () => {
               </button>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    onClick={() => handleOrdenar('id')}
-                  >
-                    ID / Proyecto <SortIcon columna="id" />
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    onClick={() => handleOrdenar('solpe')}
-                  >
-                    SOLPE <SortIcon columna="solpe" />
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    onClick={() => handleOrdenar('cliente')}
-                  >
-                    Cliente / Contacto <SortIcon columna="cliente" />
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    onClick={() => handleOrdenar('servicio')}
-                  >
-                    Servicio <SortIcon columna="servicio" />
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    onClick={() => handleOrdenar('tecnico')}
-                  >
-                    Técnico(s) <SortIcon columna="tecnico" />
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    onClick={() => handleOrdenar('fecha')}
-                  >
-                    Fecha <SortIcon columna="fecha" />
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    onClick={() => handleOrdenar('estado')}
-                  >
-                    Estado <SortIcon columna="estado" />
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+            <>
+              {/* Vista tabla - solo desktop */}
+              <table className="hidden md:table min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleOrdenar('id')}
+                    >
+                      ID / Proyecto <SortIcon columna="id" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleOrdenar('solpe')}
+                    >
+                      SOLPE <SortIcon columna="solpe" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleOrdenar('cliente')}
+                    >
+                      Cliente / Contacto <SortIcon columna="cliente" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleOrdenar('servicio')}
+                    >
+                      Servicio <SortIcon columna="servicio" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleOrdenar('tecnico')}
+                    >
+                      Técnico(s) <SortIcon columna="tecnico" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleOrdenar('fecha')}
+                    >
+                      Fecha <SortIcon columna="fecha" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleOrdenar('estado')}
+                    >
+                      Estado <SortIcon columna="estado" />
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {visitasOrdenadas.map((visita) => {
+                    const estadoBadge = getEstadoBadge(visita.estado)
+
+                    return (
+                      <tr key={visita.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-semibold text-gray-900">
+                            {visita.id}
+                          </div>
+                          {visita.nombreProyecto && (
+                            <div className="text-xs text-gray-500 mt-0.5 truncate max-w-[140px]" title={visita.nombreProyecto}>
+                              {visita.nombreProyecto}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-gray-900">
+                            {visita.solpe || '-'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-gray-900">{visita.cliente}</div>
+                          {visita.contacto && (
+                            <div className="text-xs text-gray-500 mt-0.5">{visita.contacto}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900 max-w-[180px] truncate" title={visita.tipoServicio}>
+                            {visita.tipoServicio}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {visita.tecnicosAsignados && visita.tecnicosAsignados.length > 0 ? (
+                            <div className="space-y-1">
+                              {visita.tecnicosAsignados.map((tecnico, index) => (
+                                <div key={index} className="flex items-center gap-1.5">
+                                  <span className="text-sm font-medium text-gray-900 truncate max-w-[120px]" title={tecnico.nombre || 'Sin nombre'}>
+                                    {tecnico.nombre || 'Sin nombre'}
+                                  </span>
+                                  {tecnico.especialidad && (
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${getEspecialidadColor(tecnico.especialidad)}`}>
+                                      {tecnico.especialidad}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400 italic">Sin asignar</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {format(new Date(visita.fechaVisita), 'dd/MM/yyyy', { locale: es })}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${estadoBadge.color}`}>
+                            {estadoBadge.icon} {estadoBadge.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => handleViewDetails(visita)}
+                              className="text-corporate-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded transition-colors"
+                              title="Ver detalles"
+                            >
+                              👁️
+                            </button>
+
+                            {visita.coordenadasGPS?.latitud && visita.coordenadasGPS?.longitud && (
+                              <button
+                                onClick={() => {
+                                  const lat = visita.coordenadasGPS.latitud
+                                  const lng = visita.coordenadasGPS.longitud
+                                  openInBestMapApp(lat, lng, `${visita.cliente} - ${visita.nombreProyecto || 'Visita técnica'}`)
+                                }}
+                                className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded transition-colors"
+                                title="Ver en mapa"
+                              >
+                                📍
+                              </button>
+                            )}
+
+                            {user?.role === 'admin' && (
+                              <button
+                                onClick={() => handleEliminarVisita(visita)}
+                                className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded transition-colors"
+                                title="Eliminar visita"
+                                disabled={isDeleting || isLoading}
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+
+              {/* Vista tarjetas - solo movil */}
+              <div className="md:hidden space-y-3">
                 {visitasOrdenadas.map((visita) => {
                   const estadoBadge = getEstadoBadge(visita.estado)
 
                   return (
-                    <tr key={visita.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {visita.id}
+                    <div
+                      key={visita.id}
+                      className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleViewDetails(visita)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-900">{visita.id}</span>
+                          {visita.solpe && (
+                            <span className="text-xs text-gray-500">SOLPE: {visita.solpe}</span>
+                          )}
                         </div>
-                        {visita.nombreProyecto && (
-                          <div className="text-xs text-gray-500 mt-0.5 truncate max-w-[140px]" title={visita.nombreProyecto}>
-                            {visita.nombreProyecto}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {visita.solpe || '-'}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900">{visita.cliente}</div>
-                        {visita.contacto && (
-                          <div className="text-xs text-gray-500 mt-0.5">{visita.contacto}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-gray-900 max-w-[180px] truncate" title={visita.tipoServicio}>
-                          {visita.tipoServicio}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {visita.tecnicosAsignados && visita.tecnicosAsignados.length > 0 ? (
-                          <div className="space-y-1">
-                            {visita.tecnicosAsignados.map((tecnico, index) => (
-                              <div key={index} className="flex items-center gap-1.5">
-                                <span className="text-sm font-medium text-gray-900 truncate max-w-[120px]" title={tecnico.nombre || 'Sin nombre'}>
-                                  {tecnico.nombre || 'Sin nombre'}
-                                </span>
-                                {tecnico.especialidad && (
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap ${getEspecialidadColor(tecnico.especialidad)}`}>
-                                    {tecnico.especialidad}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400 italic">Sin asignar</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        {format(new Date(visita.fechaVisita), 'dd/MM/yyyy', { locale: es })}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${estadoBadge.color}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoBadge.color}`}>
                           {estadoBadge.icon} {estadoBadge.label}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => handleViewDetails(visita)}
-                            className="text-corporate-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded transition-colors"
-                            title="Ver detalles"
-                          >
-                            👁️
-                          </button>
-
-                          {visita.coordenadasGPS?.latitud && visita.coordenadasGPS?.longitud && (
-                            <button
-                              onClick={() => {
-                                const lat = visita.coordenadasGPS.latitud
-                                const lng = visita.coordenadasGPS.longitud
-                                openInBestMapApp(lat, lng, `${visita.cliente} - ${visita.nombreProyecto || 'Visita técnica'}`)
-                              }}
-                              className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded transition-colors"
-                              title="Ver en mapa"
-                            >
-                              📍
-                            </button>
-                          )}
-
-                          {user?.role === 'admin' && (
-                            <button
-                              onClick={() => handleEliminarVisita(visita)}
-                              className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded transition-colors"
-                              title="Eliminar visita"
-                              disabled={isDeleting || isLoading}
-                            >
-                              🗑️
-                            </button>
+                      </div>
+                      <p className="text-sm font-medium text-gray-900">{visita.cliente}</p>
+                      {visita.contacto && (
+                        <p className="text-xs text-gray-500">{visita.contacto}</p>
+                      )}
+                      <p className="text-xs text-gray-600 mt-1 truncate">{visita.tipoServicio}</p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(visita.fechaVisita), 'dd/MM/yyyy', { locale: es })}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {visita.tecnicosAsignados && visita.tecnicosAsignados.length > 0 ? (
+                            <span className="text-xs text-gray-600">
+                              {visita.tecnicosAsignados.map(t => t.nombre || 'Sin nombre').join(', ')}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">Sin asignar</span>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleViewDetails(visita)}
+                          className="text-corporate-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors text-xs"
+                          title="Ver detalles"
+                        >
+                          👁️
+                        </button>
+                        {visita.coordenadasGPS?.latitud && visita.coordenadasGPS?.longitud && (
+                          <button
+                            onClick={() => {
+                              const lat = visita.coordenadasGPS.latitud
+                              const lng = visita.coordenadasGPS.longitud
+                              openInBestMapApp(lat, lng, `${visita.cliente} - ${visita.nombreProyecto || 'Visita técnica'}`)
+                            }}
+                            className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors text-xs"
+                            title="Ver en mapa"
+                          >
+                            📍
+                          </button>
+                        )}
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => handleEliminarVisita(visita)}
+                            className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors text-xs"
+                            title="Eliminar visita"
+                            disabled={isDeleting || isLoading}
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   )
                 })}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </div>
       </div>

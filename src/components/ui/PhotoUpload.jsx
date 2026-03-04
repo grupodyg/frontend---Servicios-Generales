@@ -90,7 +90,7 @@ const PhotoUpload = ({
   return (
     <div className="space-y-4">
       {/* Upload Area */}
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center">
         <input
           ref={fileInputRef}
           type="file"
@@ -102,10 +102,10 @@ const PhotoUpload = ({
         />
         
         <div className="space-y-4">
-          <div className="text-4xl text-gray-400">📷</div>
+          <div className="text-3xl sm:text-4xl text-gray-400">📷</div>
           <div>
-            <p className="text-lg font-medium text-gray-900">{label}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm sm:text-lg font-medium text-gray-900">{label}</p>
+            <p className="text-xs sm:text-sm text-gray-500">
               Arrastra las fotos aquí o haz clic para seleccionar
             </p>
             <p className="text-xs text-gray-400 mt-1">
@@ -130,7 +130,7 @@ const PhotoUpload = ({
 
       {/* Photos Grid */}
       {photos.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
           <AnimatePresence>
             {photos.map((photo, index) => (
               <motion.div
@@ -198,7 +198,7 @@ const PhotoUpload = ({
                 alt={previewPhoto.name}
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
-              <div className="bg-white p-4 mt-4 rounded-lg">
+              <div className="bg-white p-3 sm:p-4 mt-2 sm:mt-4 rounded-lg">
                 <h3 className="font-medium text-gray-900">{previewPhoto.name}</h3>
                 <p className="text-sm text-gray-500">
                   Tamaño: {formatFileSize(previewPhoto.size)}

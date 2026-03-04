@@ -29,12 +29,12 @@ const ReportesTecnico = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             Mis Reportes de Trabajo
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Historial completo de todos tus reportes enviados
           </p>
         </div>
@@ -59,7 +59,7 @@ const ReportesTecnico = () => {
         ) : (
           <div className="card">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                 Historial Completo de Reportes
               </h2>
               <p className="text-sm text-gray-600">
@@ -69,11 +69,11 @@ const ReportesTecnico = () => {
 
             <div className="space-y-4">
               {todosReportesTecnico.map((reporte) => (
-                <div key={reporte.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="font-semibold text-gray-900">{reporte.id}</h4>
+                <div key={reporte.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3 sm:mb-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{reporte.id}</h4>
                         <span className={`text-xs px-2 py-1 rounded ${
                           reporte.porcentajeAvance >= 75 ? 'bg-green-100 text-green-800' :
                           reporte.porcentajeAvance >= 50 ? 'bg-yellow-100 text-yellow-800' :
@@ -84,7 +84,7 @@ const ReportesTecnico = () => {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-sm mb-3">
                         <div>
                           <span className="text-gray-500">Orden de Trabajo:</span>
                           <div className="font-medium">{reporte.ordenId}</div>
@@ -141,7 +141,7 @@ const ReportesTecnico = () => {
                       )}
 
                       {/* Fotos */}
-                      <div className="mt-3 flex items-center space-x-4 text-sm">
+                      <div className="mt-3 flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
                         {reporte.fotosAntes && reporte.fotosAntes.length > 0 && (
                           <div className="flex items-center text-gray-600">
                             <span className="mr-1">📷</span>
@@ -158,7 +158,7 @@ const ReportesTecnico = () => {
 
                       {/* Documentos de Seguridad */}
                       {(reporte.atsDoc || reporte.ptrDoc || reporte.aspectosAmbientalesDoc) && (
-                        <div className="mt-3 flex items-center space-x-2 text-sm">
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                           {reporte.atsDoc && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">
                               📋 ATS

@@ -120,16 +120,16 @@ const Notificaciones = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notificaciones</h1>
-          <p className="text-gray-600">Gestiona todas tus notificaciones en un solo lugar</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Notificaciones</h1>
+          <p className="text-sm text-gray-600">Gestiona todas tus notificaciones en un solo lugar</p>
         </div>
-        
+
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllAsRead}
-            className="btn-secondary"
+            className="btn-secondary self-start sm:self-auto"
           >
             Marcar todas como leídas
           </button>
@@ -138,10 +138,10 @@ const Notificaciones = () => {
 
       {/* Filtros */}
       <div className="card">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFiltro('todas')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
               filtro === 'todas'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -151,7 +151,7 @@ const Notificaciones = () => {
           </button>
           <button
             onClick={() => setFiltro('no_leidas')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors ${
               filtro === 'no_leidas'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -187,9 +187,9 @@ const Notificaciones = () => {
                   !notificacion.leida ? 'border-l-4 border-l-blue-500 bg-blue-50' : ''
                 }`}
               >
-                <div className="flex items-start space-x-4">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color} flex-shrink-0`}>
-                    <span className="text-2xl">{icon}</span>
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${color} flex-shrink-0`}>
+                    <span className="text-xl sm:text-2xl">{icon}</span>
                   </div>
                   
                   <div className="flex-1 min-w-0">

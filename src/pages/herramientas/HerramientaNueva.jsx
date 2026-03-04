@@ -252,27 +252,27 @@ const HerramientaNueva = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nueva Herramienta</h1>
-          <p className="text-gray-600">Agregar una nueva herramienta al inventario</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nueva Herramienta</h1>
+          <p className="text-gray-600 text-sm sm:text-base hidden sm:block">Agregar una nueva herramienta al inventario</p>
         </div>
-        
+
         <button
           type="button"
           onClick={() => navigate('/herramientas')}
-          className="btn-secondary"
+          className="btn-secondary text-sm"
         >
-          ← Volver a Herramientas
+          ← Volver
         </button>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Formulario Simple */}
-        <div className="card max-w-2xl mx-auto">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">
+        <div className="card max-w-2xl mx-auto p-3 sm:p-4 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 sm:mb-6">
             🔧 Información de la Herramienta
           </h2>
           
@@ -296,14 +296,14 @@ const HerramientaNueva = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-1">
                 <label className="block text-sm font-medium text-gray-700">
                   Marca *
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowMarcasModal(true)}
-                  className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
+                  className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
                   title="Gestionar marcas"
                 >
                   🏷️ Gestionar Marcas
@@ -405,11 +405,11 @@ const HerramientaNueva = () => {
         </div>
 
         {/* Botones de Acción */}
-        <div className="flex justify-center space-x-4 max-w-2xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:space-x-4 max-w-2xl mx-auto">
           <button
             type="button"
             onClick={() => navigate('/herramientas')}
-            className="btn-secondary"
+            className="btn-secondary text-sm"
             disabled={isLoading}
           >
             Cancelar
@@ -417,7 +417,7 @@ const HerramientaNueva = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`btn-primary ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn-primary text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isLoading ? 'Creando...' : '🔧 Crear Herramienta'}
           </button>
@@ -426,11 +426,11 @@ const HerramientaNueva = () => {
 
       {/* Gestión de Marcas Modal */}
       {showMarcasModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   🏷️ Gestión de Marcas
                 </h3>
                 <button
@@ -451,7 +451,7 @@ const HerramientaNueva = () => {
                 <h4 className="text-lg font-semibold text-gray-900 mb-3">
                   ➕ Agregar Nueva Marca
                 </h4>
-                <div className="flex space-x-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3">
                   <input
                     type="text"
                     value={nuevaMarca}
@@ -462,7 +462,7 @@ const HerramientaNueva = () => {
                   />
                   <button
                     onClick={handleAddMarca}
-                    className="btn-primary"
+                    className="btn-primary text-sm flex-shrink-0"
                     disabled={!nuevaMarca.trim()}
                   >
                     Agregar
@@ -480,10 +480,10 @@ const HerramientaNueva = () => {
                 {marcasBase.length > 0 && (
                   <div className="mb-4">
                     <h5 className="text-sm font-medium text-gray-600 mb-2">Marcas Predeterminadas ({marcasBase.length})</h5>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {marcasBase.map((marca) => (
                         <div key={marca} className="bg-gray-100 p-2 rounded-lg text-center">
-                          <span className="text-sm text-gray-700">{marca}</span>
+                          <span className="text-xs sm:text-sm text-gray-700">{marca}</span>
                         </div>
                       ))}
                     </div>
@@ -530,23 +530,23 @@ const HerramientaNueva = () => {
                             ) : (
                               // Display mode
                               <>
-                                <div className="flex-1">
-                                  <span className="font-medium text-gray-900">{marca}</span>
+                                <div className="flex-1 min-w-0">
+                                  <span className="font-medium text-gray-900 text-sm">{marca}</span>
                                 </div>
-                                <div className="flex space-x-2">
+                                <div className="flex space-x-2 flex-shrink-0">
                                   <button
                                     onClick={() => startEditMarca(marca)}
-                                    className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
+                                    className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
                                     title="Editar marca"
                                   >
-                                    ✏️ Editar
+                                    ✏️ <span className="hidden sm:inline">Editar</span>
                                   </button>
                                   <button
                                     onClick={() => handleDeleteMarca(marca)}
-                                    className="text-sm px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
+                                    className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
                                     title="Eliminar marca"
                                   >
-                                    🗑️ Eliminar
+                                    🗑️ <span className="hidden sm:inline">Eliminar</span>
                                   </button>
                                 </div>
                               </>

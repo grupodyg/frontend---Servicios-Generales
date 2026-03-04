@@ -137,7 +137,7 @@ const DateRangePicker = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="input-field flex items-center justify-between min-w-64 cursor-pointer hover:border-corporate-blue transition-colors"
+        className="input-field flex items-center justify-between min-w-0 sm:min-w-64 cursor-pointer hover:border-corporate-blue transition-colors"
       >
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -160,7 +160,7 @@ const DateRangePicker = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-4 min-w-[340px]"
+            className="absolute top-full left-0 sm:left-auto sm:right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-3 sm:p-4 w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[340px] max-w-[340px]"
           >
             {/* Presets */}
             <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-gray-100">
@@ -182,19 +182,19 @@ const DateRangePicker = ({
             </div>
 
             {/* Selection indicator */}
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${selecting === 'start' ? 'bg-blue-100 text-blue-700' : 'bg-gray-50 text-gray-500'}`}>
-                <span className="text-xs font-medium">Inicio:</span>
-                <span className="text-sm font-semibold">
+            <div className="flex items-center justify-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+              <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg ${selecting === 'start' ? 'bg-blue-100 text-blue-700' : 'bg-gray-50 text-gray-500'}`}>
+                <span className="text-[10px] sm:text-xs font-medium">Inicio:</span>
+                <span className="text-xs sm:text-sm font-semibold">
                   {tempStart ? format(tempStart, 'dd/MM/yy', { locale: es }) : '--/--/--'}
                 </span>
               </div>
-              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${selecting === 'end' ? 'bg-blue-100 text-blue-700' : 'bg-gray-50 text-gray-500'}`}>
-                <span className="text-xs font-medium">Fin:</span>
-                <span className="text-sm font-semibold">
+              <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg ${selecting === 'end' ? 'bg-blue-100 text-blue-700' : 'bg-gray-50 text-gray-500'}`}>
+                <span className="text-[10px] sm:text-xs font-medium">Fin:</span>
+                <span className="text-xs sm:text-sm font-semibold">
                   {tempEnd ? format(tempEnd, 'dd/MM/yy', { locale: es }) : '--/--/--'}
                 </span>
               </div>

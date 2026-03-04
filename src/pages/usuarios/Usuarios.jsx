@@ -232,18 +232,18 @@ const Usuarios = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
-          <p className="text-gray-600">Administración de usuarios del sistema</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+          <p className="text-sm text-gray-600">Administración de usuarios del sistema</p>
         </div>
         <div className="flex space-x-3">
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="hidden sm:flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setViewMode('table')}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                viewMode === 'table' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                viewMode === 'table'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -252,8 +252,8 @@ const Usuarios = () => {
             <button
               onClick={() => setViewMode('cards')}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                viewMode === 'cards' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                viewMode === 'cards'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -270,7 +270,7 @@ const Usuarios = () => {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -279,10 +279,10 @@ const Usuarios = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Usuarios</p>
-              <p className="text-2xl font-bold text-gray-900">{estadisticas.total}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.total}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">👥</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <span className="text-lg sm:text-xl">👥</span>
             </div>
           </div>
         </motion.div>
@@ -296,10 +296,10 @@ const Usuarios = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Usuarios Activos</p>
-              <p className="text-2xl font-bold text-green-600">{estadisticas.activos}</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-600">{estadisticas.activos}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">✅</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <span className="text-lg sm:text-xl">✅</span>
             </div>
           </div>
         </motion.div>
@@ -313,10 +313,10 @@ const Usuarios = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Técnicos</p>
-              <p className="text-2xl font-bold text-blue-600">{estadisticas.tecnicos}</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-600">{estadisticas.tecnicos}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">🔧</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <span className="text-lg sm:text-xl">🔧</span>
             </div>
           </div>
         </motion.div>
@@ -330,10 +330,10 @@ const Usuarios = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Supervisores</p>
-              <p className="text-2xl font-bold text-purple-600">{estadisticas.supervisores}</p>
+              <p className="text-xl sm:text-2xl font-bold text-purple-600">{estadisticas.supervisores}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">👨‍💼</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <span className="text-lg sm:text-xl">👨‍💼</span>
             </div>
           </div>
         </motion.div>
@@ -341,7 +341,7 @@ const Usuarios = () => {
 
       {/* Filtros */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <div className="relative">
             <input
               type="text"
@@ -386,7 +386,59 @@ const Usuarios = () => {
 
       {/* Lista de usuarios */}
       {viewMode === 'table' ? (
-        <div className="card overflow-hidden">
+        <>
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {usuariosFiltrados.length === 0 ? (
+            <div className="card text-center py-8">
+              <p className="text-gray-500">No se encontraron usuarios</p>
+            </div>
+          ) : (
+            usuariosFiltrados.map((usuario) => (
+              <div key={usuario.id} className="card">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="flex-shrink-0 h-10 w-10">
+                    <div className="h-10 w-10 rounded-full bg-corporate-blue flex items-center justify-center">
+                      <span className="text-sm font-medium text-white">
+                        {usuario.name.charAt(0)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{usuario.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{usuario.email}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {getRoleBadge(usuario.role)}
+                  {getEstadoBadge(usuario.estado)}
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>{usuario.especialidad || 'Sin especialidad'}</span>
+                  <span>{new Date(usuario.ultimaActividad).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
+                  <button onClick={() => handleOpenModal('view', usuario)} className="text-blue-600 hover:text-blue-900 p-1" title="Ver">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  </button>
+                  <button onClick={() => handleOpenModal('edit', usuario)} className="text-green-600 hover:text-green-900 p-1" title="Editar">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  </button>
+                  <button onClick={() => handleToggleEstado(usuario)} className={usuario.estado === 'active' ? 'text-orange-600 hover:text-orange-900 p-1' : 'text-green-600 hover:text-green-900 p-1'} title={usuario.estado === 'active' ? 'Desactivar' : 'Activar'}>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={usuario.estado === 'active' ? "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} /></svg>
+                  </button>
+                  {usuario.id !== currentUser?.id && (
+                    <button onClick={() => handleDeleteUsuario(usuario)} className="text-red-600 hover:text-red-900 p-1" title="Eliminar">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        {/* Desktop table */}
+        <div className="hidden md:block card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -512,8 +564,9 @@ const Usuarios = () => {
             </table>
           </div>
         </div>
+        </>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {usuariosFiltrados.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <div className="text-6xl text-gray-400 mb-4">👥</div>
@@ -646,7 +699,7 @@ const Usuarios = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div>
                         <h4 className="font-medium text-gray-900 mb-3">Información Personal</h4>
                         <dl className="space-y-2">
@@ -718,7 +771,7 @@ const Usuarios = () => {
                       </div>
                     </div>
 
-                    <div className="flex justify-end space-x-3 pt-6 border-t">
+                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-6 border-t">
                       <button
                         onClick={() => handleOpenModal('edit', selectedUsuario)}
                         className="btn-secondary"
@@ -735,7 +788,7 @@ const Usuarios = () => {
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Nombre Completo *
@@ -897,7 +950,7 @@ const Usuarios = () => {
                       )}
                     </div>
 
-                    <div className="flex justify-end space-x-3 pt-6 border-t">
+                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-6 border-t">
                       <button
                         type="button"
                         onClick={handleCloseModal}

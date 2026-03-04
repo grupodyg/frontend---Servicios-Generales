@@ -34,13 +34,13 @@ const Configuracion = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-        <p className="text-gray-600">Administrar configuraciones del sistema</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Configuración</h1>
+        <p className="text-sm text-gray-600">Administrar configuraciones del sistema</p>
       </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}

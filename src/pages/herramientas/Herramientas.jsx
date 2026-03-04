@@ -664,26 +664,26 @@ const Herramientas = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Herramientas</h1>
-          <p className="text-gray-600">Gestión de herramientas del inventario</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Herramientas</h1>
+          <p className="text-gray-600 text-sm sm:text-base hidden sm:block">Gestión de herramientas del inventario</p>
         </div>
 
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3 w-full sm:w-auto">
           {user?.role === 'admin' && (
             <>
               <button
                 onClick={() => navigate('/herramientas/nueva')}
-                className="btn-secondary"
+                className="btn-secondary text-sm"
               >
                 🔧 Nueva Herramienta
               </button>
               <button
                 onClick={() => setShowCategoriasModal(true)}
-                className="btn-secondary"
+                className="btn-secondary text-sm"
               >
                 🏷️ Gestionar Categorías
               </button>
@@ -691,7 +691,7 @@ const Herramientas = () => {
           )}
           <button
             onClick={() => setShowSolicitudHerramientasModal(true)}
-            className="btn-primary"
+            className="btn-primary text-sm"
           >
             📝 Solicitar Herramientas
           </button>
@@ -732,50 +732,50 @@ const Herramientas = () => {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-green-600">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+        <div className="card text-center p-3 sm:p-4 md:p-6">
+          <div className="text-xl sm:text-2xl font-bold text-green-600">
             {herramientas.filter(h => h.estado === 'available').length}
           </div>
-          <div className="text-sm text-gray-600">Disponibles</div>
+          <div className="text-xs sm:text-sm text-gray-600">Disponibles</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-blue-600">
+        <div className="card text-center p-3 sm:p-4 md:p-6">
+          <div className="text-xl sm:text-2xl font-bold text-blue-600">
             {herramientas.filter(h => h.estado === 'assigned').length}
           </div>
-          <div className="text-sm text-gray-600">En Uso</div>
+          <div className="text-xs sm:text-sm text-gray-600">En Uso</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-yellow-600">
+        <div className="card text-center p-3 sm:p-4 md:p-6">
+          <div className="text-xl sm:text-2xl font-bold text-yellow-600">
             {herramientas.filter(h => h.estado === 'maintenance').length}
           </div>
-          <div className="text-sm text-gray-600">Mantenimiento</div>
+          <div className="text-xs sm:text-sm text-gray-600">Mantenimiento</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-gray-900">
+        <div className="card text-center p-3 sm:p-4 md:p-6">
+          <div className="text-xl sm:text-2xl font-bold text-gray-900">
             {herramientas.length}
           </div>
-          <div className="text-sm text-gray-600">Total</div>
+          <div className="text-xs sm:text-sm text-gray-600">Total</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'border-corporate-blue text-corporate-blue'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span className="mr-2">{tab.icon}</span>
+              <span className="mr-1 sm:mr-2">{tab.icon}</span>
               {tab.name}
               {tab.count !== undefined && (
-                <span className="ml-2 bg-gray-100 text-gray-600 py-1 px-2 rounded-full text-xs">
+                <span className="ml-1 sm:ml-2 bg-gray-100 text-gray-600 py-1 px-2 rounded-full text-xs">
                   {tab.count}
                 </span>
               )}
@@ -794,14 +794,63 @@ const Herramientas = () => {
         {activeTab === 'inventario' && (
           <div>
             {/* Lista de herramientas */}
-            <div className="card">
+            <div className="card p-3 sm:p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             Lista de Herramientas ({filteredHerramientas.length})
           </h2>
         </div>
-        
-        <div className="overflow-x-auto">
+
+        {/* Vista tarjetas movil */}
+        <div className="md:hidden space-y-3">
+          {filteredHerramientas.map((herramienta) => (
+            <div key={herramienta.id} className="bg-gray-50 rounded-lg p-3 border">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center min-w-0 flex-1">
+                  <div className="text-xl mr-2 flex-shrink-0">🛠️</div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">{herramienta.nombre}</div>
+                    <div className="text-xs text-gray-500">{herramienta.modelo}</div>
+                  </div>
+                </div>
+                <div className="flex space-x-2 flex-shrink-0 ml-2">
+                  <button
+                    onClick={() => handleVerDetalles(herramienta)}
+                    className="text-blue-600 hover:text-blue-900"
+                    title="Ver detalles"
+                  >
+                    👁️
+                  </button>
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={() => handleEditar(herramienta)}
+                      className="text-gray-600 hover:text-gray-900"
+                      title="Editar"
+                    >
+                      ✏️
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-gray-500 font-mono">{herramienta.codigo}</span>
+                <span className="text-gray-400">|</span>
+                <span className="text-gray-600">{herramienta.categoriaNombre || '-'}</span>
+                <span className="text-gray-400">|</span>
+                {getEstadoBadge(herramienta.estado)}
+                {canViewPrices(user) && herramienta.valor && (
+                  <>
+                    <span className="text-gray-400">|</span>
+                    <span className="text-gray-900 font-medium">S/ {herramienta.valor.toFixed(2)}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Vista tabla desktop */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -921,7 +970,7 @@ const Herramientas = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                 {/* Filtro por Estado */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1045,15 +1094,15 @@ const Herramientas = () => {
             ) : (
               <div className="space-y-4">
                 {filtrarSolicitudesHerramientas().map((solicitud) => (
-              <div key={solicitud.id} className="card">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{solicitud.id}</h3>
-                    <p className="text-sm text-gray-500">
+              <div key={solicitud.id} className="card p-3 sm:p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0 mb-4">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{solicitud.id}</h3>
+                    <p className="text-xs sm:text-sm text-gray-500 break-words">
                       Solicitado por: {solicitud.solicitante || 'Sin asignar'} • {formatDateTime(solicitud.fechaSolicitud)}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     <span className={`status-badge ${
                       (solicitud.estado === 'pendiente' || solicitud.estado === 'pending') ? 'status-pending' :
                       (solicitud.estado === 'aprobada' || solicitud.estado === 'approved') ? 'bg-blue-100 text-blue-800' :
@@ -1077,12 +1126,12 @@ const Herramientas = () => {
                   <div className="space-y-2">
                     {solicitud.herramientas && solicitud.herramientas.length > 0 ? (
                       solicitud.herramientas.map((herramienta, index) => (
-                        <div key={index} className="flex justify-between items-center bg-gray-50 rounded p-2">
-                          <div className="flex-1">
-                            <span className="text-sm font-medium text-gray-900">{herramienta.nombre || 'Herramienta sin nombre'}</span>
+                        <div key={index} className="flex flex-col sm:flex-row justify-between sm:items-center bg-gray-50 rounded p-2 gap-1">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs sm:text-sm font-medium text-gray-900">{herramienta.nombre || 'Herramienta sin nombre'}</span>
                             <p className="text-xs text-gray-600">{herramienta.motivo || 'Sin motivo especificado'}</p>
                           </div>
-                          <div className="text-right text-sm text-gray-600">
+                          <div className="text-left sm:text-right text-xs sm:text-sm text-gray-600 flex-shrink-0">
                             <div>Devolución: {formatDate(herramienta.fechaDevolucionPrevista) || 'No especificada'}</div>
                             {(solicitud.estado === 'entregada' || solicitud.estado === 'delivered') && herramienta.fechaEntrega && (
                               <div className="text-blue-600">Entregada: {formatDateTime(herramienta.fechaEntrega)}</div>
@@ -1111,18 +1160,18 @@ const Herramientas = () => {
                 )}
 
                 {user?.role === 'admin' && (
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3">
                     {(solicitud.estado === 'pendiente' || solicitud.estado === 'pending') && (
                       <>
                         <button
                           onClick={() => handleSolicitudHerramientaAprobacion(solicitud.id, 'approved')}
-                          className="btn-primary bg-green-600 hover:bg-green-700"
+                          className="btn-primary bg-green-600 hover:bg-green-700 text-sm"
                         >
                           ✅ Aprobar
                         </button>
                         <button
                           onClick={() => handleSolicitudHerramientaAprobacion(solicitud.id, 'rejected')}
-                          className="btn-secondary bg-red-50 text-red-700 hover:bg-red-100"
+                          className="btn-secondary bg-red-50 text-red-700 hover:bg-red-100 text-sm"
                         >
                           ❌ Rechazar
                         </button>
@@ -1131,7 +1180,7 @@ const Herramientas = () => {
                     {(solicitud.estado === 'aprobada' || solicitud.estado === 'approved') && (
                       <button
                         onClick={() => handleSolicitudHerramientaAprobacion(solicitud.id, 'delivered')}
-                        className="btn-primary bg-blue-600 hover:bg-blue-700"
+                        className="btn-primary bg-blue-600 hover:bg-blue-700 text-sm"
                       >
                         📦 Marcar como Entregada
                       </button>
@@ -1139,7 +1188,7 @@ const Herramientas = () => {
                     {(solicitud.estado === 'entregada' || solicitud.estado === 'delivered') && (
                       <button
                         onClick={() => handleSolicitudHerramientaAprobacion(solicitud.id, 'returned')}
-                        className="btn-primary bg-purple-600 hover:bg-purple-700"
+                        className="btn-primary bg-purple-600 hover:bg-purple-700 text-sm"
                       >
                         🔙 Marcar como Devuelta
                       </button>
@@ -1156,11 +1205,11 @@ const Herramientas = () => {
 
       {/* Solicitud de Herramientas Modal */}
       {showSolicitudHerramientasModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   🔧 Nueva Solicitud de Herramientas
                 </h3>
                 <button
@@ -1343,7 +1392,7 @@ const Herramientas = () => {
               )}
 
               {/* Actions */}
-              <div className="flex justify-end space-x-3 pt-6 border-t mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-4 sm:pt-6 border-t mt-4 sm:mt-6">
                 <button
                   onClick={() => {
                     setShowSolicitudHerramientasModal(false)
@@ -1356,13 +1405,13 @@ const Herramientas = () => {
                     })
                     setBusquedaHerramientasModal('')
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSubmitNuevaSolicitudHerramienta}
-                  className="btn-primary"
+                  className="btn-primary text-sm"
                   disabled={selectedHerramientas.length === 0}
                 >
                   🔧 Crear Solicitud
@@ -1375,11 +1424,11 @@ const Herramientas = () => {
 
       {/* Modal Ver Detalles */}
       {showDetallesModal && herramientaSeleccionada && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   🛠️ Detalles de la Herramienta
                 </h3>
                 <button
@@ -1395,9 +1444,9 @@ const Herramientas = () => {
 
               <div className="space-y-4">
                 {/* Información General */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">📋 Información General</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">📋 Información General</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="text-xs font-medium text-gray-500">Nombre</label>
                       <p className="text-sm text-gray-900 font-medium">{herramientaSeleccionada.nombre}</p>
@@ -1418,9 +1467,9 @@ const Herramientas = () => {
                 </div>
 
                 {/* Detalles Técnicos */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">🔧 Detalles Técnicos</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">🔧 Detalles Técnicos</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="text-xs font-medium text-gray-500">Marca</label>
                       <p className="text-sm text-gray-900">{herramientaSeleccionada.marca || 'N/A'}</p>
@@ -1460,13 +1509,13 @@ const Herramientas = () => {
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end space-x-3 pt-6 border-t mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-4 sm:pt-6 border-t mt-4 sm:mt-6">
                 <button
                   onClick={() => {
                     setShowDetallesModal(false)
                     setHerramientaSeleccionada(null)
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm"
                 >
                   Cerrar
                 </button>
@@ -1476,7 +1525,7 @@ const Herramientas = () => {
                       setShowDetallesModal(false)
                       setShowEditarModal(true)
                     }}
-                    className="btn-primary"
+                    className="btn-primary text-sm"
                   >
                     ✏️ Editar
                   </button>
@@ -1489,11 +1538,11 @@ const Herramientas = () => {
 
       {/* Modal Editar Herramienta */}
       {showEditarModal && herramientaSeleccionada && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   ✏️ Editar Herramienta
                 </h3>
                 <button
@@ -1509,9 +1558,9 @@ const Herramientas = () => {
 
               <div className="space-y-4">
                 {/* Información General */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">📋 Información General</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">📋 Información General</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                       <input
@@ -1570,9 +1619,9 @@ const Herramientas = () => {
                 </div>
 
                 {/* Detalles Técnicos */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">🔧 Detalles Técnicos</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">🔧 Detalles Técnicos</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
                       <input
@@ -1643,19 +1692,19 @@ const Herramientas = () => {
               </div>
 
               {/* Footer */}
-              <div className="flex justify-end space-x-3 pt-6 border-t mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-4 sm:pt-6 border-t mt-4 sm:mt-6">
                 <button
                   onClick={() => {
                     setShowEditarModal(false)
                     setHerramientaSeleccionada(null)
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleGuardarEdicion}
-                  className="btn-primary"
+                  className="btn-primary text-sm"
                 >
                   💾 Guardar Cambios
                 </button>
@@ -1667,12 +1716,12 @@ const Herramientas = () => {
 
       {/* Modal de Gestión de Categorías */}
       {showCategoriasModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  🏷️ Gestión de Categorías de Herramientas
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                  🏷️ Gestión de Categorías
                 </h3>
                 <button
                   onClick={() => {
@@ -1746,7 +1795,7 @@ const Herramientas = () => {
                           {categoriaEditando?.id === categoria.id ? (
                             // Edit mode
                             <div className="flex-1 flex flex-col space-y-2">
-                              <div className="flex space-x-3">
+                              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3">
                                 <div className="flex-1">
                                   <label className="block text-xs text-gray-600 mb-1">Nombre</label>
                                   <input
@@ -1758,7 +1807,7 @@ const Herramientas = () => {
                                     autoFocus
                                   />
                                 </div>
-                                <div className="w-32">
+                                <div className="w-full sm:w-32">
                                   <label className="block text-xs text-gray-600 mb-1">Prefijo</label>
                                   <input
                                     type="text"
@@ -1789,10 +1838,10 @@ const Herramientas = () => {
                           ) : (
                             // Display mode
                             <>
-                              <div className="flex-1">
+                              <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2">
-                                  <h5 className="font-medium text-gray-900">{categoria.nombre}</h5>
-                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-mono rounded">
+                                  <h5 className="font-medium text-gray-900 truncate">{categoria.nombre}</h5>
+                                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-mono rounded flex-shrink-0">
                                     {categoria.prefijo}
                                   </span>
                                 </div>
@@ -1800,21 +1849,21 @@ const Herramientas = () => {
                                   {herramientasEnCategoria} herramienta{herramientasEnCategoria !== 1 ? 's' : ''}
                                 </p>
                               </div>
-                              <div className="flex space-x-2">
+                              <div className="flex space-x-2 flex-shrink-0">
                                 <button
                                   onClick={() => startEditCategoria(categoria)}
-                                  className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors"
                                   title="Editar categoría"
                                 >
-                                  ✏️ Editar
+                                  ✏️ <span className="hidden sm:inline">Editar</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteCategoria(categoria.id)}
-                                  className="text-sm px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
                                   title="Eliminar categoría"
                                   disabled={herramientasEnCategoria > 0}
                                 >
-                                  🗑️ Eliminar
+                                  🗑️ <span className="hidden sm:inline">Eliminar</span>
                                 </button>
                               </div>
                             </>

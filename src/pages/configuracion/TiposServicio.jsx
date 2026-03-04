@@ -203,17 +203,17 @@ const TiposServicio = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tipos de Servicio</h1>
-          <p className="text-gray-600">Configura los tipos de servicio disponibles en el sistema</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tipos de Servicio</h1>
+          <p className="text-sm text-gray-600">Configura los tipos de servicio disponibles en el sistema</p>
         </div>
         <button
           onClick={openModal}
-          className="btn-primary"
+          className="btn-primary self-start sm:self-auto"
           disabled={isLoading}
         >
-          ➕ Nuevo Tipo
+          + Nuevo Tipo
         </button>
       </div>
 
@@ -238,8 +238,8 @@ const TiposServicio = () => {
                   tipo.activo ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-300'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
                     <div className="flex flex-col space-y-1">
                       <button
                         onClick={() => handleMoveUp(tipo)}
@@ -258,16 +258,16 @@ const TiposServicio = () => {
                         ▼
                       </button>
                     </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm text-gray-500 font-mono">#{tipo.orden}</span>
                         <h3 className={`font-medium ${tipo.activo ? 'text-gray-900' : 'text-gray-500'}`}>
                           {tipo.nombre}
                         </h3>
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          tipo.activo 
-                            ? 'bg-green-100 text-green-800' 
+                          tipo.activo
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}>
                           {tipo.activo ? 'Activo' : 'Inactivo'}
@@ -281,7 +281,7 @@ const TiposServicio = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 self-end sm:self-auto">
                     <button
                       onClick={() => handleToggle(tipo)}
                       className={`text-sm font-medium px-3 py-1 rounded transition-colors ${
@@ -293,7 +293,7 @@ const TiposServicio = () => {
                     >
                       {tipo.activo ? 'Desactivar' : 'Activar'}
                     </button>
-                    
+
                     <button
                       onClick={() => handleEdit(tipo)}
                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-sm font-medium px-3 py-1 rounded transition-colors"
@@ -301,7 +301,7 @@ const TiposServicio = () => {
                     >
                       Editar
                     </button>
-                    
+
                     {tipo.activo && (
                       <button
                         onClick={() => handleDelete(tipo)}
@@ -321,7 +321,7 @@ const TiposServicio = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit}>
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">
@@ -358,7 +358,7 @@ const TiposServicio = () => {
                 </div>
               </div>
               
-              <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+              <div className="px-6 py-4 bg-gray-50 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}

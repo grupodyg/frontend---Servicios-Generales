@@ -178,15 +178,15 @@ const Ordenes = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Órdenes de Trabajo</h1>
-          <p className="text-gray-600">Gestión de órdenes de mantenimiento</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Órdenes de Trabajo</h1>
+          <p className="text-sm text-gray-600 hidden sm:block">Gestión de órdenes de mantenimiento</p>
         </div>
         {(user?.role === 'admin' || user?.role === 'supervisor') && (
           <Link
             to="/ordenes/nueva"
-            className="btn-primary"
+            className="btn-primary text-center text-sm sm:text-base"
           >
             ➕ Nueva Orden
           </Link>
@@ -195,7 +195,7 @@ const Ordenes = () => {
 
       {/* Filters */}
       <div className="card">
-        <div className={`grid grid-cols-1 ${user?.role === 'tecnico' ? 'md:grid-cols-6' : 'md:grid-cols-7'} gap-4`}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Estado
@@ -307,39 +307,92 @@ const Ordenes = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="card">
+      {/* Orders - Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {ordenes.length === 0 ? (
+          <div className="card text-center py-8">
+            <div className="text-4xl mb-3">📋</div>
+            <p className="font-semibold text-gray-900 text-sm">No se encontraron órdenes</p>
+            <p className="text-xs text-gray-600 mt-1">
+              {user?.role === 'tecnico'
+                ? 'No tienes órdenes asignadas'
+                : 'No hay órdenes que coincidan con los filtros'}
+            </p>
+          </div>
+        ) : (
+          ordenes.map((orden) => (
+            <div key={orden.id} className="card">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-gray-900">#{orden.id}</span>
+                  <span className={`text-xs font-medium ${getPrioridadColor(orden.prioridad)}`}>
+                    {orden.prioridad === 'alta' ? '🔴' : orden.prioridad === 'media' ? '🟡' : '🟢'} {orden.prioridad?.charAt(0).toUpperCase() + orden.prioridad?.slice(1)}
+                  </span>
+                </div>
+                {getEstadoBadge(orden.estado)}
+              </div>
+
+              <div className="space-y-1.5 text-sm">
+                <div className="font-medium text-gray-900">{orden.cliente}</div>
+                {orden.ubicacion && (
+                  <div className="text-xs text-gray-500 truncate">📍 {orden.ubicacion}</div>
+                )}
+                <div className="text-xs text-gray-600">{orden.tipoServicio}</div>
+                <div className="flex flex-wrap gap-1">
+                  {getTipoVisitaBadge(orden)}
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                <span>👤 {orden.tecnicoAsignado}</span>
+                <span>{orden.fechaVencimiento ? format(new Date(orden.fechaVencimiento), 'dd/MM/yyyy', { locale: es }) : '-'}</span>
+              </div>
+
+              {/* Progreso */}
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                  <div className="bg-corporate-blue h-1.5 rounded-full" style={{ width: `${orden.porcentajeAvance}%` }} />
+                </div>
+                <span className="text-xs text-gray-600 font-medium">{orden.porcentajeAvance}%</span>
+              </div>
+
+              {/* Acciones */}
+              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+                <Link to={`/ordenes/${orden.id}`} className="flex-1 text-center text-xs bg-blue-50 text-corporate-blue py-2 rounded-lg font-medium hover:bg-blue-100">
+                  Ver detalle
+                </Link>
+                {(user?.role === 'supervisor' || user?.role === 'admin') && (
+                  <button onClick={() => handleReasignarTecnico(orden)} className="text-xs bg-orange-50 text-orange-600 py-2 px-3 rounded-lg hover:bg-orange-100" disabled={isLoading}>
+                    👥
+                  </button>
+                )}
+                {user?.role === 'admin' && (
+                  <>
+                    <Link to={`/ordenes/${orden.id}/editar`} className="text-xs bg-gray-50 text-gray-600 py-2 px-3 rounded-lg hover:bg-gray-100">✏️</Link>
+                    <button onClick={() => handleEliminarOrden(orden)} className="text-xs bg-red-50 text-red-600 py-2 px-3 rounded-lg hover:bg-red-100" disabled={isDeleting || isLoading}>🗑️</button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Orders Table - Desktop */}
+      <div className="card hidden md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID / Prioridad
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  OC
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente / Ubicación
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Servicio / Visita
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Progreso
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Técnico
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vencimiento
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OC</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Servicio</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Progreso</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Técnico</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Vencimiento</th>
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -348,21 +401,12 @@ const Ordenes = () => {
                   <td colSpan="9" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center space-y-4">
                       <div className="text-6xl">📋</div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        No se encontraron órdenes de trabajo
-                      </div>
+                      <div className="text-lg font-semibold text-gray-900">No se encontraron órdenes de trabajo</div>
                       <div className="text-sm text-gray-600">
-                        {user?.role === 'tecnico'
-                          ? 'No tienes órdenes asignadas en este momento'
-                          : 'No hay órdenes que coincidan con los filtros seleccionados'}
+                        {user?.role === 'tecnico' ? 'No tienes órdenes asignadas en este momento' : 'No hay órdenes que coincidan con los filtros seleccionados'}
                       </div>
                       {(user?.role === 'admin' || user?.role === 'supervisor') && (
-                        <Link
-                          to="/ordenes/nueva"
-                          className="btn-primary mt-4"
-                        >
-                          ➕ Crear Primera Orden
-                        </Link>
+                        <Link to="/ordenes/nueva" className="btn-primary mt-4">➕ Crear Primera Orden</Link>
                       )}
                     </div>
                   </td>
@@ -370,123 +414,55 @@ const Ordenes = () => {
               ) : (
                 ordenes.map((orden) => (
                   <tr key={orden.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {orden.id}
-                    </div>
-                    <div className={`text-xs mt-0.5 font-medium ${getPrioridadColor(orden.prioridad)}`}>
-                      {orden.prioridad === 'alta' ? '🔴' : orden.prioridad === 'media' ? '🟡' : '🟢'} {orden.prioridad.charAt(0).toUpperCase() + orden.prioridad.slice(1)}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {orden.numeroOrdenCompra ? (
-                      <div className="text-sm font-medium text-gray-900">
-                        {orden.numeroOrdenCompra}
+                    <td className="px-3 py-3">
+                      <div className="text-sm font-semibold text-gray-900">{orden.id}</div>
+                      <div className={`text-xs mt-0.5 font-medium ${getPrioridadColor(orden.prioridad)}`}>
+                        {orden.prioridad === 'alta' ? '🔴' : orden.prioridad === 'media' ? '🟡' : '🟢'} {orden.prioridad?.charAt(0).toUpperCase() + orden.prioridad?.slice(1)}
                       </div>
-                    ) : (
-                      <div className="text-sm text-gray-400 italic">
-                        -
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="text-sm text-gray-900">{orden.numeroOrdenCompra || <span className="text-gray-400 italic">-</span>}</div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="text-sm font-medium text-gray-900 truncate max-w-[140px]">{orden.cliente}</div>
+                      {orden.ubicacion && <div className="text-xs text-gray-500 mt-0.5 truncate max-w-[140px]">📍 {orden.ubicacion}</div>}
+                    </td>
+                    <td className="px-3 py-3 hidden lg:table-cell">
+                      <div className="text-sm text-gray-900 truncate max-w-[130px]">{orden.tipoServicio}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {getTipoVisitaBadge(orden)}
                       </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-gray-900">{orden.cliente}</div>
-                    {orden.ubicacion && (
-                      <div className="text-xs text-gray-500 mt-0.5 truncate max-w-[160px]" title={orden.ubicacion}>
-                        📍 {orden.ubicacion}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900 truncate max-w-[150px]" title={orden.tipoServicio}>
-                      {orden.tipoServicio}
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {getTipoVisitaBadge(orden)}
-                      {!orden.basadoEnVisitaTecnica && orden.tipoVisita === 'sin_visita' && !puedesolicitarMateriales(orden).permitido && (
-                        <div className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded" title="Sin acceso a materiales">
-                          ⚠️
+                    </td>
+                    <td className="px-3 py-3">{getEstadoBadge(orden.estado)}</td>
+                    <td className="px-3 py-3 hidden xl:table-cell">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div className="bg-corporate-blue h-2 rounded-full transition-all" style={{ width: `${orden.porcentajeAvance}%` }} />
                         </div>
-                      )}
-                      {!puedeSubirFotos(orden).permitido && (
-                        <div className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded" title="Fotos bloqueadas">
-                          📸
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {getEstadoBadge(orden.estado)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-corporate-blue h-2 rounded-full transition-all"
-                          style={{ width: `${orden.porcentajeAvance}%` }}
-                        />
+                        <span className="text-xs text-gray-600 font-medium">{orden.porcentajeAvance}%</span>
                       </div>
-                      <span className="text-xs text-gray-600 font-medium min-w-[32px]">
-                        {orden.porcentajeAvance}%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900 font-medium truncate max-w-[120px]" title={orden.tecnicoAsignado}>
-                      {orden.tecnicoAsignado}
-                    </div>
-                    {orden.fechaReasignacion && (
-                      <div className="text-[10px] text-orange-600 flex items-center gap-0.5 mt-0.5">
-                        🔄 {orden.fechaReasignacion}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="text-sm text-gray-900 font-medium truncate max-w-[100px]">{orden.tecnicoAsignado}</div>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
+                      {orden.fechaVencimiento ? format(new Date(orden.fechaVencimiento), 'dd/MM/yyyy', { locale: es }) : '-'}
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Link to={`/ordenes/${orden.id}`} className="text-corporate-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors" title="Ver detalles">👁️</Link>
+                        {(user?.role === 'supervisor' || user?.role === 'admin') && (
+                          <button onClick={() => handleReasignarTecnico(orden)} className="text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors" title="Reasignar" disabled={isLoading}>👥</button>
+                        )}
+                        {user?.role === 'admin' && (
+                          <>
+                            <Link to={`/ordenes/${orden.id}/editar`} className="text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-1.5 rounded transition-colors" title="Editar">✏️</Link>
+                            <button onClick={() => handleEliminarOrden(orden)} className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors" title="Eliminar" disabled={isDeleting || isLoading}>🗑️</button>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {orden.fechaVencimiento ? format(new Date(orden.fechaVencimiento), 'dd/MM/yyyy', { locale: es }) : '-'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <Link
-                        to={`/ordenes/${orden.id}`}
-                        className="text-corporate-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded transition-colors"
-                        title="Ver detalles"
-                      >
-                        👁️
-                      </Link>
-
-                      {(user?.role === 'supervisor' || user?.role === 'admin') && (
-                        <button
-                          onClick={() => handleReasignarTecnico(orden)}
-                          className="text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 p-2 rounded transition-colors"
-                          title="Reasignar técnico"
-                          disabled={isLoading}
-                        >
-                          👥
-                        </button>
-                      )}
-
-                      {user?.role === 'admin' && (
-                        <>
-                          <Link
-                            to={`/ordenes/${orden.id}/editar`}
-                            className="text-gray-600 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded transition-colors"
-                            title="Editar orden"
-                          >
-                            ✏️
-                          </Link>
-                          <button
-                            onClick={() => handleEliminarOrden(orden)}
-                            className="text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded transition-colors"
-                            title="Eliminar orden"
-                            disabled={isDeleting || isLoading}
-                          >
-                            🗑️
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
                 ))
               )}
             </tbody>

@@ -120,11 +120,11 @@ const TabCompletado = memo(({
           </label>
 
           {datosCompletado.coordenadasGPS?.latitud && datosCompletado.coordenadasGPS?.longitud ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-green-800">Ubicacion registrada</p>
-                  <p className="text-sm text-green-600">
+                  <p className="text-sm text-green-600 break-all">
                     {formatCoordinates(datosCompletado.coordenadasGPS.latitud, datosCompletado.coordenadasGPS.longitud)}
                   </p>
                 </div>
@@ -172,8 +172,8 @@ const TabCompletado = memo(({
           </label>
 
           {datosCompletado.firmaTecnico || visitaActual.firmaTecnico ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-start justify-between">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-green-800 mb-2">Firma registrada</p>
                   <img
@@ -212,9 +212,9 @@ const TabCompletado = memo(({
 
         {/* Modal de firma */}
         {showSignaturePad && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">Firma Digital</h3>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3">
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-lg w-full">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Firma Digital</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Dibuje su firma en el recuadro usando el mouse o su dedo en dispositivos tactiles.
               </p>
@@ -235,23 +235,23 @@ const TabCompletado = memo(({
                 />
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                 <button
                   onClick={clearSignature}
-                  className="btn-secondary"
+                  className="btn-secondary w-full sm:w-auto order-3 sm:order-1"
                 >
                   Limpiar
                 </button>
-                <div className="flex gap-2">
+                <div className="flex gap-2 order-1 sm:order-2">
                   <button
                     onClick={() => setShowSignaturePad(false)}
-                    className="btn-secondary"
+                    className="btn-secondary flex-1 sm:flex-none"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={saveSignature}
-                    className="btn-primary"
+                    className="btn-primary flex-1 sm:flex-none"
                   >
                     Guardar Firma
                   </button>

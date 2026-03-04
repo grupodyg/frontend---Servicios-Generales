@@ -14,6 +14,7 @@ const Permisos = () => {
     aprobarPermiso,
     rechazarPermiso,
     agregarArchivoAdjunto,
+    uploadPermisoFile,
     obtenerEstadisticas,
     inicializarDatos
   } = usePermisosStore()
@@ -167,18 +168,24 @@ const Permisos = () => {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
     if (file) {
-      // En producción, aquí subirías el archivo a un servidor
-      // Por ahora simulamos la carga
-      const fileInfo = {
-        nombre: file.name,
-        tipo: file.type,
-        tamaño: (file.size / 1024).toFixed(2) + 'KB',
-        url: URL.createObjectURL(file)
-      }
-      
-      if (permisoSeleccionado) {
-        await agregarArchivoAdjunto(permisoSeleccionado.id, fileInfo)
-        await notificationService.success('Archivo adjuntado', '', 1000)
+      try {
+        // Subir archivo a S3
+        const uploadResult = await uploadPermisoFile(file)
+
+        const fileInfo = {
+          nombre: uploadResult.name,
+          tipo: uploadResult.type,
+          tamaño: (uploadResult.size / 1024).toFixed(2) + 'KB',
+          url: uploadResult.url
+        }
+
+        if (permisoSeleccionado) {
+          await agregarArchivoAdjunto(permisoSeleccionado.id, fileInfo)
+          await notificationService.success('Archivo adjuntado', '', 1000)
+        }
+      } catch (error) {
+        console.error('Error subiendo archivo:', error)
+        await notificationService.error('Error', 'No se pudo subir el archivo')
       }
     }
   }
@@ -223,31 +230,31 @@ const Permisos = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           {isTecnico(user) ? (
             <>
-              <h1 className="text-2xl font-bold text-gray-900">Mis Permisos</h1>
-              <p className="text-gray-600">Gestiona tus solicitudes de permisos y descansos</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Mis Permisos</h1>
+              <p className="text-sm text-gray-600">Gestiona tus solicitudes de permisos y descansos</p>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold text-gray-900">Gestión de Permisos</h1>
-              <p className="text-gray-600">Administra las solicitudes de permisos del personal</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gestión de Permisos</h1>
+              <p className="text-sm text-gray-600">Administra las solicitudes de permisos del personal</p>
             </>
           )}
         </div>
 
         <button
           onClick={handleNuevoPermiso}
-          className="btn-primary"
+          className="btn-primary self-start sm:self-auto"
         >
           {isTecnico(user) ? '+ Solicitar Permiso' : '+ Nueva Solicitud'}
         </button>
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -256,9 +263,9 @@ const Permisos = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-blue-600">Total Solicitudes</p>
-              <p className="text-2xl font-bold text-blue-900">{estadisticas.total}</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-900">{estadisticas.total}</p>
             </div>
-            <span className="text-3xl">📊</span>
+            <span className="text-2xl sm:text-3xl">📊</span>
           </div>
         </motion.div>
 
@@ -271,9 +278,9 @@ const Permisos = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-yellow-600">Pendientes</p>
-              <p className="text-2xl font-bold text-yellow-900">{estadisticas.pendientes}</p>
+              <p className="text-xl sm:text-2xl font-bold text-yellow-900">{estadisticas.pendientes}</p>
             </div>
-            <span className="text-3xl">⏳</span>
+            <span className="text-2xl sm:text-3xl">⏳</span>
           </div>
         </motion.div>
 
@@ -286,9 +293,9 @@ const Permisos = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-green-600">Aprobados</p>
-              <p className="text-2xl font-bold text-green-900">{estadisticas.aprobados}</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-900">{estadisticas.aprobados}</p>
             </div>
-            <span className="text-3xl">✅</span>
+            <span className="text-2xl sm:text-3xl">✅</span>
           </div>
         </motion.div>
 
@@ -301,16 +308,16 @@ const Permisos = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-red-600">Rechazados</p>
-              <p className="text-2xl font-bold text-red-900">{estadisticas.rechazados}</p>
+              <p className="text-xl sm:text-2xl font-bold text-red-900">{estadisticas.rechazados}</p>
             </div>
-            <span className="text-3xl">❌</span>
+            <span className="text-2xl sm:text-3xl">❌</span>
           </div>
         </motion.div>
       </div>
 
       {/* Filtros */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div>
             <input
               type="text"
@@ -363,8 +370,49 @@ const Permisos = () => {
         </div>
       </div>
 
-      {/* Lista de permisos */}
-      <div className="card">
+      {/* Lista de permisos - Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {permisosFiltrados.length === 0 ? (
+          <div className="card text-center py-8">
+            <p className="text-gray-500">No se encontraron permisos con los filtros aplicados</p>
+          </div>
+        ) : (
+          permisosFiltrados.map((permiso) => (
+            <motion.div
+              key={permiso.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="card"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-xs text-gray-500">{permiso.id}</span>
+                {getEstadoBadge(permiso.estado)}
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">{getTipoIcon(permiso.tipoPermiso)}</span>
+                <span className="font-medium text-gray-900">{permiso.empleadoNombre}</span>
+              </div>
+              <div className="text-sm text-gray-600 mb-1 capitalize">{permiso.tipoPermiso}</div>
+              <div className="text-xs text-gray-500 mb-1">{permiso.fechaInicio} - {permiso.fechaFin} ({permiso.diasSolicitados || 1} dias)</div>
+              {permiso.archivosAdjuntos?.length > 0 && (
+                <span className="text-xs text-blue-600">📎 {permiso.archivosAdjuntos.length} adjuntos</span>
+              )}
+              <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100">
+                <button onClick={() => handleVerDetalles(permiso)} className="text-blue-600 hover:text-blue-800 font-medium text-sm">Ver detalles</button>
+                {permiso.estado === 'pending' && isAdminOrSupervisor(user) && (
+                  <>
+                    <button onClick={() => handleAprobar(permiso)} className="text-green-600 hover:text-green-800 font-medium text-sm">Aprobar</button>
+                    <button onClick={() => handleRechazar(permiso)} className="text-red-600 hover:text-red-800 font-medium text-sm">Rechazar</button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+
+      {/* Lista de permisos - Desktop table */}
+      <div className="hidden md:block card">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -421,7 +469,7 @@ const Permisos = () => {
                       >
                         Ver detalles
                       </button>
-                      
+
                       {permiso.estado === 'pending' && isAdminOrSupervisor(user) && (
                         <>
                           <span className="text-gray-300">|</span>
@@ -446,7 +494,7 @@ const Permisos = () => {
               ))}
             </tbody>
           </table>
-          
+
           {permisosFiltrados.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No se encontraron permisos con los filtros aplicados</p>
@@ -465,7 +513,7 @@ const Permisos = () => {
               </h3>
               
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Tipo de Permiso
@@ -525,7 +573,7 @@ const Permisos = () => {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Fecha Inicio
@@ -602,7 +650,7 @@ const Permisos = () => {
                   </p>
                 </div>
                 
-                <div className="flex justify-end space-x-3 pt-4 border-t">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4 border-t">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
@@ -642,7 +690,7 @@ const Permisos = () => {
               </div>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm font-medium text-gray-500">Empleado</p>

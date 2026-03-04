@@ -129,12 +129,14 @@ export const API_ENDPOINTS = {
 
   PERMIT_ATTACHMENTS: `${API_BASE_URL}/api/permit-attachments`,
   PERMIT_ATTACHMENT_BY_ID: (id) => `${API_BASE_URL}/api/permit-attachments/${id}`,
+  PERMIT_ATTACHMENT_UPLOAD: `${API_BASE_URL}/api/permit-attachments/upload`,
 
   // ========================================
   // HR - PAYROLL SLIPS
   // ========================================
   PAYROLL_SLIPS: `${API_BASE_URL}/api/payroll-slips`,
   PAYROLL_SLIP_BY_ID: (id) => `${API_BASE_URL}/api/payroll-slips/${id}`,
+  PAYROLL_SLIP_UPLOAD: `${API_BASE_URL}/api/payroll-slips/upload`,
 
   // ========================================
   // CONFIGURATION

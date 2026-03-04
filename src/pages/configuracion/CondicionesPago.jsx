@@ -172,14 +172,14 @@ const CondicionesPago = () => {
     <DndProvider backend={HTML5Backend}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Condiciones de Pago</h1>
-            <p className="text-gray-600">Configurar las condiciones de pago disponibles para presupuestos</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Condiciones de Pago</h1>
+            <p className="text-sm text-gray-600">Configurar las condiciones de pago disponibles para presupuestos</p>
           </div>
           <button
             onClick={() => handleOpenModal()}
-            className="btn-primary"
+            className="btn-primary self-start sm:self-auto"
           >
             + Nueva Condición
           </button>
@@ -213,8 +213,8 @@ const CondicionesPago = () => {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">
                   {editingCondicion ? 'Editar Condición' : 'Nueva Condición'}
@@ -251,7 +251,7 @@ const CondicionesPago = () => {
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-3 mt-6">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-6">
                   <button
                     type="button"
                     onClick={handleCloseModal}
@@ -299,15 +299,15 @@ const CondicionItem = ({ condicion, index, moveCondicion, onEdit, onDelete, onTo
   return (
     <div
       ref={(node) => drag(drop(node))}
-      className={`flex items-center justify-between p-4 border rounded-lg cursor-move transition-all ${
+      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg cursor-move transition-all gap-3 ${
         isDragging ? 'opacity-50' : ''
       } ${
-        isActive 
-          ? 'border-gray-200 bg-white' 
+        isActive
+          ? 'border-gray-200 bg-white'
           : 'border-gray-100 bg-gray-50'
       }`}
     >
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3 sm:space-x-4">
         <div className="text-gray-400">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -321,7 +321,7 @@ const CondicionItem = ({ condicion, index, moveCondicion, onEdit, onDelete, onTo
         </div>
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 self-end sm:self-auto">
         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
           isActive 
             ? 'bg-green-100 text-green-800' 

@@ -191,6 +191,18 @@ const usePermisosStore = create(
         await get().fetchPermisos()
       },
 
+      uploadPermisoFile: async (file) => {
+        try {
+          const formData = new FormData()
+          formData.append('file', file)
+          const response = await api.upload(API_ENDPOINTS.PERMIT_ATTACHMENT_UPLOAD, formData)
+          return response.data
+        } catch (error) {
+          console.error('Error uploading permit file:', error)
+          throw error
+        }
+      },
+
       agregarArchivoAdjunto: async (permisoId, archivoInfo) => {
         const permiso = get().getPermisoById(permisoId)
         if (!permiso) return

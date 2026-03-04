@@ -523,14 +523,14 @@ const OrdenNueva = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nueva Orden de Trabajo</h1>
-          <p className="text-gray-600">Crear una nueva orden de mantenimiento</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nueva Orden de Trabajo</h1>
+          <p className="text-sm sm:text-base text-gray-600">Crear una nueva orden de mantenimiento</p>
         </div>
-        
+
         {/* Emergency Toggle */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 self-start sm:self-auto">
           <span className="text-sm font-medium text-gray-700">Emergencia</span>
           <button
             type="button"
@@ -550,7 +550,7 @@ const OrdenNueva = () => {
 
       {/* Emergency Alert */}
       {isEmergency && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <span className="text-red-400 text-xl">⚠️</span>
@@ -635,7 +635,7 @@ const OrdenNueva = () => {
               
               {/* Información de la visita seleccionada */}
               {visitaSeleccionada && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4">
                   <h3 className="text-sm font-medium text-green-800 mb-2">✅ Visita Técnica Seleccionada - Información Cargada</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
@@ -937,7 +937,7 @@ const OrdenNueva = () => {
 
               {/* Conditional Fields for Emergency */}
               {isEmergency && (
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                <div className="bg-red-50 p-3 sm:p-4 rounded-lg border border-red-200">
                   <label className="block text-sm font-medium text-red-700 mb-1">
                     Justificación de Emergencia *
                   </label>
@@ -1129,7 +1129,7 @@ const OrdenNueva = () => {
           </div>
         ) : tipoVisita === 'con_visita' && visitaSeleccionada ? (
           <div className="card">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
                 Inventario de la Visita Técnica
               </h2>
@@ -1138,7 +1138,7 @@ const OrdenNueva = () => {
               </span>
             </div>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <span className="text-blue-400 text-xl">📋</span>
@@ -1157,13 +1157,13 @@ const OrdenNueva = () => {
             {/* Lista de materiales - Solo cantidad editable */}
             <div className="space-y-2 mb-4">
               {materialesVisitaEditables.map((material, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                  <div className="flex-1 grid grid-cols-4 gap-3 items-center">
+                <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg border gap-2">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 items-center">
                     {/* Nombre - Solo lectura */}
-                    <div className="col-span-1">
+                    <div>
                       <span className="text-sm font-medium text-gray-900">{material.nombre}</span>
                     </div>
-                    {/* Cantidad - Editable con límite de stock */}
+                    {/* Cantidad - Editable con limite de stock */}
                     <div className="flex items-center space-x-2">
                       <input
                         type="number"
@@ -1189,7 +1189,7 @@ const OrdenNueva = () => {
                     <div>
                       <span className="text-sm text-gray-600">{material.unidad || 'unidad'}</span>
                     </div>
-                    {/* Subtotal - Calculado automáticamente */}
+                    {/* Subtotal - Calculado automaticamente */}
                     <div>
                       {canViewPrices(user) && (
                         <span className="text-sm font-semibold text-gray-900">
@@ -1204,7 +1204,7 @@ const OrdenNueva = () => {
                       const newMateriales = materialesVisitaEditables.filter((_, i) => i !== index)
                       setMaterialesVisitaEditables(newMateriales)
                     }}
-                    className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                    className="ml-0 sm:ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded self-end sm:self-auto"
                     title="Eliminar material"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1216,7 +1216,7 @@ const OrdenNueva = () => {
             </div>
             
             {/* Formulario para agregar nuevo material */}
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 sm:p-4">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Agregar nuevo material</h4>
 
               {/* Opción 1: Desde inventario */}
@@ -1365,7 +1365,7 @@ const OrdenNueva = () => {
               Selección de Inventario
             </h2>
             
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <span className="text-amber-400 text-xl">📦</span>
@@ -1385,7 +1385,7 @@ const OrdenNueva = () => {
             {/* Tabs para Materiales y Herramientas */}
             <div className="mb-6">
               <div className="border-b border-gray-200">
-                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
                   <button
                     type="button"
                     onClick={() => setActiveInventoryTab('materiales')}
@@ -1425,7 +1425,7 @@ const OrdenNueva = () => {
             {/* Contenido de las tabs */}
             {activeInventoryTab === 'materiales' && (
               <div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <span className="text-blue-400 text-xl">🧱</span>
@@ -1446,12 +1446,12 @@ const OrdenNueva = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Agregar Material
                   </label>
-                  <div className="flex space-x-3">
-                    <div className="flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <div className="flex-shrink-0 hidden sm:block">
                       <span className="text-gray-400 text-lg">📦</span>
                     </div>
                     <select
-                      className="input-field text-sm flex-1"
+                      className="input-field text-sm flex-1 min-w-0"
                       value={inputMaterialSinVisita}
                       onChange={(e) => setInputMaterialSinVisita(e.target.value)}
                     >
@@ -1483,10 +1483,10 @@ const OrdenNueva = () => {
                           }
                         }
                       }}
-                      className="btn-primary px-4 py-2 text-sm whitespace-nowrap"
+                      className="btn-primary px-4 py-2 text-sm whitespace-nowrap w-full sm:w-auto"
                       disabled={!inputMaterialSinVisita || materialesSeleccionados.find(m => m.id === parseInt(inputMaterialSinVisita))}
                     >
-                      ✅ Agregar
+                      Agregar
                     </button>
                   </div>
                 </div>
@@ -1499,49 +1499,47 @@ const OrdenNueva = () => {
                     </h3>
                     <div className="space-y-3">
                       {materialesSeleccionados.map((material, index) => (
-                        <div key={material.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                          <div className="flex items-center flex-1">
-                            <span className="text-blue-600 mr-3">📦</span>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">{material.nombre}</span>
-                                <div className="flex items-center space-x-3">
-                                  <div className="flex items-center space-x-2">
-                                    <label className="text-xs text-gray-600">Cantidad:</label>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      max={material.stockActual}
-                                      value={material.cantidad}
-                                      onChange={(e) => {
-                                        const nuevaCantidad = parseInt(e.target.value) || 1
-                                        if (nuevaCantidad <= material.stockActual) {
-                                          const nuevosMateriales = [...materialesSeleccionados]
-                                          nuevosMateriales[index].cantidad = nuevaCantidad
-                                          setMaterialesSeleccionados(nuevosMateriales)
-                                        }
-                                      }}
-                                      className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
-                                    />
-                                    <span className="text-xs text-gray-600">{material.unidad}</span>
-                                  </div>
-                                  <span className="text-xs text-gray-500">
-                                    Stock: {material.stockActual}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setMaterialesSeleccionados(materialesSeleccionados.filter(m => m.id !== material.id))
-                                    }}
-                                    className="text-red-600 hover:text-red-800"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </div>
+                        <div key={material.id} className="bg-gray-50 p-3 rounded">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center min-w-0 flex-1">
+                              <span className="text-blue-600 mr-2 sm:mr-3 flex-shrink-0">📦</span>
+                              <span className="text-sm font-medium truncate">{material.nombre}</span>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMaterialesSeleccionados(materialesSeleccionados.filter(m => m.id !== material.id))
+                              }}
+                              className="text-red-600 hover:text-red-800 flex-shrink-0"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 ml-6 sm:ml-8">
+                            <div className="flex items-center space-x-2">
+                              <label className="text-xs text-gray-600">Cantidad:</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max={material.stockActual}
+                                value={material.cantidad}
+                                onChange={(e) => {
+                                  const nuevaCantidad = parseInt(e.target.value) || 1
+                                  if (nuevaCantidad <= material.stockActual) {
+                                    const nuevosMateriales = [...materialesSeleccionados]
+                                    nuevosMateriales[index].cantidad = nuevaCantidad
+                                    setMaterialesSeleccionados(nuevosMateriales)
+                                  }
+                                }}
+                                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
+                              />
+                              <span className="text-xs text-gray-600">{material.unidad}</span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              Stock: {material.stockActual}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -1567,7 +1565,7 @@ const OrdenNueva = () => {
             
             {activeInventoryTab === 'herramientas' && (
               <div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <span className="text-blue-400 text-xl">🔧</span>
@@ -1588,12 +1586,12 @@ const OrdenNueva = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Agregar Herramienta
                   </label>
-                  <div className="flex space-x-3">
-                    <div className="flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <div className="flex-shrink-0 hidden sm:block">
                       <span className="text-gray-400 text-lg">🛠️</span>
                     </div>
                     <select
-                      className="input-field text-sm flex-1"
+                      className="input-field text-sm flex-1 min-w-0"
                       value={inputHerramientaSinVisita}
                       onChange={(e) => setInputHerramientaSinVisita(e.target.value)}
                     >
@@ -1637,10 +1635,10 @@ const OrdenNueva = () => {
                           }
                         }
                       }}
-                      className="btn-primary px-4 py-2 text-sm whitespace-nowrap"
+                      className="btn-primary px-4 py-2 text-sm whitespace-nowrap w-full sm:w-auto"
                       disabled={!inputHerramientaSinVisita || herramientasSeleccionadas.find(h => h.id === parseInt(inputHerramientaSinVisita))}
                     >
-                      ✅ Agregar
+                      Agregar
                     </button>
                   </div>
                 </div>
@@ -1654,7 +1652,7 @@ const OrdenNueva = () => {
                     <div className="space-y-3">
                       {herramientasSeleccionadas.map((herramienta, index) => (
                         <div key={herramienta.id} className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                          <div className="flex justify-between items-start">
+                          <div className="flex justify-between items-start gap-2">
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-900 flex items-center">
                                 <span className="text-blue-600 mr-2">🛠️</span>
@@ -1721,7 +1719,7 @@ const OrdenNueva = () => {
         {/* Herramientas de la Visita Técnica */}
         {tipoVisita === 'con_visita' && (
           <div className="card">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
                 Herramientas de la Visita Técnica
               </h2>
@@ -1730,7 +1728,7 @@ const OrdenNueva = () => {
               </span>
             </div>
             
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 sm:p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <span className="text-orange-400 text-xl">🔧</span>
@@ -1749,17 +1747,19 @@ const OrdenNueva = () => {
             {/* Lista de herramientas - Solo cantidad editable */}
             <div className="space-y-2 mb-4">
               {herramientasVisitaEditables.map((herramienta, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border group">
-                  <div className="flex items-center flex-1">
+                <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg border group gap-2">
+                  <div className="flex items-center flex-1 min-w-0">
                     <div className="flex-shrink-0 mr-3">
                       <span className="text-gray-600 text-lg">🛠️</span>
                     </div>
                     {/* Nombre - Solo lectura */}
-                    <span className="text-sm font-medium text-gray-900 flex-1">
+                    <span className="text-sm font-medium text-gray-900 flex-1 truncate">
                       {typeof herramienta === 'string' ? herramienta : herramienta.nombre}
                     </span>
+                  </div>
+                  <div className="flex items-center justify-between sm:justify-end gap-2 ml-9 sm:ml-0">
                     {/* Cantidad - Editable */}
-                    <div className="flex items-center space-x-2 mr-4">
+                    <div className="flex items-center space-x-2">
                       <label className="text-xs text-gray-500">Cant:</label>
                       <input
                         type="number"
@@ -1778,35 +1778,35 @@ const OrdenNueva = () => {
                         }}
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newHerramientas = herramientasVisitaEditables.filter((_, i) => i !== index)
+                        setHerramientasVisitaEditables(newHerramientas)
+                      }}
+                      className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Eliminar herramienta"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newHerramientas = herramientasVisitaEditables.filter((_, i) => i !== index)
-                      setHerramientasVisitaEditables(newHerramientas)
-                    }}
-                    className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Eliminar herramienta"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
                 </div>
               ))}
             </div>
 
             {/* Formulario para agregar nueva herramienta */}
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 sm:p-4">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Agregar nueva herramienta</h4>
 
               {/* Opción 1: Desde inventario */}
-              <div className="flex space-x-3 items-center mb-3">
-                <div className="flex-shrink-0">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center mb-3">
+                <div className="flex-shrink-0 hidden sm:block">
                   <span className="text-gray-400 text-lg">🛠️</span>
                 </div>
                 <select
-                  className="input-field text-sm flex-1"
+                  className="input-field text-sm flex-1 min-w-0"
                   value={typeof nuevaHerramienta === 'object' ? nuevaHerramienta.nombre || '' : nuevaHerramienta}
                   onChange={(e) => setNuevaHerramienta(e.target.value)}
                 >
@@ -1843,13 +1843,13 @@ const OrdenNueva = () => {
               </div>
 
               {/* Opción 2: Entrada manual */}
-              <div className="flex space-x-3 items-center border-t border-gray-200 pt-3">
-                <div className="flex-shrink-0">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center border-t border-gray-200 pt-3">
+                <div className="flex-shrink-0 hidden sm:block">
                   <span className="text-gray-400 text-lg">✏️</span>
                 </div>
                 <input
                   type="text"
-                  className="input-field text-sm flex-1"
+                  className="input-field text-sm flex-1 min-w-0"
                   placeholder="O escribir nombre de herramienta manualmente..."
                   value={inputHerramientaSinVisita}
                   onChange={(e) => setInputHerramientaSinVisita(e.target.value)}
@@ -1881,7 +1881,7 @@ const OrdenNueva = () => {
                       setInputHerramientaSinVisita('')
                     }
                   }}
-                  className="btn-secondary px-3 py-1 text-sm"
+                  className="btn-secondary px-3 py-1 text-sm w-full sm:w-auto"
                   disabled={!inputHerramientaSinVisita.trim()}
                 >
                   Agregar manual
@@ -1900,7 +1900,7 @@ const OrdenNueva = () => {
         {/* Personal de la Visita Técnica */}
         {tipoVisita === 'con_visita' && (
           <div className="card">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
                 Personal de la Visita Técnica
               </h2>
@@ -1909,7 +1909,7 @@ const OrdenNueva = () => {
               </span>
             </div>
             
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 sm:p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <span className="text-purple-400 text-xl">👥</span>
@@ -1928,13 +1928,13 @@ const OrdenNueva = () => {
             {/* Lista de personal editable */}
             <div className="space-y-3 mb-4">
               {personalVisitaEditable.map((personal, index) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-lg border group">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center flex-1">
+                <div key={index} className="p-3 sm:p-4 bg-gray-50 rounded-lg border group">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                    <div className="flex items-start flex-1 min-w-0">
                       <div className="flex-shrink-0 mr-3">
                         <span className="text-blue-600 text-lg">👨‍🔧</span>
                       </div>
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 space-y-2 min-w-0">
                         <input
                           type="text"
                           className="w-full text-sm border-0 bg-transparent font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white rounded px-2 py-1"
@@ -1959,24 +1959,22 @@ const OrdenNueva = () => {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3 ml-4">
-                      <div className="text-right">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="number"
-                            min="0.5"
-                            step="0.5"
-                            className="w-16 text-sm border-0 bg-transparent font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white rounded px-2 py-1 text-center"
-                            value={personal.diasEstimados}
-                            onChange={(e) => {
-                              const newPersonal = [...personalVisitaEditable]
-                              newPersonal[index].diasEstimados = parseFloat(e.target.value) || 0
-                              setPersonalVisitaEditable(newPersonal)
-                            }}
-                            placeholder="0"
-                          />
-                          <span className="text-sm text-gray-600">días</span>
-                        </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-3 ml-9 sm:ml-0 flex-shrink-0">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          min="0.5"
+                          step="0.5"
+                          className="w-16 text-sm border-0 bg-transparent font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white rounded px-2 py-1 text-center"
+                          value={personal.diasEstimados}
+                          onChange={(e) => {
+                            const newPersonal = [...personalVisitaEditable]
+                            newPersonal[index].diasEstimados = parseFloat(e.target.value) || 0
+                            setPersonalVisitaEditable(newPersonal)
+                          }}
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-600">días</span>
                       </div>
                       <button
                         type="button"
@@ -1984,7 +1982,7 @@ const OrdenNueva = () => {
                           const newPersonal = personalVisitaEditable.filter((_, i) => i !== index)
                           setPersonalVisitaEditable(newPersonal)
                         }}
-                        className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1997,11 +1995,11 @@ const OrdenNueva = () => {
             </div>
             
             {/* Formulario para agregar nuevo personal */}
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 sm:p-4">
               <h4 className="text-sm font-medium text-gray-700 mb-3">Agregar nueva especialidad</h4>
               <div className="space-y-3">
-                <div className="flex space-x-3">
-                  <div className="flex-shrink-0">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <div className="flex-shrink-0 hidden sm:block">
                     <span className="text-gray-400 text-lg">👨‍🔧</span>
                   </div>
                   <div className="flex-1 space-y-3">
@@ -2019,7 +2017,7 @@ const OrdenNueva = () => {
                       value={nuevoPersonal.descripcion}
                       onChange={(e) => setNuevoPersonal({...nuevoPersonal, descripcion: e.target.value})}
                     />
-                    <div className="flex space-x-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <div className="flex items-center space-x-2">
                         <input
                           type="number"
@@ -2079,7 +2077,7 @@ const OrdenNueva = () => {
           </h2>
           
           {/* Nota informativa sobre restricciones */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <span className="text-blue-400 text-xl">ℹ️</span>
@@ -2108,7 +2106,7 @@ const OrdenNueva = () => {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end space-x-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
           <button
             type="button"
             onClick={() => navigate('/ordenes')}

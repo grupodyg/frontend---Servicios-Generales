@@ -99,6 +99,18 @@ const useBoletasStore = create(
         }
       },
 
+      uploadBoletaFile: async (file) => {
+        try {
+          const formData = new FormData()
+          formData.append('file', file)
+          const response = await api.upload(API_ENDPOINTS.PAYROLL_SLIP_UPLOAD, formData)
+          return response.data
+        } catch (error) {
+          console.error('Error uploading boleta file:', error)
+          throw error
+        }
+      },
+
       subirBoleta: async (boletaData) => {
         set({ isLoading: true })
         try {

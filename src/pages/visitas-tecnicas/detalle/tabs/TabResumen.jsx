@@ -54,35 +54,35 @@ const TabResumen = memo(({
   return (
     <div className="space-y-6">
       {/* Header con totales generales */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-6 text-white shadow-lg">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-3 sm:p-4 md:p-6 text-white shadow-lg">
+        <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Resumen Ejecutivo
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold">{totalesMateriales.totalItems}</p>
-            <p className="text-xs text-slate-300">Materiales</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center">
+            <p className="text-xl sm:text-2xl font-bold">{totalesMateriales.totalItems}</p>
+            <p className="text-[10px] sm:text-xs text-slate-300">Materiales</p>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold">{totalesHerramientas.totalItems}</p>
-            <p className="text-xs text-slate-300">Herramientas</p>
+          <div className="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center">
+            <p className="text-xl sm:text-2xl font-bold">{totalesHerramientas.totalItems}</p>
+            <p className="text-[10px] sm:text-xs text-slate-300">Herramientas</p>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold">{totalPersonal.totalPersonas}</p>
-            <p className="text-xs text-slate-300">Personal</p>
+          <div className="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center">
+            <p className="text-xl sm:text-2xl font-bold">{totalPersonal.totalPersonas}</p>
+            <p className="text-[10px] sm:text-xs text-slate-300">Personal</p>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold">{totalPersonal.totalDias}</p>
-            <p className="text-xs text-slate-300">Dias Est.</p>
+          <div className="bg-white/10 backdrop-blur rounded-lg p-2 sm:p-3 text-center">
+            <p className="text-xl sm:text-2xl font-bold">{totalPersonal.totalDias}</p>
+            <p className="text-[10px] sm:text-xs text-slate-300">Dias Est.</p>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-white/20">
-          <div className="flex justify-between items-center">
-            <span className="text-slate-300">Costo Total Estimado:</span>
-            <span className="text-3xl font-bold">S/ {totalGeneral.toFixed(2)}</span>
+        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/20">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+            <span className="text-sm sm:text-base text-slate-300">Costo Total Estimado:</span>
+            <span className="text-2xl sm:text-3xl font-bold">S/ {totalGeneral.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -157,7 +157,7 @@ const TabResumen = memo(({
 
       {/* Materiales */}
       <div className="card border-l-4 border-l-blue-500">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,14 +166,14 @@ const TabResumen = memo(({
             </div>
             <h3 className="text-lg font-semibold text-gray-800">Materiales</h3>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-blue-600">S/ {totalesMateriales.totalCosto.toFixed(2)}</p>
+          <div className="sm:text-right">
+            <p className="text-xl sm:text-2xl font-bold text-blue-600">S/ {totalesMateriales.totalCosto.toFixed(2)}</p>
             <p className="text-xs text-gray-500">{totalesMateriales.totalItems} items</p>
           </div>
         </div>
 
         {visitaActual.materialesEstimados?.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-gray-200">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-gray-200">
             <table className="min-w-full text-sm">
               <thead className="bg-blue-50">
                 <tr>
@@ -210,7 +210,7 @@ const TabResumen = memo(({
 
       {/* Herramientas */}
       <div className="card border-l-4 border-l-amber-500">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
               <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -220,14 +220,14 @@ const TabResumen = memo(({
             </div>
             <h3 className="text-lg font-semibold text-gray-800">Herramientas</h3>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-amber-600">S/ {totalesHerramientas.totalCosto.toFixed(2)}</p>
+          <div className="sm:text-right">
+            <p className="text-xl sm:text-2xl font-bold text-amber-600">S/ {totalesHerramientas.totalCosto.toFixed(2)}</p>
             <p className="text-xs text-gray-500">{totalesHerramientas.totalItems} herramientas ({totalesHerramientas.totalCantidad} unidades)</p>
           </div>
         </div>
 
         {herramientas?.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-gray-200">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-gray-200">
             <table className="min-w-full text-sm">
               <thead className="bg-amber-50">
                 <tr>
@@ -274,7 +274,7 @@ const TabResumen = memo(({
 
       {/* Personal */}
       <div className="card border-l-4 border-l-green-500">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
               <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -283,15 +283,15 @@ const TabResumen = memo(({
             </div>
             <h3 className="text-lg font-semibold text-gray-800">Personal Requerido</h3>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-green-600">{totalPersonal.totalPersonas}</p>
+          <div className="sm:text-right">
+            <p className="text-xl sm:text-2xl font-bold text-green-600">{totalPersonal.totalPersonas}</p>
             <p className="text-xs text-gray-500">{totalPersonal.totalDias} dias estimados</p>
           </div>
         </div>
 
         {listaPersonal?.length > 0 ? (
           <div className="space-y-3">
-            <div className="overflow-hidden rounded-lg border border-gray-200">
+            <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-gray-200">
               <table className="min-w-full text-sm">
                 <thead className="bg-green-50">
                   <tr>
@@ -349,9 +349,9 @@ const TabResumen = memo(({
           <h3 className="text-lg font-semibold text-gray-800">Datos de Completado</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {/* Firma del tecnico */}
-          <div className="bg-indigo-50 rounded-lg p-4">
+          <div className="bg-indigo-50 rounded-lg p-3 sm:p-4">
             <h4 className="text-sm font-medium text-indigo-800 mb-3">Firma del Tecnico</h4>
             {visitaActual.firmaTecnico ? (
               <div className="bg-white rounded-lg p-2 border border-indigo-200">
@@ -372,7 +372,7 @@ const TabResumen = memo(({
           </div>
 
           {/* Ubicacion GPS */}
-          <div className="bg-indigo-50 rounded-lg p-4">
+          <div className="bg-indigo-50 rounded-lg p-3 sm:p-4">
             <h4 className="text-sm font-medium text-indigo-800 mb-3">Ubicacion GPS</h4>
             {visitaActual.coordenadasGPS?.latitud && visitaActual.coordenadasGPS?.longitud ? (
               <div className="bg-white rounded-lg p-3 border border-indigo-200">
@@ -402,7 +402,7 @@ const TabResumen = memo(({
 
         {/* Nombre del proyecto y fecha de completado */}
         {(visitaActual.nombreProyecto || visitaActual.fechaCompletado) && (
-          <div className="mt-4 pt-4 border-t border-indigo-100 grid grid-cols-2 gap-4 text-sm">
+          <div className="mt-4 pt-4 border-t border-indigo-100 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
             {visitaActual.nombreProyecto && (
               <div>
                 <span className="text-gray-500">Proyecto:</span>
@@ -433,8 +433,8 @@ const TabResumen = memo(({
         </div>
 
         {presupuestoAsociado ? (
-          <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-teal-800">Cotizacion generada</p>
                 <p className="text-xl font-bold text-teal-900">{presupuestoAsociado.id}</p>
@@ -451,8 +451,8 @@ const TabResumen = memo(({
             </div>
           </div>
         ) : (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-gray-700">Sin cotizacion generada</p>
                 <p className="text-xs text-gray-500">
@@ -487,8 +487,8 @@ const TabResumen = memo(({
             <h3 className="text-lg font-semibold text-gray-800">Orden de Trabajo</h3>
           </div>
 
-          <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-rose-800">Orden generada</p>
                 <p className="text-xl font-bold text-rose-900">{visitaActual.ordenGenerada}</p>

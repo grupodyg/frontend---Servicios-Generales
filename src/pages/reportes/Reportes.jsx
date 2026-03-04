@@ -592,25 +592,25 @@ const Reportes = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             {hasPermission('all') ? 'Reportes Administrativos' : 'Mis Reportes'}
           </h1>
-          <p className="text-gray-600">
-            {hasPermission('all') 
+          <p className="text-gray-600 text-sm sm:text-base">
+            {hasPermission('all')
               ? 'Análisis completo del sistema de mantenimiento'
               : 'Reportes de progreso y actividades'
             }
           </p>
         </div>
-        
-        <div className="flex space-x-3">
+
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Filtro por Cliente */}
           <select
             value={selectedClient || ''}
             onChange={(e) => setSelectedClient(e.target.value ? parseInt(e.target.value) : null)}
-            className="input-field min-w-40"
+            className="input-field min-w-0 sm:min-w-40"
           >
             <option value="">Todos los clientes</option>
             {clientes
@@ -628,7 +628,7 @@ const Reportes = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="input-field min-w-32"
+            className="input-field min-w-0 sm:min-w-32"
           >
             <option value="semana">Última Semana</option>
             <option value="mes">Último Mes</option>
@@ -638,7 +638,7 @@ const Reportes = () => {
           <button
             onClick={handleExportarCompleto}
             disabled={exporting}
-            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {exporting ? '⏳ Exportando...' : '📤 Exportar Completo'}
           </button>
@@ -647,19 +647,19 @@ const Reportes = () => {
 
       {/* Quick Stats - Visible para Admin y Supervisor */}
       {(hasPermission('all') || hasPermission('reportes')) && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div className="card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Órdenes de trabajo</p>
-                <p className="text-2xl font-bold text-gray-900">{ordenes.length}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Total Órdenes de trabajo</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{ordenes.length}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-xl">📋</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="text-lg sm:text-xl">📋</span>
               </div>
             </div>
             <div className="mt-2">
-              <span className="text-sm text-gray-500">
+              <span className="text-xs sm:text-sm text-gray-500">
                 {ordenesEstado.find(o => o.name === 'En Proceso')?.value || 0} en proceso
               </span>
             </div>
@@ -668,17 +668,17 @@ const Reportes = () => {
           <div className="card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Reportes Diarios</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-xs sm:text-sm text-gray-600">Reportes Diarios</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">
                   {generalStats?.total_reports || estadisticasReportes.totalReportes || 0}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-xl">📝</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <span className="text-lg sm:text-xl">📝</span>
               </div>
             </div>
             <div className="mt-2">
-              <span className="text-sm text-blue-600">
+              <span className="text-xs sm:text-sm text-blue-600">
                 {generalStats?.reports_today || estadisticasReportes.reportesHoy || 0} hoy
               </span>
             </div>
@@ -687,17 +687,17 @@ const Reportes = () => {
           <div className="card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Avance Promedio</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-xs sm:text-sm text-gray-600">Avance Promedio</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">
                   {generalStats?.avg_progress || estadisticasReportes.promedioAvance || 0}%
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <span className="text-xl">⚡</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <span className="text-lg sm:text-xl">⚡</span>
               </div>
             </div>
             <div className="mt-2">
-              <span className="text-sm text-gray-500">
+              <span className="text-xs sm:text-sm text-gray-500">
                 {generalStats?.active_technicians || 0} técnicos activos
               </span>
             </div>
@@ -706,15 +706,15 @@ const Reportes = () => {
           <div className="card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Alertas Materiales</p>
-                <p className="text-2xl font-bold text-red-600">{materialesBajoStock.length}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Alertas Materiales</p>
+                <p className="text-xl sm:text-2xl font-bold text-red-600">{materialesBajoStock.length}</p>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                <span className="text-xl">⚠️</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <span className="text-lg sm:text-xl">⚠️</span>
               </div>
             </div>
             <div className="mt-2">
-              <span className="text-sm text-red-600">
+              <span className="text-xs sm:text-sm text-red-600">
                 {materialesBajoStock.length > 0 ? 'Requieren atención' : 'Sin alertas'}
               </span>
             </div>
@@ -723,20 +723,21 @@ const Reportes = () => {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex-shrink-0 whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-corporate-blue text-corporate-blue'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.name}
+              <span className="mr-1 sm:mr-2">{tab.icon}</span>
+              <span className="hidden sm:inline">{tab.name}</span>
+              <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
             </button>
           ))}
         </nav>
@@ -752,19 +753,20 @@ const Reportes = () => {
         {activeTab === 'resumen' && (
           <div className="space-y-6">
             {/* Executive Summary Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div className="card">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Estado de Órdenes de trabajo
                 </h3>
-                <ResponsiveContainer width="100%" height={250}>
+                <div className="h-[200px] sm:h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={ordenesEstado}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
+                      innerRadius={50}
+                      outerRadius={80}
                       paddingAngle={5}
                       dataKey="value"
                     >
@@ -775,6 +777,7 @@ const Reportes = () => {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
+                </div>
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   {ordenesEstado.map((item, index) => (
                     <div key={index} className="text-center">
@@ -796,7 +799,8 @@ const Reportes = () => {
                   Tendencia de Productividad ({dateRange === 'semana' ? 'Última Semana' : dateRange === 'mes' ? 'Último Mes' : 'Último Trimestre'})
                 </h3>
                 {productivityData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={250}>
+                  <div className="h-[200px] sm:h-[250px] overflow-x-auto">
+                  <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={productivityData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="fecha" />
@@ -815,8 +819,9 @@ const Reportes = () => {
                       <Line type="monotone" dataKey="tecnicosActivos" name="Técnicos Activos" stroke="#059669" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
+                  </div>
                 ) : (
-                  <div className="flex items-center justify-center h-[250px] bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-center h-[200px] sm:h-[250px] bg-gray-50 rounded-lg">
                     <div className="text-center">
                       <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -834,9 +839,9 @@ const Reportes = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Indicadores Clave de Rendimiento (KPI)
               </h3>
-              <div className={`grid grid-cols-1 ${user?.role === 'admin' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
+              <div className={`grid grid-cols-1 sm:grid-cols-2 ${user?.role === 'admin' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 sm:gap-6`}>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600 mb-2">
+                  <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">
                     {kpisData?.completion_rate || 0}%
                   </div>
                   <div className="text-sm text-gray-600">Tasa de Cumplimiento</div>
@@ -845,7 +850,7 @@ const Reportes = () => {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">
                     {kpisData?.avg_days_per_order || 0}
                   </div>
                   <div className="text-sm text-gray-600">Días Promedio por Orden</div>
@@ -854,8 +859,8 @@ const Reportes = () => {
                   </div>
                 </div>
                 {canViewPrices(user) && (
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-orange-600 mb-2">
+                  <div className="text-center sm:col-span-2 md:col-span-1">
+                    <div className="text-2xl sm:text-3xl font-bold text-orange-600 mb-2">
                       S/ {kpisData?.avg_cost_per_order?.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                     </div>
                     <div className="text-sm text-gray-600">Costo Promedio por Orden</div>
@@ -873,8 +878,8 @@ const Reportes = () => {
           <div className="space-y-6">
             {/* Tabla de estadísticas por cliente */}
             <div className="card">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Estadísticas por Cliente
                 </h3>
                 <span className="text-sm text-gray-500">
@@ -981,44 +986,44 @@ const Reportes = () => {
 
             {/* Resumen de clientes */}
             {estadisticasPorCliente.length > 0 && (
-              <div className={`grid grid-cols-1 ${canViewPrices(user) ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4`}>
+              <div className={`grid grid-cols-2 ${canViewPrices(user) ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-3 sm:gap-4`}>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-blue-600">{estadisticasPorCliente.length}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600">{estadisticasPorCliente.length}</div>
                   <div className="text-sm text-gray-600">Clientes con Órdenes</div>
                   <div className="text-xs text-gray-400 mt-1">
                     {estadisticasPorCliente.filter(c => c.tipo === 'empresa').length} empresas, {estadisticasPorCliente.filter(c => c.tipo !== 'empresa').length} personas
                   </div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">
                     {estadisticasPorCliente.reduce((sum, c) => sum + c.completadas, 0)}
                   </div>
-                  <div className="text-sm text-gray-600">Órdenes Completadas</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Órdenes Completadas</div>
                   <div className="text-xs text-gray-400 mt-1">
                     {Math.round((estadisticasPorCliente.reduce((sum, c) => sum + c.completadas, 0) / Math.max(estadisticasPorCliente.reduce((sum, c) => sum + c.totalOrdenes, 0), 1)) * 100)}% del total
                   </div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-yellow-600">
+                  <div className="text-xl sm:text-2xl font-bold text-yellow-600">
                     {estadisticasPorCliente.reduce((sum, c) => sum + c.enProceso, 0)}
                   </div>
-                  <div className="text-sm text-gray-600">En Proceso</div>
+                  <div className="text-xs sm:text-sm text-gray-600">En Proceso</div>
                   <div className="text-xs text-gray-400 mt-1">
                     Requieren seguimiento
                   </div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-gray-600">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-600">
                     {estadisticasPorCliente.reduce((sum, c) => sum + c.pendientes, 0)}
                   </div>
-                  <div className="text-sm text-gray-600">Pendientes</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Pendientes</div>
                   <div className="text-xs text-gray-400 mt-1">
                     Por iniciar
                   </div>
                 </div>
                 {canViewPrices(user) && (
-                  <div className="card text-center bg-gradient-to-br from-green-50 to-emerald-50">
-                    <div className="text-2xl font-bold text-green-700">
+                  <div className="card text-center bg-gradient-to-br from-green-50 to-emerald-50 col-span-2 md:col-span-1">
+                    <div className="text-xl sm:text-2xl font-bold text-green-700">
                       S/ {estadisticasPorCliente.reduce((sum, c) => sum + c.montoTotal, 0).toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </div>
                     <div className="text-sm text-gray-600">Facturación Total</div>
@@ -1094,8 +1099,8 @@ const Reportes = () => {
 
             {/* Gráfico de Productividad */}
             <div className="card">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Productividad Diaria
                 </h3>
                 <span className="text-sm text-gray-500">
@@ -1103,7 +1108,8 @@ const Reportes = () => {
                 </span>
               </div>
               {productivityData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={400}>
+                <div className="h-[280px] sm:h-[350px] md:h-[400px] overflow-x-auto">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={productivityData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
@@ -1134,8 +1140,9 @@ const Reportes = () => {
                     <Bar dataKey="promedioAvance" fill="#f59e0b" name="promedioAvance" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               ) : (
-                <div className="flex items-center justify-center h-[400px] bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-center h-[280px] sm:h-[350px] md:h-[400px] bg-gray-50 rounded-lg">
                   <div className="text-center">
                     <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -1149,39 +1156,39 @@ const Reportes = () => {
 
             {/* Resumen de Productividad */}
             {productivityData.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600">
                     {productivityData.reduce((sum, d) => sum + d.reportes, 0)}
                   </div>
-                  <div className="text-sm text-gray-600">Total Reportes</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Total Reportes</div>
                   <div className="text-xs text-gray-400 mt-1">
                     Promedio: {(productivityData.reduce((sum, d) => sum + d.reportes, 0) / productivityData.length).toFixed(1)}/día
                   </div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">
                     {Math.max(...productivityData.map(d => d.tecnicosActivos))}
                   </div>
-                  <div className="text-sm text-gray-600">Máx. Técnicos/Día</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Máx. Técnicos/Día</div>
                   <div className="text-xs text-gray-400 mt-1">
                     Promedio: {(productivityData.reduce((sum, d) => sum + d.tecnicosActivos, 0) / productivityData.length).toFixed(1)}
                   </div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-yellow-600">
+                  <div className="text-xl sm:text-2xl font-bold text-yellow-600">
                     {Math.round(productivityData.reduce((sum, d) => sum + d.promedioAvance, 0) / productivityData.length)}%
                   </div>
-                  <div className="text-sm text-gray-600">Avance Promedio</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Avance Promedio</div>
                   <div className="text-xs text-gray-400 mt-1">
                     Del período seleccionado
                   </div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-xl sm:text-2xl font-bold text-purple-600">
                     {productivityData.length}
                   </div>
-                  <div className="text-sm text-gray-600">Días Activos</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Días Activos</div>
                   <div className="text-xs text-gray-400 mt-1">
                     Con reportes registrados
                   </div>
@@ -1195,8 +1202,8 @@ const Reportes = () => {
         {activeTab === 'tecnicos' && (
           <div className="space-y-6">
             <div className="card">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Rendimiento por Técnico
                 </h3>
                 <span className="text-sm text-gray-500">
@@ -1283,30 +1290,30 @@ const Reportes = () => {
 
             {/* Resumen de Técnicos */}
             {eficienciaTecnicos.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-blue-600">{eficienciaTecnicos.length}</div>
-                  <div className="text-sm text-gray-600">Técnicos Activos</div>
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600">{eficienciaTecnicos.length}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Técnicos Activos</div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">
                     {eficienciaTecnicos.reduce((sum, t) => sum + t.completadas, 0)}
                   </div>
-                  <div className="text-sm text-gray-600">Total Completadas</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Total Completadas</div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-xl sm:text-2xl font-bold text-purple-600">
                     {eficienciaTecnicos.reduce((sum, t) => sum + t.totalReportes, 0)}
                   </div>
-                  <div className="text-sm text-gray-600">Total Reportes</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Total Reportes</div>
                 </div>
                 <div className="card text-center">
-                  <div className="text-2xl font-bold text-orange-600">
+                  <div className="text-xl sm:text-2xl font-bold text-orange-600">
                     {eficienciaTecnicos.length > 0
                       ? Math.round(eficienciaTecnicos.reduce((sum, t) => sum + t.eficiencia, 0) / eficienciaTecnicos.length)
                       : 0}%
                   </div>
-                  <div className="text-sm text-gray-600">Eficiencia Promedio</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Eficiencia Promedio</div>
                 </div>
               </div>
             )}
@@ -1315,9 +1322,9 @@ const Reportes = () => {
 
         {activeTab === 'materiales' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                   Resumen de Inventario
                 </h3>
                 <div className="space-y-4">
@@ -1343,7 +1350,7 @@ const Reportes = () => {
               </div>
 
               <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                   Alertas de Materiales
                 </h3>
                 <div className="space-y-3">

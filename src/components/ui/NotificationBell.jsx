@@ -115,7 +115,7 @@ const NotificationBell = () => {
             className="fixed inset-0 z-10" 
             onClick={() => setShowDropdown(false)}
           />
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+          <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 z-20">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Notificaciones</h3>

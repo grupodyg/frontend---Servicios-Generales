@@ -139,25 +139,25 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-corporate-blue to-blue-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">
+      <div className="bg-gradient-to-r from-corporate-blue to-blue-600 rounded-lg p-4 sm:p-6 text-white">
+        <h1 className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">
           ¡Hola, {user?.name}!
         </h1>
-        <p className="text-blue-100">
+        <p className="text-blue-100 text-sm sm:text-base">
           Aquí tienes un resumen de las actividades de mantenimiento
         </p>
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Órdenes de trabajo</p>
-              <p className="text-3xl font-bold text-gray-900">{metricas.total}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Órdenes</p>
+              <p className="text-xl sm:text-3xl font-bold text-gray-900">{metricas.total}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">📋</span>
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <span className="text-lg sm:text-2xl">📋</span>
             </div>
           </div>
           <div className="mt-4">
@@ -173,33 +173,33 @@ const Dashboard = () => {
 
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">En Proceso</p>
-              <p className="text-3xl font-bold text-blue-600">{metricas.enProceso}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600">En Proceso</p>
+              <p className="text-xl sm:text-3xl font-bold text-blue-600">{metricas.enProceso}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">⚙️</span>
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <span className="text-lg sm:text-2xl">⚙️</span>
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-sm text-blue-600">Activas actualmente</span>
+          <div className="mt-2 sm:mt-4">
+            <span className="text-xs sm:text-sm text-blue-600">Activas actualmente</span>
           </div>
         </div>
 
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Completadas</p>
-              <p className="text-3xl font-bold text-green-600">{metricas.completadas}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Completadas</p>
+              <p className="text-xl sm:text-3xl font-bold text-green-600">{metricas.completadas}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">✅</span>
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <span className="text-lg sm:text-2xl">✅</span>
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-sm text-green-600">
+          <div className="mt-2 sm:mt-4">
+            <span className="text-xs sm:text-sm text-green-600">
               {metricas.total > 0
-                ? `${Math.round((metricas.completadas / metricas.total) * 100)}% tasa de éxito`
+                ? `${Math.round((metricas.completadas / metricas.total) * 100)}% éxito`
                 : 'Sin datos'}
             </span>
           </div>
@@ -207,35 +207,35 @@ const Dashboard = () => {
 
         <div className="card">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Vencidas</p>
-              <p className="text-3xl font-bold text-red-600">{metricas.vencidas}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600">Vencidas</p>
+              <p className="text-xl sm:text-3xl font-bold text-red-600">{metricas.vencidas}</p>
             </div>
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">⚠️</span>
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
+              <span className="text-lg sm:text-2xl">⚠️</span>
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-sm text-red-600">Requieren atención</span>
+          <div className="mt-2 sm:mt-4">
+            <span className="text-xs sm:text-sm text-red-600">Requieren atención</span>
           </div>
         </div>
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
         {/* Pie Chart */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Distribución de Órdenes de trabajo
+          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+            Distribución de Órdenes
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
             <PieChart>
               <Pie
                 data={dataPieChart}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius={40}
+                outerRadius={70}
                 paddingAngle={5}
                 dataKey="value"
               >
@@ -246,14 +246,14 @@ const Dashboard = () => {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
-          <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-4">
             {dataPieChart.map((item, index) => (
               <div key={index} className="flex items-center">
                 <div
-                  className="w-3 h-3 rounded-full mr-2"
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full mr-1.5 sm:mr-2 flex-shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-sm text-gray-600">{item.name}: {item.value}</span>
+                <span className="text-xs sm:text-sm text-gray-600 truncate">{item.name}: {item.value}</span>
               </div>
             ))}
           </div>
@@ -261,24 +261,28 @@ const Dashboard = () => {
 
         {/* Bar Chart */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Órdenes de trabajo por Mes
+          <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+            Órdenes por Mes
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dataBarChart}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="ordenes" fill="#3b82f6" name="Total" />
-              <Bar dataKey="completadas" fill="#059669" name="Completadas" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="overflow-x-auto -mx-2">
+            <div className="min-w-[300px]">
+              <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
+                <BarChart data={dataBarChart}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="ordenes" fill="#3b82f6" name="Total" />
+                  <Bar dataKey="completadas" fill="#059669" name="Completadas" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Quick Actions & Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
         {/* Quick Actions */}
         {hasPermission('ordenes') && (
           <div className="card">

@@ -60,9 +60,9 @@ const TabMateriales = memo(({
 
         {/* Formulario para agregar material */}
         {editMode && (
-          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+          <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4">
             <h3 className="text-sm font-medium text-gray-700 mb-3">Agregar Material</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {/* Input con autocomplete */}
               <div className="relative md:col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">Nombre del material</label>
@@ -134,7 +134,7 @@ const TabMateriales = memo(({
             </div>
 
             {/* Precio unitario */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-3">
               {canViewPrices(user) && (
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Precio unitario (S/.)</label>

@@ -183,12 +183,12 @@ const Clientes = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cartera de Clientes</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Cartera de Clientes</h1>
           <p className="text-gray-600">Gestiona y monitorea tu base de clientes</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -222,7 +222,7 @@ const Clientes = () => {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -231,7 +231,7 @@ const Clientes = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-blue-600">Total Clientes</p>
-              <p className="text-2xl font-bold text-blue-900">{estadisticas.total}</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-900">{estadisticas.total}</p>
             </div>
             <span className="text-3xl">👥</span>
           </div>
@@ -246,7 +246,7 @@ const Clientes = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-green-600">Activos</p>
-              <p className="text-2xl font-bold text-green-900">{estadisticas.activos}</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-900">{estadisticas.activos}</p>
             </div>
             <span className="text-3xl">✅</span>
           </div>
@@ -261,7 +261,7 @@ const Clientes = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-purple-600">Premium</p>
-              <p className="text-2xl font-bold text-purple-900">
+              <p className="text-xl sm:text-2xl font-bold text-purple-900">
                 {estadisticas.clientesPorCategoria.premium}
               </p>
             </div>
@@ -278,7 +278,7 @@ const Clientes = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-orange-600">Total Órdenes de trabajo</p>
-              <p className="text-2xl font-bold text-orange-900">{estadisticas.totalOrdenes}</p>
+              <p className="text-xl sm:text-2xl font-bold text-orange-900">{estadisticas.totalOrdenes}</p>
             </div>
             <span className="text-3xl">📋</span>
           </div>
@@ -294,7 +294,7 @@ const Clientes = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-emerald-600">Facturación Total</p>
-                <p className="text-2xl font-bold text-emerald-900">
+                <p className="text-xl sm:text-2xl font-bold text-emerald-900">
                   S/{estadisticas.totalFacturado.toLocaleString()}
                 </p>
               </div>
@@ -306,7 +306,7 @@ const Clientes = () => {
 
       {/* Filtros */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div>
             <input
               type="text"
@@ -447,7 +447,7 @@ const Clientes = () => {
 
       {/* Vista de Tarjetas */}
       {vistaActual === 'tarjetas' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {clientesFiltrados.map((cliente) => (
             <motion.div
               key={cliente.id}
@@ -493,11 +493,11 @@ const Clientes = () => {
 
                 <div className={`grid ${canViewPrices(user) ? 'grid-cols-3' : 'grid-cols-2'} gap-3 pt-3 border-t`}>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">{cliente.totalOrdenes}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">{cliente.totalOrdenes}</p>
                     <p className="text-xs text-gray-500">Órdenes de trabajo</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-orange-600">{cliente.ordenesActivas}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-orange-600">{cliente.ordenesActivas}</p>
                     <p className="text-xs text-gray-500">Activas</p>
                   </div>
                   {canViewPrices(user) && (
@@ -531,7 +531,7 @@ const Clientes = () => {
             {estadisticas.topClientes.map((cliente, index) => (
               <div key={cliente.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
+                  <span className="text-xl sm:text-2xl font-bold text-gray-400">#{index + 1}</span>
                   <div>
                     <p className="font-medium text-gray-900">{cliente.nombre}</p>
                     <p className="text-sm text-gray-500">
@@ -555,10 +555,10 @@ const Clientes = () => {
           onClick={resetModal}
         >
           <div
-            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg w-full max-w-[95vw] sm:max-w-2xl md:max-w-4xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Detalles del Cliente
@@ -573,7 +573,7 @@ const Clientes = () => {
 
               {/* VISTA: DETALLES */}
               {modalView === 'detalles' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
                 {/* Información básica */}
                 <div className="space-y-4">
                   <div>
@@ -653,7 +653,7 @@ const Clientes = () => {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-2">Estadísticas</h4>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="text-center p-3 bg-white rounded-lg">
                           <p className="text-3xl font-bold text-gray-900">
                             {clienteSeleccionado.totalOrdenes}
@@ -674,7 +674,7 @@ const Clientes = () => {
                         </div>
                         {canViewPrices(user) && (
                           <div className="text-center p-3 bg-white rounded-lg">
-                            <p className="text-2xl font-bold text-blue-600">
+                            <p className="text-xl sm:text-2xl font-bold text-blue-600">
                               S/{clienteSeleccionado.montoTotal?.toLocaleString() || 0}
                             </p>
                             <p className="text-sm text-gray-500">Facturación Total</p>
@@ -843,7 +843,7 @@ const Clientes = () => {
                       Tipo de Cliente
                     </h3>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <button
                         type="button"
                         onClick={() => setFormDataCliente({
@@ -1118,7 +1118,7 @@ const Clientes = () => {
               )}
 
               {/* Botones de acción */}
-              <div className="mt-6 flex justify-end gap-3">
+              <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
                 {modalView === 'detalles' && (
                   <>
                     <button

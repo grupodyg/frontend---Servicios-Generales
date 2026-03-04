@@ -1,18 +1,18 @@
 const AuthLayout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-corporate-blue to-blue-600 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-corporate-blue to-blue-600 flex items-center justify-center p-3 sm:p-4">
       <div className="max-w-md w-full">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-4">
-            <span className="text-2xl font-bold text-corporate-blue">DG</span>
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full mb-3 sm:mb-4">
+            <span className="text-xl sm:text-2xl font-bold text-corporate-blue">DG</span>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">DIG Group</h1>
-          <p className="text-blue-100">Sistema de Gestión de Mantenimiento</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">DIG Group</h1>
+          <p className="text-blue-100 text-sm sm:text-base">Sistema de Gestión de Mantenimiento</p>
         </div>
-        
+
         {/* Auth Content */}
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-white rounded-lg shadow-xl p-5 sm:p-8">
           {children}
         </div>
         

@@ -203,18 +203,18 @@ const Presupuestos = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Presupuestos</h1>
-          <p className="text-gray-600 mt-1">Gestión de presupuestos y cotizaciones</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Presupuestos</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Gestión de presupuestos y cotizaciones</p>
         </div>
-        <Link to="/presupuestos/nuevo" className="btn-primary">
+        <Link to="/presupuestos/nuevo" className="btn-primary text-center">
           + Nuevo Presupuesto
         </Link>
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -222,8 +222,8 @@ const Presupuestos = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-gray-900">{estadisticas.total}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.total}</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <span className="text-xl">📊</span>
@@ -239,8 +239,8 @@ const Presupuestos = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Pendientes</p>
-              <p className="text-2xl font-bold text-yellow-600">{estadisticas.pendientes}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Pendientes</p>
+              <p className="text-xl sm:text-2xl font-bold text-yellow-600">{estadisticas.pendientes}</p>
               <p className="text-xs text-gray-500 mt-1">
                 {estadisticas.pendientesSinPrecios} sin precios
               </p>
@@ -259,8 +259,8 @@ const Presupuestos = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Aprobados</p>
-              <p className="text-2xl font-bold text-green-600">{estadisticas.aprobados}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Aprobados</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-600">{estadisticas.aprobados}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <span className="text-xl">✅</span>
@@ -276,8 +276,8 @@ const Presupuestos = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Rechazados</p>
-              <p className="text-2xl font-bold text-red-600">{estadisticas.rechazados}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Rechazados</p>
+              <p className="text-xl sm:text-2xl font-bold text-red-600">{estadisticas.rechazados}</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
               <span className="text-xl">❌</span>
@@ -293,8 +293,8 @@ const Presupuestos = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Tasa Conversión</p>
-              <p className="text-xl font-bold text-blue-600">
+              <p className="text-xs sm:text-sm text-gray-600">Tasa Conversión</p>
+              <p className="text-lg sm:text-xl font-bold text-blue-600">
                 {estadisticas.tasaConversion.toFixed(1)}%
               </p>
             </div>
@@ -344,36 +344,145 @@ const Presupuestos = () => {
         </div>
       </div>
 
-      {/* Lista de presupuestos */}
-      <div className="card overflow-hidden">
+      {/* Lista de presupuestos - Vista de tarjetas para movil */}
+      <div className="md:hidden space-y-3">
+        {presupuestosFiltrados.length === 0 ? (
+          <div className="card p-6 text-center text-gray-500">
+            No se encontraron presupuestos
+          </div>
+        ) : (
+          presupuestosFiltrados.map((presupuesto) => {
+            const totales = calcularTotalesPresupuesto(presupuesto)
+            const tienePrecios = totales.subtotal > 0
+            return (
+              <div key={presupuesto.id} className="card p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <Link
+                      to={`/presupuestos/${presupuesto.id}`}
+                      className="text-corporate-blue hover:text-blue-800 font-semibold text-sm"
+                    >
+                      {presupuesto.numero}
+                    </Link>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">
+                      {getClienteNombre(presupuesto) || '-'}
+                    </p>
+                    {(presupuesto.clienteData?.ruc || presupuesto.cliente?.ruc) && (
+                      <p className="text-xs text-gray-500">
+                        {presupuesto.clienteData?.ruc || presupuesto.cliente?.ruc}
+                      </p>
+                    )}
+                  </div>
+                  {getEstadoBadge(presupuesto.estado, tienePrecios)}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-500">Fecha:</span>
+                    <span className="ml-1 text-gray-900">{new Date(presupuesto.fechaCotizacion).toLocaleDateString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Vence:</span>
+                    <span className="ml-1 text-gray-900">{new Date(presupuesto.fechaVencimiento).toLocaleDateString()}</span>
+                  </div>
+                  {canViewPrices(user) && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">Total:</span>
+                      <span className="ml-1 font-semibold text-gray-900">
+                        S/{totales.total.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span className="ml-2 text-gray-400">
+                        (IGV S/{totales.igv.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                      </span>
+                    </div>
+                  )}
+                  <div className="col-span-2">
+                    <span className="text-gray-500">Registrado por:</span>
+                    <span className="ml-1 text-gray-700">{presupuesto.elaboradoPor || '-'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+                  <Link
+                    to={`/presupuestos/${presupuesto.id}`}
+                    className="text-blue-600 hover:text-blue-900 p-1"
+                    title="Ver detalle"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </Link>
+                  {presupuesto.estado === 'pendiente' && user?.role === 'admin' && (
+                    <button
+                      onClick={() => handleEditar(presupuesto)}
+                      className="text-gray-600 hover:text-gray-900 p-1"
+                      title="Editar"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  )}
+                  {presupuesto.estado === 'pendiente' && totales.subtotal > 0 && user?.role === 'admin' && (
+                    <>
+                      <button
+                        onClick={() => handleAprobar(presupuesto)}
+                        className="text-green-600 hover:text-green-900 p-1"
+                        title="Aprobar"
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleRechazar(presupuesto)}
+                        className="text-red-600 hover:text-red-900 p-1"
+                        title="Rechazar"
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Lista de presupuestos - Tabla para desktop */}
+      <div className="card overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Número
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Numero
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cliente
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fecha
                 </th>
                 {canViewPrices(user) && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Total
                   </th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Vencimiento
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Registrado por
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
@@ -388,7 +497,7 @@ const Presupuestos = () => {
               ) : (
                 presupuestosFiltrados.map((presupuesto) => (
                   <tr key={presupuesto.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                       <Link
                         to={`/presupuestos/${presupuesto.id}`}
                         className="text-corporate-blue hover:text-blue-800 font-medium"
@@ -396,7 +505,7 @@ const Presupuestos = () => {
                         {presupuesto.numero}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
                           {getClienteNombre(presupuesto) || '-'}
@@ -408,11 +517,11 @@ const Presupuestos = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(presupuesto.fechaCotizacion).toLocaleDateString()}
                     </td>
                     {canViewPrices(user) && (
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                         {(() => {
                           const totales = calcularTotalesPresupuesto(presupuesto)
                           return (
@@ -428,20 +537,20 @@ const Presupuestos = () => {
                         })()}
                       </td>
                     )}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                       {(() => {
                         const totales = calcularTotalesPresupuesto(presupuesto)
                         const tienePrecios = totales.subtotal > 0
                         return getEstadoBadge(presupuesto.estado, tienePrecios)
                       })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(presupuesto.fechaVencimiento).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {presupuesto.elaboradoPor || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <Link
                           to={`/presupuestos/${presupuesto.id}`}
@@ -453,7 +562,7 @@ const Presupuestos = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </Link>
-                        
+
                         {presupuesto.estado === 'pendiente' && user?.role === 'admin' && (
                           <button
                             onClick={() => handleEditar(presupuesto)}
