@@ -1,0 +1,220 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { api, API_ENDPOINTS } from '../config/api'
+import { getCurrentTimestamp } from '../utils/dateUtils'
+
+// Transformaciones para Permisos de Empleados
+const transformBackendToFrontend = (backend) => {
+  if (!backend) return null
+
+  // Transformar attached_documentation que puede ser null, string, o JSON
+  let archivosAdjuntos = []
+  let documentacionTexto = null
+
+  if (backend.attached_documentation) {
+    if (Array.isArray(backend.attached_documentation)) {
+      archivosAdjuntos = backend.attached_documentation
+    } else if (typeof backend.attached_documentation === 'string') {
+      try {
+        // Intentar parsear como JSON
+        const parsed = JSON.parse(backend.attached_documentation)
+        archivosAdjuntos = Array.isArray(parsed) ? parsed : []
+      } catch {
+        // Si no es JSON válido, es un string simple
+        // Guardarlo como texto plano para mostrar
+        documentacionTexto = backend.attached_documentation
+        // No crear archivos adjuntos para texto plano
+        archivosAdjuntos = []
+      }
+    } else if (typeof backend.attached_documentation === 'object') {
+      archivosAdjuntos = [backend.attached_documentation]
+    }
+  }
+
+  return {
+    id: backend.id,
+    empleadoId: backend.employee_id,
+    empleadoNombre: backend.employee_name,
+    tipoPermiso: backend.permit_type,
+    fechaInicio: backend.start_date,
+    fechaFin: backend.end_date,
+    diasSolicitados: backend.days_requested,
+    motivo: backend.reason,
+    documentacionAdjunta: documentacionTexto,
+    archivosAdjuntos: archivosAdjuntos,
+    estado: backend.status,
+    aprobadoPor: backend.approved_by,
+    fechaAprobacion: backend.approval_date,
+    rechazadoPor: backend.rejected_by,
+    fechaRechazo: backend.rejection_date,
+    motivoRechazo: backend.rejection_reason,
+    fechaSolicitud: backend.date_time_registration,
+    fechaCreacion: backend.date_time_registration
+  }
+}
+
+const transformFrontendToBackend = (frontend) => {
+  if (!frontend) return null
+  return {
+    employee_id: frontend.empleadoId || null,
+    employee_name: frontend.empleadoNombre || null,
+    permit_type: frontend.tipoPermiso || null,
+    start_date: frontend.fechaInicio || null,
+    end_date: frontend.fechaFin || null,
+    days_requested: frontend.diasSolicitados || null,
+    reason: frontend.motivo || null,
+    attached_documentation: frontend.documentacionAdjunta || null,
+    status: frontend.estado || 'pending',
+    approved_by: frontend.aprobadoPor || null,
+    approval_date: frontend.fechaAprobacion || null,
+    rejected_by: frontend.rechazadoPor || null,
+    rejection_date: frontend.fechaRechazo || null,
+    rejection_reason: frontend.motivoRechazo || null
+  }
+}
+
+const usePermisosStore = create(
+  persist(
+    (set, get) => ({
+      permisos: [],
+      isLoading: false,
+
+      fetchPermisos: async (filters = {}) => {
+        set({ isLoading: true })
+        try {
+          const params = new URLSearchParams()
+          if (filters.status) params.append('status', filters.status)
+          if (filters.employee_id) params.append('employee_id', filters.employee_id)
+          if (filters.permit_type) params.append('permit_type', filters.permit_type)
+
+          const url = `${API_ENDPOINTS.EMPLOYEE_PERMITS}${params.toString() ? '?' + params.toString() : ''}`
+          const backendPermisos = await api.get(url)
+          const permisos = backendPermisos.map(transformBackendToFrontend)
+
+          set({ permisos, isLoading: false })
+          return permisos
+        } catch (error) {
+          set({ isLoading: false })
+          console.error('Error fetching permisos:', error)
+          throw error
+        }
+      },
+
+      crearPermiso: async (permisoData) => {
+        set({ isLoading: true })
+        try {
+          const backendData = transformFrontendToBackend(permisoData)
+          const response = await api.post(API_ENDPOINTS.EMPLOYEE_PERMITS, backendData)
+          const createdPermiso = transformBackendToFrontend(response.data)
+
+          await get().fetchPermisos()
+
+          set({ isLoading: false })
+          return createdPermiso
+        } catch (error) {
+          set({ isLoading: false })
+          console.error('Error creating permiso:', error)
+          throw error
+        }
+      },
+
+      updatePermiso: async (id, updates) => {
+        set({ isLoading: true })
+        try {
+          const backendUpdates = transformFrontendToBackend(updates)
+          Object.keys(backendUpdates).forEach(key =>
+            (backendUpdates[key] === undefined || backendUpdates[key] === null) && delete backendUpdates[key]
+          )
+
+          const response = await api.put(API_ENDPOINTS.EMPLOYEE_PERMIT_BY_ID(id), backendUpdates)
+          const updatedPermiso = transformBackendToFrontend(response.data)
+
+          await get().fetchPermisos()
+
+          set({ isLoading: false })
+          return updatedPermiso
+        } catch (error) {
+          set({ isLoading: false })
+          console.error('Error updating permiso:', error)
+          throw error
+        }
+      },
+
+      aprobarPermiso: async (id, aprobadoPor) => {
+        const updates = {
+          estado: 'approved',
+          aprobadoPor: aprobadoPor,
+          fechaAprobacion: getCurrentTimestamp()
+        }
+        return await get().updatePermiso(id, updates)
+      },
+
+      rechazarPermiso: async (id, rechazadoPor, motivoRechazo) => {
+        const updates = {
+          estado: 'rejected',
+          rechazadoPor: rechazadoPor,
+          motivoRechazo: motivoRechazo,
+          fechaRechazo: getCurrentTimestamp()
+        }
+        return await get().updatePermiso(id, updates)
+      },
+
+      deletePermiso: async (id) => {
+        set({ isLoading: true })
+        try {
+          await api.delete(API_ENDPOINTS.EMPLOYEE_PERMIT_BY_ID(id))
+          await get().fetchPermisos()
+          set({ isLoading: false })
+        } catch (error) {
+          set({ isLoading: false })
+          console.error('Error deleting permiso:', error)
+          throw error
+        }
+      },
+
+      getPermisoById: (id) => {
+        const permisos = get().permisos || []
+        return permisos.find(p => p.id === id)
+      },
+
+      obtenerEstadisticas: () => {
+        const permisos = get().permisos || []
+        return {
+          total: permisos.length,
+          pendientes: permisos.filter(p => p.estado === 'pending').length,
+          aprobados: permisos.filter(p => p.estado === 'approved').length,
+          rechazados: permisos.filter(p => p.estado === 'rejected').length
+        }
+      },
+
+      inicializarDatos: async () => {
+        await get().fetchPermisos()
+      },
+
+      agregarArchivoAdjunto: async (permisoId, archivoInfo) => {
+        const permiso = get().getPermisoById(permisoId)
+        if (!permiso) return
+
+        const archivosActuales = permiso.documentacionAdjunta || []
+        const nuevosArchivos = [
+          ...archivosActuales,
+          {
+            id: Date.now().toString(),
+            ...archivoInfo,
+            fechaCarga: getCurrentTimestamp()
+          }
+        ]
+
+        await get().updatePermiso(permisoId, {
+          documentacionAdjunta: nuevosArchivos
+        })
+      }
+    }),
+    {
+      name: 'permisos-storage',
+      partialize: (state) => ({ permisos: state.permisos })
+    }
+  )
+)
+
+export default usePermisosStore

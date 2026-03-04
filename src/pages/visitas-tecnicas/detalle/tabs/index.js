@@ -1,0 +1,6 @@
+export { default as TabEstadoLugar } from './TabEstadoLugar'
+export { default as TabMateriales } from './TabMateriales'
+export { default as TabHerramientas } from './TabHerramientas'
+export { default as TabPersonal } from './TabPersonal'
+export { default as TabCompletado } from './TabCompletado'
+export { default as TabResumen } from './TabResumen'
