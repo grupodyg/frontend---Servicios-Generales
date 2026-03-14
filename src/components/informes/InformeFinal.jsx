@@ -12,6 +12,7 @@ import InformeFinalPDF from '../../utils/informeFinalPDF'
 import { getCurrentDate, getCurrentTimestamp, getToday, formatDate, formatDateTime } from '../../utils/dateUtils'
 import ReporteFotograficoEstandar from '../../utils/reporteFotograficoEstandar'
 import SignatureCanvas from '../common/SignatureCanvas'
+import { getFileUrl } from '../../config/api'
 
 const InformeFinal = ({ ordenId, onClose }) => {
   const { user } = useAuthStore()
@@ -79,23 +80,23 @@ const InformeFinal = ({ ordenId, onClose }) => {
       
       switch(tipo) {
         case 'ats':
-          documento = reporte.atsDocument
+          documento = reporte.atsDoc
           nombreArchivo = `ATS_Reporte_${index + 1}_${reporte.fecha || ''}.pdf`
           break
         case 'ptr':
-          documento = reporte.ptrDocument
+          documento = reporte.ptrDoc
           nombreArchivo = `PTR_Reporte_${index + 1}_${reporte.fecha || ''}.pdf`
           break
         case 'aspectos':
-          documento = reporte.aspectosAmbientalesDocument
+          documento = reporte.aspectosAmbientalesDoc
           nombreArchivo = `AspectosAmbientales_Reporte_${index + 1}_${reporte.fecha || ''}.pdf`
           break
       }
-      
+
       if (documento) {
         documentos.push({
           url: documento.url || documento,
-          nombre: documento.name || nombreArchivo,
+          nombre: documento.nombre || documento.name || nombreArchivo,
           reporteIndex: index + 1,
           fecha: reporte.fecha
         })
@@ -116,7 +117,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
       try {
         // Crear un enlace temporal para descargar
         const link = document.createElement('a')
-        link.href = doc.url
+        link.href = getFileUrl(doc.url)
         link.download = doc.nombre
         document.body.appendChild(link)
         link.click()
@@ -831,7 +832,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                           {reporte.atsDoc && (
                             <div className="bg-green-50 p-2 rounded">
                               <p className="text-xs font-medium text-gray-600">ATS:</p>
-                              <a href={reporte.atsDoc.url} target="_blank" rel="noopener noreferrer" 
+                              <a href={getFileUrl(reporte.atsDoc.url)} target="_blank" rel="noopener noreferrer"
                                  className="text-xs text-blue-600 hover:text-blue-800">
                                 📎 {reporte.atsDoc.nombre}
                               </a>
@@ -840,7 +841,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                           {reporte.aspectosAmbientalesDoc && (
                             <div className="bg-green-50 p-2 rounded">
                               <p className="text-xs font-medium text-gray-600">Aspectos Amb.:</p>
-                              <a href={reporte.aspectosAmbientalesDoc.url} target="_blank" rel="noopener noreferrer"
+                              <a href={getFileUrl(reporte.aspectosAmbientalesDoc.url)} target="_blank" rel="noopener noreferrer"
                                  className="text-xs text-blue-600 hover:text-blue-800">
                                 📎 {reporte.aspectosAmbientalesDoc.nombre}
                               </a>
@@ -849,7 +850,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                           {reporte.ptrDoc && (
                             <div className="bg-green-50 p-2 rounded">
                               <p className="text-xs font-medium text-gray-600">PTR:</p>
-                              <a href={reporte.ptrDoc.url} target="_blank" rel="noopener noreferrer"
+                              <a href={getFileUrl(reporte.ptrDoc.url)} target="_blank" rel="noopener noreferrer"
                                  className="text-xs text-blue-600 hover:text-blue-800">
                                 📎 {reporte.ptrDoc.nombre}
                               </a>

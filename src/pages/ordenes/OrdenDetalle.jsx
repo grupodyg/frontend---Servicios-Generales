@@ -7,7 +7,7 @@ import useMaterialesStore from '../../stores/materialesStore'
 import useAuthStore from '../../stores/authStore'
 import { isTecnico } from '../../utils/roleUtils'
 import { canViewPrices } from '../../utils/permissionsUtils'
-import { API_BASE_URL } from '../../config/api'
+import { API_BASE_URL, getFileUrl } from '../../config/api'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Timeline from '../../components/ui/Timeline'
@@ -60,7 +60,7 @@ const OrdenDetalle = () => {
         html: `
           <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
             <img
-              src="${API_BASE_URL}${foto.url || foto}"
+              src="${getFileUrl(foto.url || foto)}"
               alt="${tipoFoto === 'antes' ? 'Antes' : 'Después'} - ${indice + 1}"
               style="max-width: 100%; max-height: 70vh; object-fit: contain; display: block; margin: 0 auto;"
             />
@@ -1151,7 +1151,7 @@ const OrdenDetalle = () => {
                               {reporte.fotosAntes.map((foto, idx) => (
                                 <div key={idx} className="relative group">
                                   <img
-                                    src={`${API_BASE_URL}${foto.url || foto}`}
+                                    src={getFileUrl(foto.url || foto)}
                                     alt={`Antes - ${idx + 1}`}
                                     className="w-full h-24 sm:h-32 object-cover rounded-lg border-2 border-red-200 cursor-pointer hover:border-red-400 transition-colors"
                                     onClick={() => mostrarGaleriaFotos(reporte.fotosAntes, idx, reporte.id, 'antes')}
@@ -1185,7 +1185,7 @@ const OrdenDetalle = () => {
                               {reporte.fotosDespues.map((foto, idx) => (
                                 <div key={idx} className="relative group">
                                   <img
-                                    src={`${API_BASE_URL}${foto.url || foto}`}
+                                    src={getFileUrl(foto.url || foto)}
                                     alt={`Después - ${idx + 1}`}
                                     className="w-full h-24 sm:h-32 object-cover rounded-lg border-2 border-green-200 cursor-pointer hover:border-green-400 transition-colors"
                                     onClick={() => mostrarGaleriaFotos(reporte.fotosDespues, idx, reporte.id, 'despues')}
@@ -1235,7 +1235,7 @@ const OrdenDetalle = () => {
                                 {reporte.atsDoc ? (
                                   <div className="mt-2">
                                     <a
-                                      href={`${API_BASE_URL}${reporte.atsDoc.url}`}
+                                      href={getFileUrl(reporte.atsDoc.url)}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
@@ -1265,7 +1265,7 @@ const OrdenDetalle = () => {
                                 {reporte.aspectosAmbientalesDoc ? (
                                   <div className="mt-2">
                                     <a
-                                      href={`${API_BASE_URL}${reporte.aspectosAmbientalesDoc.url}`}
+                                      href={getFileUrl(reporte.aspectosAmbientalesDoc.url)}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
@@ -1295,7 +1295,7 @@ const OrdenDetalle = () => {
                                 {reporte.ptrDoc ? (
                                   <div className="mt-2">
                                     <a
-                                      href={`${API_BASE_URL}${reporte.ptrDoc.url}`}
+                                      href={getFileUrl(reporte.ptrDoc.url)}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-sm text-blue-600 hover:text-blue-800 flex items-center"

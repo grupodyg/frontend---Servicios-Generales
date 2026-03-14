@@ -4,6 +4,7 @@ import useAuthStore from '../../stores/authStore'
 import usePermisosStore from '../../stores/permisosStore'
 import notificationService from '../../services/notificationService'
 import { ROLES, isTecnico, isAdminOrSupervisor, getRoleDisplayName } from '../../utils/roleUtils'
+import { getFileUrl } from '../../config/api'
 
 const Permisos = () => {
   const { user, getAllUsers } = useAuthStore()
@@ -828,7 +829,7 @@ const Permisos = () => {
                               </div>
                               {archivo.url && (
                                 <a
-                                  href={archivo.url}
+                                  href={getFileUrl(archivo.url)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800 text-sm font-medium"
