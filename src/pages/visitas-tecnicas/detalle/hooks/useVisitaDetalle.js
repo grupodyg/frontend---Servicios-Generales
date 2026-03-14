@@ -121,7 +121,7 @@ const useVisitaDetalle = () => {
   const [listaPersonal, setListaPersonal] = useState([])
   const [nuevaPersona, setNuevaPersona] = useState({
     especialidad: '',
-    diasEstimados: 1,
+    diasEstimados: '',
     observaciones: ''
   })
   const [especialidadPersonalizada, setEspecialidadPersonalizada] = useState('')
@@ -634,15 +634,20 @@ const useVisitaDetalle = () => {
       return
     }
 
+    if (!nuevaPersona.diasEstimados || nuevaPersona.diasEstimados < 1) {
+      MySwal.fire({ icon: 'warning', title: 'Días estimados requeridos', text: 'Ingrese los días estimados' })
+      return
+    }
+
     const nuevaPersonaCompleta = {
       id: Date.now(),
       especialidad: especialidadFinal,
-      diasEstimados: nuevaPersona.diasEstimados,
+      diasEstimados: parseInt(nuevaPersona.diasEstimados),
       observaciones: nuevaPersona.observaciones
     }
 
     setListaPersonal(prev => [...prev, nuevaPersonaCompleta])
-    setNuevaPersona({ especialidad: '', diasEstimados: 1, observaciones: '' })
+    setNuevaPersona({ especialidad: '', diasEstimados: '', observaciones: '' })
     setEspecialidadPersonalizada('')
     setMostrarInputEspecialidad(false)
 

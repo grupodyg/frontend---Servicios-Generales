@@ -85,7 +85,7 @@ const TabPersonal = memo(({
                   className="input-field"
                   min="1"
                   value={nuevaPersona.diasEstimados}
-                  onChange={(e) => setNuevaPersona({ ...nuevaPersona, diasEstimados: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => setNuevaPersona({ ...nuevaPersona, diasEstimados: e.target.value === '' ? '' : parseInt(e.target.value) || '' })}
                 />
               </div>
 

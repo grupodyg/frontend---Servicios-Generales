@@ -19,6 +19,7 @@ const Clientes = () => {
     getEstadisticasClientes,
     cambiarEstadoCliente,
     actualizarCliente,
+    deleteCliente,
     inicializarDatos
   } = useClientesStore()
 
@@ -81,6 +82,27 @@ const Clientes = () => {
     if (result.isConfirmed) {
       await cambiarEstadoCliente(cliente.id, nuevoEstado)
       await notificationService.success('Estado actualizado', '', 2000)
+    }
+  }
+
+  const handleEliminarCliente = async (cliente) => {
+    const result = await notificationService.confirm(
+      '¿Eliminar cliente?',
+      `¿Estás seguro de eliminar a "${cliente.nombre}"? El cliente dejará de aparecer en todas las vistas.`,
+      'Eliminar',
+      'Cancelar'
+    )
+
+    if (result.isConfirmed) {
+      try {
+        await deleteCliente(cliente.id)
+        await notificationService.success('Cliente eliminado', '', 2000)
+        if (showModal) {
+          resetModal()
+        }
+      } catch (error) {
+        await notificationService.error('Error', 'No se pudo eliminar el cliente')
+      }
     }
   }
 
@@ -421,15 +443,27 @@ const Clientes = () => {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <button
-                        onClick={() => {
-                          setClienteSeleccionado(cliente)
-                          setShowModal(true)
-                        }}
-                        className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                      >
-                        Ver detalles
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setClienteSeleccionado(cliente)
+                            setShowModal(true)
+                          }}
+                          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                        >
+                          Ver detalles
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEliminarCliente(cliente)
+                          }}
+                          className="text-red-500 hover:text-red-700 font-medium text-sm"
+                          title="Eliminar cliente"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </motion.tr>
                 ))}
@@ -1121,6 +1155,12 @@ const Clientes = () => {
               <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
                 {modalView === 'detalles' && (
                   <>
+                    <button
+                      onClick={() => handleEliminarCliente(clienteSeleccionado)}
+                      className="btn-secondary text-red-600 hover:bg-red-50 border-red-200 mr-auto"
+                    >
+                      🗑️ Eliminar
+                    </button>
                     <button
                       onClick={handleVerHistorial}
                       className="btn-secondary"
