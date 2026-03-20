@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState } from 'react'
 import { ESPECIALIDADES_PERSONAL } from '../hooks/useVisitaDetalle'
-import { isAdminOrSupervisor } from '../../../../utils/roleUtils'
+import { isAdmin } from '../../../../utils/roleUtils'
 import { VISITA_ESTADOS } from '../../../../constants/visitasTecnicasConstants'
 
 const TabPersonal = memo(({
@@ -35,7 +35,7 @@ const TabPersonal = memo(({
   const puedeAsignarPrecios = useMemo(() => {
     if (!visitaActual || !user) return false
     const estadosPermitidos = [VISITA_ESTADOS.COMPLETED, 'completed', VISITA_ESTADOS.APPROVED, 'approved']
-    return isAdminOrSupervisor(user) && estadosPermitidos.includes(visitaActual.estado)
+    return isAdmin(user) && estadosPermitidos.includes(visitaActual.estado)
   }, [visitaActual, user])
 
   // Verificar si ya tienen precios asignados
@@ -48,10 +48,11 @@ const TabPersonal = memo(({
     return listaPersonal.reduce((sum, p) => sum + (p.totalCosto || (p.tarifaDiaria || 0) * (p.diasEstimados || 0)), 0)
   }, [listaPersonal])
 
-  // Mostrar columnas de precio si es admin y la visita está completada/aprobada, o si ya tienen precios
+  // Mostrar columnas de precio SOLO si es admin (ni supervisor ni técnico pueden ver precios)
   const mostrarPrecios = useMemo(() => {
+    if (!isAdmin(user)) return false
     return puedeAsignarPrecios || tienenPrecios
-  }, [puedeAsignarPrecios, tienenPrecios])
+  }, [puedeAsignarPrecios, tienenPrecios, user])
 
   const handleActivarModoPrecios = () => {
     handleCargarTarifasPersonal()

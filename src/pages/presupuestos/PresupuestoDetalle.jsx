@@ -376,6 +376,7 @@ const PresupuestoDetalle = () => {
               clienteData: {
                 ...found.clienteData,
                 nombre: clienteEncontrado.nombre,
+                tipo: clienteEncontrado.tipo,
                 ruc: clienteEncontrado.ruc || clienteEncontrado.dni,
                 email: clienteEncontrado.email,
                 telefono: clienteEncontrado.telefono,

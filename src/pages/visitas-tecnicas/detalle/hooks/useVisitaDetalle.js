@@ -1116,6 +1116,7 @@ const useVisitaDetalle = () => {
         cliente: visitaActual.cliente,
         clienteData: {
           nombre: visitaActual.cliente,
+          tipo: visitaActual.tipoCliente || 'empresa',
           ruc: '',
           email: visitaActual.email || '',
           telefono: visitaActual.telefono || '',

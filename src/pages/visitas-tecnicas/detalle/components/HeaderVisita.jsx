@@ -98,7 +98,7 @@ const HeaderVisita = memo(({
         {/* Boton de exportar PDF para admin/supervisor */}
         {isAdminOrSupervisor(user) && (
           <div>
-            {generateVisitaTecnicaReport(visitaActual, obtenerResumenFotos())}
+            {generateVisitaTecnicaReport(visitaActual, obtenerResumenFotos(), user?.role)}
           </div>
         )}
 

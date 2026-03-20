@@ -662,6 +662,7 @@ const PresupuestoNuevo = () => {
           cliente: clienteSeleccionado.nombre,
           clienteData: {
             nombre: clienteSeleccionado.nombre,
+            tipo: clienteSeleccionado.tipo,
             ruc: clienteSeleccionado.ruc || clienteSeleccionado.dni,
             email: clienteSeleccionado.email,
             telefono: clienteSeleccionado.telefono,

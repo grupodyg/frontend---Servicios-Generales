@@ -660,7 +660,8 @@ const stylesVisitaTecnica = StyleSheet.create({
   }
 })
 
-const VisitaTecnicaDocument = ({ visita, fotos = [] }) => {
+const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
+  const esAdmin = userRole === 'admin'
   // Obtener color del estado
   const getEstadoColor = (estado) => {
     switch(estado) {
@@ -781,10 +782,12 @@ const VisitaTecnicaDocument = ({ visita, fotos = [] }) => {
             <View style={stylesVisitaTecnica.table}>
               {/* Header */}
               <View style={stylesVisitaTecnica.tableHeader}>
-                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '50%' }]}>Material</Text>
-                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '15%', textAlign: 'center' }]}>Cant.</Text>
-                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '15%', textAlign: 'center' }]}>Unidad</Text>
-                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '20%', textAlign: 'right' }]}>Subtotal</Text>
+                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: esAdmin ? '50%' : '60%' }]}>Material</Text>
+                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: esAdmin ? '15%' : '20%', textAlign: 'center' }]}>Cant.</Text>
+                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: esAdmin ? '15%' : '20%', textAlign: 'center' }]}>Unidad</Text>
+                {esAdmin && (
+                  <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '20%', textAlign: 'right' }]}>Subtotal</Text>
+                )}
               </View>
               {/* Rows */}
               {visita.materialesEstimados.map((material, index) => (
@@ -795,21 +798,25 @@ const VisitaTecnicaDocument = ({ visita, fotos = [] }) => {
                     index % 2 === 1 && stylesVisitaTecnica.tableRowAlt
                   ]}
                 >
-                  <Text style={[stylesVisitaTecnica.tableCell, { width: '50%' }]}>{material.nombre}</Text>
-                  <Text style={[stylesVisitaTecnica.tableCell, { width: '15%', textAlign: 'center' }]}>{material.cantidad}</Text>
-                  <Text style={[stylesVisitaTecnica.tableCell, { width: '15%', textAlign: 'center' }]}>{material.unidad}</Text>
-                  <Text style={[stylesVisitaTecnica.tableCellBold, { width: '20%', textAlign: 'right' }]}>
-                    {material.subtotal ? `S/ ${material.subtotal.toFixed(2)}` : 'N/A'}
-                  </Text>
+                  <Text style={[stylesVisitaTecnica.tableCell, { width: esAdmin ? '50%' : '60%' }]}>{material.nombre}</Text>
+                  <Text style={[stylesVisitaTecnica.tableCell, { width: esAdmin ? '15%' : '20%', textAlign: 'center' }]}>{material.cantidad}</Text>
+                  <Text style={[stylesVisitaTecnica.tableCell, { width: esAdmin ? '15%' : '20%', textAlign: 'center' }]}>{material.unidad}</Text>
+                  {esAdmin && (
+                    <Text style={[stylesVisitaTecnica.tableCellBold, { width: '20%', textAlign: 'right' }]}>
+                      {material.subtotal ? `S/ ${material.subtotal.toFixed(2)}` : 'N/A'}
+                    </Text>
+                  )}
                 </View>
               ))}
-              {/* Total */}
-              <View style={[stylesVisitaTecnica.tableRow, { backgroundColor: '#1e40af', padding: 10 }]}>
-                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '80%', textAlign: 'right' }]}>TOTAL ESTIMADO:</Text>
-                <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '20%', textAlign: 'right', fontSize: 11 }]}>
-                  S/ {totalMateriales.toFixed(2)}
-                </Text>
-              </View>
+              {/* Total - solo visible para admin */}
+              {esAdmin && (
+                <View style={[stylesVisitaTecnica.tableRow, { backgroundColor: '#1e40af', padding: 10 }]}>
+                  <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '80%', textAlign: 'right' }]}>TOTAL ESTIMADO:</Text>
+                  <Text style={[stylesVisitaTecnica.tableHeaderCell, { width: '20%', textAlign: 'right', fontSize: 11 }]}>
+                    S/ {totalMateriales.toFixed(2)}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -977,10 +984,10 @@ export const usePDFGenerator = () => {
     )
   }
 
-  const generateVisitaTecnicaReport = (visita, fotos = []) => {
+  const generateVisitaTecnicaReport = (visita, fotos = [], userRole = 'admin') => {
     return (
       <PDFDownloadLink
-        document={<VisitaTecnicaDocument visita={visita} fotos={fotos} />}
+        document={<VisitaTecnicaDocument visita={visita} fotos={fotos} userRole={userRole} />}
         fileName={`visita-tecnica-${visita.id}.pdf`}
         className="btn-primary inline-flex items-center"
       >
@@ -1498,11 +1505,13 @@ const formatFechaCotizacion = (fecha) => {
 const PresupuestoDocument = ({ presupuesto, userRole }) => {
   // Datos seguros del cliente
   const clienteNombre = getClienteNombreSeguro(presupuesto)
+  const clienteTipo = getClienteData(presupuesto, 'tipo', '')
   const clienteRuc = getClienteData(presupuesto, 'ruc', '-')
   const clienteDireccion = getClienteData(presupuesto, 'direccion', '-')
   const clienteContacto = getClienteData(presupuesto, 'contacto', '-')
   const clienteTelefono = getClienteData(presupuesto, 'telefono', '-')
   const clienteEmail = getClienteData(presupuesto, 'email', '-')
+  const esEmpresa = clienteTipo === 'empresa'
 
   // Datos de la cotización con fallbacks seguros
   const validezDias = presupuesto?.validezDias || 30
@@ -1570,10 +1579,12 @@ const PresupuestoDocument = ({ presupuesto, userRole }) => {
                 <Text style={stylesCotizacion.infoLabel}>Dirección:</Text>
                 <Text style={stylesCotizacion.infoValueLight}>{clienteDireccion}</Text>
               </View>
-              <View style={stylesCotizacion.infoRow}>
-                <Text style={stylesCotizacion.infoLabel}>Contacto:</Text>
-                <Text style={stylesCotizacion.infoValueLight}>{clienteContacto}</Text>
-              </View>
+              {esEmpresa && (
+                <View style={stylesCotizacion.infoRow}>
+                  <Text style={stylesCotizacion.infoLabel}>Contacto:</Text>
+                  <Text style={stylesCotizacion.infoValueLight}>{clienteContacto}</Text>
+                </View>
+              )}
               <View style={stylesCotizacion.infoRow}>
                 <Text style={stylesCotizacion.infoLabel}>Teléfono:</Text>
                 <Text style={stylesCotizacion.infoValueLight}>{clienteTelefono}</Text>

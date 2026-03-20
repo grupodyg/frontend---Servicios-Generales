@@ -415,7 +415,7 @@ const Usuarios = () => {
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <span>{usuario.especialidad || 'Sin especialidad'}</span>
-                  <span>{new Date(usuario.ultimaActividad).toLocaleDateString()}</span>
+                  <span>{usuario.ultimaActividad ? new Date(usuario.ultimaActividad).toLocaleDateString() : 'Sin conexión'}</span>
                 </div>
                 <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
                   <button onClick={() => handleOpenModal('view', usuario)} className="text-blue-600 hover:text-blue-900 p-1" title="Ver">
@@ -502,7 +502,7 @@ const Usuarios = () => {
                         {getEstadoBadge(usuario.estado)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(usuario.ultimaActividad).toLocaleDateString()}
+                        {usuario.ultimaActividad ? new Date(usuario.ultimaActividad).toLocaleDateString() : 'Sin conexión'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
@@ -610,7 +610,7 @@ const Usuarios = () => {
                 
                 <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                   <p className="text-xs text-gray-500">
-                    Último acceso: {new Date(usuario.ultimaActividad).toLocaleDateString()}
+                    Último acceso: {usuario.ultimaActividad ? new Date(usuario.ultimaActividad).toLocaleDateString() : 'Sin conexión'}
                   </p>
                   <div className="flex space-x-1">
                     <button
@@ -745,7 +745,7 @@ const Usuarios = () => {
                           <div>
                             <dt className="text-sm font-medium text-gray-500">Última Actividad</dt>
                             <dd className="text-sm text-gray-900">
-                              {selectedUsuario.ultimaActividad ? new Date(selectedUsuario.ultimaActividad).toLocaleDateString() : 'No disponible'}
+                              {selectedUsuario.ultimaActividad ? new Date(selectedUsuario.ultimaActividad).toLocaleDateString() : 'Sin conexión'}
                             </dd>
                           </div>
                         </dl>
