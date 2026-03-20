@@ -188,26 +188,28 @@ export const apiRequest = async (url, options = {}) => {
       headers,
     });
 
-    // Handle 401 Unauthorized y 403 Forbidden (token expirado)
-    if (response.status === 401 || response.status === 403) {
-      // ✅ CRITICAL FIX: Read the actual error from backend before throwing generic message
+    // Handle 401 Unauthorized (sesión expirada / token inválido)
+    if (response.status === 401) {
       const errorData = await response.json().catch(() => ({}));
       const backendErrorMessage = errorData.error || errorData.mensaje || null;
-
-      // Check if this is a login request (should NOT clear storage for login failures)
       const isLoginRequest = url.includes('/auth/login');
 
       if (!isLoginRequest) {
-        // For non-login requests with 401/403: clear auth and redirect
         localStorage.removeItem('auth-storage');
         if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
           window.location.href = '/';
         }
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
       } else {
-        // For login requests: throw the actual backend error
         throw new Error(backendErrorMessage || 'Credenciales inválidas');
       }
+    }
+
+    // Handle 403 Forbidden (sin permisos, pero sesión válida — NO hacer logout)
+    if (response.status === 403) {
+      const errorData = await response.json().catch(() => ({}));
+      const backendErrorMessage = errorData.error || errorData.mensaje || 'No tienes permisos para esta acción';
+      throw new Error(backendErrorMessage);
     }
 
     // Handle other errors
@@ -273,12 +275,17 @@ export const api = {
       ...options,
     });
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       localStorage.removeItem('auth-storage');
       if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
         window.location.href = '/';
       }
       throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+    }
+
+    if (response.status === 403) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.mensaje || 'No tienes permisos para esta acción');
     }
 
     if (!response.ok) {
@@ -304,12 +311,17 @@ export const api = {
       ...options,
     });
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       localStorage.removeItem('auth-storage');
       if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
         window.location.href = '/';
       }
       throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+    }
+
+    if (response.status === 403) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.mensaje || 'No tienes permisos para esta acción');
     }
 
     if (!response.ok) {

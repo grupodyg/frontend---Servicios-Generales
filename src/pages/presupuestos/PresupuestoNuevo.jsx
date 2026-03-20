@@ -418,7 +418,7 @@ const PresupuestoNuevo = () => {
     fetchClientes()
     fetchMateriales()
     fetchHerramientas()
-    fetchTarifas()
+    if (user?.role === 'admin') fetchTarifas()
     fetchCondicionesPago()
     if (isEditing) fetchPresupuestos()
   }, [])

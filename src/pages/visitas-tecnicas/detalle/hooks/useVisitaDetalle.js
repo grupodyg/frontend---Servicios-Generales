@@ -8,7 +8,7 @@ import useHerramientasStore from '../../../../stores/herramientasStore'
 import useTecnicosStore from '../../../../stores/tecnicosStore'
 import useSpecialtyRatesStore from '../../../../stores/specialtyRatesStore'
 import { usePDFGenerator } from '../../../../utils/pdfGenerator.jsx'
-import { isAdminOrSupervisor, isTecnico } from '../../../../utils/roleUtils'
+import { isAdmin, isAdminOrSupervisor, isTecnico } from '../../../../utils/roleUtils'
 import { getCurrentTimestamp } from '../../../../utils/dateUtils'
 import {
   VISITA_ESTADOS,
@@ -158,13 +158,14 @@ const useVisitaDetalle = () => {
         await storeeFetchVisitas()
 
         // Cargar datos relacionados en paralelo
-        Promise.all([
+        // fetchTarifas solo para admin (specialty-rates es admin-only)
+        await Promise.all([
           fetchMateriales(),
           fetchHerramientas(),
           fetchPresupuestos(),
           fetchTecnicos(),
-          fetchTarifas()
-        ])
+          isAdmin(user) ? fetchTarifas() : Promise.resolve()
+        ]).catch(err => console.error('Error cargando datos relacionados:', err))
 
         const { visitas } = useVisitasTecnicasStore.getState()
         const visitaEncontrada = visitas.find(v => v.id === id)
