@@ -7,6 +7,7 @@ import notificationService from '../../services/notificationService'
 import { generarBoletaPDF } from '../../utils/boletaPDF'
 import { hasAdminPermissions } from '../../utils/roleUtils'
 import { getCurrentYear, getCurrentMonth } from '../../utils/dateUtils'
+import { getFileUrl } from '../../config/api'
 
 const Boletas = () => {
   const { user } = useAuthStore()
@@ -808,7 +809,7 @@ const Boletas = () => {
                         <div>
                           {boletaSeleccionada.archivoUrl ? (
                             <a
-                              href={boletaSeleccionada.archivoUrl}
+                              href={getFileUrl(boletaSeleccionada.archivoUrl)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"

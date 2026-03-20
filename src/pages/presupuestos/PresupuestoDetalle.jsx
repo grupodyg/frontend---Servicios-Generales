@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import usePresupuestosStore, { getClienteNombre } from '../../stores/presupuestosStore'
 import useOrdenesStore from '../../stores/ordenesStore'
+import useClientesStore from '../../stores/clientesStore'
 import useAuthStore from '../../stores/authStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { usePDFGenerator } from '../../utils/pdfGenerator'
@@ -312,6 +313,7 @@ const PresupuestoDetalle = () => {
     generarOrden
   } = usePresupuestosStore()
   const { createOrden } = useOrdenesStore()
+  const { fetchClientes } = useClientesStore()
   const { generatePresupuestoReport } = usePDFGenerator()
   const [presupuesto, setPresupuesto] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -361,7 +363,29 @@ const PresupuestoDetalle = () => {
         await fetchPresupuestos()
         const found = getPresupuestoById(id)
         if (found) {
-          setPresupuesto(found)
+          const clientesList = await fetchClientes()
+          const clienteName = found.cliente || found.clienteData?.nombre
+          const clienteRuc = found.clienteData?.ruc
+          const clienteEncontrado = (clientesList || []).find(c =>
+            (clienteRuc && (c.ruc === clienteRuc || c.dni === clienteRuc)) ||
+            c.nombre === clienteName
+          )
+          if (clienteEncontrado) {
+            setPresupuesto({
+              ...found,
+              clienteData: {
+                ...found.clienteData,
+                nombre: clienteEncontrado.nombre,
+                ruc: clienteEncontrado.ruc || clienteEncontrado.dni,
+                email: clienteEncontrado.email,
+                telefono: clienteEncontrado.telefono,
+                direccion: clienteEncontrado.direccion,
+                contacto: clienteEncontrado.contactoPrincipal?.nombre
+              }
+            })
+          } else {
+            setPresupuesto(found)
+          }
         }
       } finally {
         setLoading(false)
