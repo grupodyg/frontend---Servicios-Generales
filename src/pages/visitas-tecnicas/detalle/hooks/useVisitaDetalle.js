@@ -326,6 +326,8 @@ const useVisitaDetalle = () => {
           id: foto.id,
           url: foto.url,
           nombre: foto.nombre || foto.name,
+          name: foto.name || foto.nombre,
+          size: foto.size || null,
           comentario: foto.comentario || ''
         }))
       }
@@ -679,6 +681,58 @@ const useVisitaDetalle = () => {
     }
   }, [listaPersonal, requerimientosAdicionales, visitaActual, updateVisitaTecnica, fetchVisitas])
 
+  // Handler: Cargar tarifas automáticas desde specialty_rates
+  const handleCargarTarifasPersonal = useCallback(() => {
+    const { tarifas: tarifasActuales } = useSpecialtyRatesStore.getState()
+    const listaActualizada = listaPersonal.map(p => {
+      const tarifa = tarifasActuales.find(t =>
+        t.especialidad.toLowerCase() === (p.especialidad || '').toLowerCase()
+      )
+      const tarifaDiaria = tarifa?.tarifaDiaria || p.tarifaDiaria || 0
+      return {
+        ...p,
+        tarifaDiaria: tarifaDiaria,
+        totalCosto: tarifaDiaria * (p.diasEstimados || 0)
+      }
+    })
+    setListaPersonal(listaActualizada)
+  }, [listaPersonal])
+
+  // Handler: Actualizar precio de una persona individual
+  const handleActualizarPrecioPersona = useCallback((personaId, nuevaTarifa) => {
+    const tarifaNum = parseFloat(nuevaTarifa) || 0
+    setListaPersonal(prev => prev.map(p => {
+      if (p.id === personaId) {
+        return {
+          ...p,
+          tarifaDiaria: tarifaNum,
+          totalCosto: tarifaNum * (p.diasEstimados || 0)
+        }
+      }
+      return p
+    }))
+  }, [])
+
+  // Handler: Guardar precios del personal en la visita
+  const handleGuardarPreciosPersonal = useCallback(async () => {
+    try {
+      await updateVisitaTecnica(visitaActual.id, {
+        listaPersonal: listaPersonal
+      })
+
+      setVisitaActual(prev => ({
+        ...prev,
+        listaPersonal: listaPersonal
+      }))
+      await fetchVisitas()
+
+      MySwal.fire({ icon: 'success', title: 'Precios guardados', text: 'Los precios del personal han sido guardados correctamente', timer: 1500, showConfirmButton: false })
+    } catch (error) {
+      console.error('Error al guardar precios del personal:', error)
+      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron guardar los precios del personal' })
+    }
+  }, [listaPersonal, visitaActual, updateVisitaTecnica, fetchVisitas])
+
   // Handler: Completar Visita
   const handleCompletarVisita = useCallback(async () => {
     // Validaciones
@@ -768,6 +822,8 @@ const useVisitaDetalle = () => {
             id: f.id,
             url: f.url,
             nombre: f.nombre || f.name,
+            name: f.name || f.nombre,
+            size: f.size || null,
             comentario: f.comentario || ''
           }))
         }
@@ -1028,11 +1084,11 @@ const useVisitaDetalle = () => {
 
       // Items de mano de obra con tarifas de especialidad
       const itemsPersonal = (listaPersonal || []).map(p => {
-        // Buscar tarifa por especialidad
+        // Usar tarifa guardada en la persona, si no buscar en specialty_rates
         const tarifa = tarifasActuales.find(t =>
           t.especialidad.toLowerCase() === (p.especialidad || '').toLowerCase()
         )
-        const tarifaDiaria = tarifa?.tarifaDiaria || 0
+        const tarifaDiaria = p.tarifaDiaria || tarifa?.tarifaDiaria || 0
         const diasEstimados = p.diasEstimados || 0
         return {
           tipo: 'mano_obra',
@@ -1321,6 +1377,9 @@ const useVisitaDetalle = () => {
     handleAgregarPersona,
     handleEliminarPersona,
     handleGuardarPersonal,
+    handleCargarTarifasPersonal,
+    handleActualizarPrecioPersona,
+    handleGuardarPreciosPersonal,
 
     // Completar
     datosCompletado,

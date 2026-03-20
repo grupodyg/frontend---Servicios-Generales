@@ -37,7 +37,8 @@ const TabResumen = memo(({
     const personas = listaPersonal || []
     const totalPersonas = personas.length
     const totalDias = personas.reduce((sum, p) => sum + (p.diasEstimados || 0), 0)
-    return { totalPersonas, totalDias }
+    const totalCosto = personas.reduce((sum, p) => sum + (p.totalCosto || (p.tarifaDiaria || 0) * (p.diasEstimados || 0)), 0)
+    return { totalPersonas, totalDias, totalCosto }
   }, [listaPersonal])
 
   // Verificar si tiene presupuesto generado
@@ -46,10 +47,10 @@ const TabResumen = memo(({
     return presupuestos?.find(p => p.id === visitaActual.presupuestoGenerado)
   }, [visitaActual.presupuestoGenerado, presupuestos])
 
-  // Total general estimado
+  // Total general estimado (incluye personal)
   const totalGeneral = useMemo(() => {
-    return totalesMateriales.totalCosto + totalesHerramientas.totalCosto
-  }, [totalesMateriales.totalCosto, totalesHerramientas.totalCosto])
+    return totalesMateriales.totalCosto + totalesHerramientas.totalCosto + totalPersonal.totalCosto
+  }, [totalesMateriales.totalCosto, totalesHerramientas.totalCosto, totalPersonal.totalCosto])
 
   return (
     <div className="space-y-6">
@@ -284,8 +285,17 @@ const TabResumen = memo(({
             <h3 className="text-lg font-semibold text-gray-800">Personal Requerido</h3>
           </div>
           <div className="sm:text-right">
-            <p className="text-xl sm:text-2xl font-bold text-green-600">{totalPersonal.totalPersonas}</p>
-            <p className="text-xs text-gray-500">{totalPersonal.totalDias} dias estimados</p>
+            {totalPersonal.totalCosto > 0 ? (
+              <>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">S/ {totalPersonal.totalCosto.toFixed(2)}</p>
+                <p className="text-xs text-gray-500">{totalPersonal.totalPersonas} personas - {totalPersonal.totalDias} dias estimados</p>
+              </>
+            ) : (
+              <>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{totalPersonal.totalPersonas}</p>
+                <p className="text-xs text-gray-500">{totalPersonal.totalDias} dias estimados</p>
+              </>
+            )}
           </div>
         </div>
 
@@ -297,26 +307,45 @@ const TabResumen = memo(({
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-green-800">Especialidad</th>
                     <th className="px-3 py-2 text-center text-xs font-semibold text-green-800 w-24">Dias Est.</th>
+                    {totalPersonal.totalCosto > 0 && (
+                      <>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-green-800 w-24">Tarifa/Dia</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-green-800 w-24">Subtotal</th>
+                      </>
+                    )}
                     <th className="px-3 py-2 text-left text-xs font-semibold text-green-800">Observaciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {listaPersonal.map((p, idx) => (
-                    <tr key={p.id || idx} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 text-gray-700">
-                        <span className="inline-flex items-center">
-                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                          <span className="font-medium">{p.especialidad}</span>
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {p.diasEstimados} dias
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-gray-500 text-xs">{p.observaciones || '-'}</td>
-                    </tr>
-                  ))}
+                  {listaPersonal.map((p, idx) => {
+                    const totalP = p.totalCosto || (p.tarifaDiaria || 0) * (p.diasEstimados || 0)
+                    return (
+                      <tr key={p.id || idx} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 text-gray-700">
+                          <span className="inline-flex items-center">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            <span className="font-medium">{p.especialidad}</span>
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {p.diasEstimados} dias
+                          </span>
+                        </td>
+                        {totalPersonal.totalCosto > 0 && (
+                          <>
+                            <td className="px-3 py-2 text-right text-gray-600">
+                              {p.tarifaDiaria > 0 ? `S/ ${parseFloat(p.tarifaDiaria).toFixed(2)}` : '-'}
+                            </td>
+                            <td className="px-3 py-2 text-right font-semibold text-gray-800">
+                              {totalP > 0 ? `S/ ${totalP.toFixed(2)}` : '-'}
+                            </td>
+                          </>
+                        )}
+                        <td className="px-3 py-2 text-gray-500 text-xs">{p.observaciones || '-'}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

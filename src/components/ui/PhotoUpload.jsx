@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import Compressor from 'compressorjs'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getCurrentTimestamp } from '../../utils/dateUtils'
+import { getFileUrl } from '../../config/api'
 
 const PhotoUpload = ({ 
   photos = [], 
@@ -80,12 +81,22 @@ const PhotoUpload = ({
   }
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes'
+    if (!bytes || bytes === 0) return null
     const k = 1024
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
+
+  // Resuelve la URL correcta: blob URLs para fotos nuevas, getFileUrl para fotos de Wasabi/servidor
+  const resolvePhotoUrl = (url) => {
+    if (!url) return ''
+    if (url.startsWith('blob:')) return url
+    return getFileUrl(url)
+  }
+
+  // Obtiene el nombre de la foto (compatibilidad: name o nombre)
+  const getPhotoName = (photo) => photo.name || photo.nombre || ''
 
   return (
     <div className="space-y-4">
@@ -142,18 +153,18 @@ const PhotoUpload = ({
               >
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                   <img
-                    src={photo.url}
-                    alt={photo.name}
+                    src={resolvePhotoUrl(photo.url)}
+                    alt={getPhotoName(photo)}
                     className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
                     onClick={() => setPreviewPhoto(photo)}
                   />
                 </div>
-                
+
                 {/* Photo Info */}
                 <div className="mt-2 text-xs text-gray-500">
-                  <p className="truncate">{photo.name}</p>
-                  <p>{formatFileSize(photo.size)}</p>
-                  {photo.originalSize > photo.size && (
+                  {getPhotoName(photo) && <p className="truncate">{getPhotoName(photo)}</p>}
+                  {formatFileSize(photo.size) && <p>{formatFileSize(photo.size)}</p>}
+                  {photo.originalSize && photo.size && photo.originalSize > photo.size && (
                     <p className="text-green-600">
                       ↓ {Math.round((1 - photo.size / photo.originalSize) * 100)}% comprimida
                     </p>
@@ -194,18 +205,27 @@ const PhotoUpload = ({
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={previewPhoto.url}
-                alt={previewPhoto.name}
+                src={resolvePhotoUrl(previewPhoto.url)}
+                alt={getPhotoName(previewPhoto)}
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
               <div className="bg-white p-3 sm:p-4 mt-2 sm:mt-4 rounded-lg">
-                <h3 className="font-medium text-gray-900">{previewPhoto.name}</h3>
-                <p className="text-sm text-gray-500">
-                  Tamaño: {formatFileSize(previewPhoto.size)}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Subida: {new Date(previewPhoto.uploadedAt).toLocaleString()}
-                </p>
+                {getPhotoName(previewPhoto) && (
+                  <h3 className="font-medium text-gray-900">{getPhotoName(previewPhoto)}</h3>
+                )}
+                {previewPhoto.comentario && (
+                  <p className="text-sm text-gray-600 mt-1">{previewPhoto.comentario}</p>
+                )}
+                {formatFileSize(previewPhoto.size) && (
+                  <p className="text-sm text-gray-500">
+                    Tamaño: {formatFileSize(previewPhoto.size)}
+                  </p>
+                )}
+                {previewPhoto.uploadedAt && (
+                  <p className="text-sm text-gray-500">
+                    Subida: {new Date(previewPhoto.uploadedAt).toLocaleString()}
+                  </p>
+                )}
               </div>
             </motion.div>
             

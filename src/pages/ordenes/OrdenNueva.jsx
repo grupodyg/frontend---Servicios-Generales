@@ -317,7 +317,7 @@ const OrdenNueva = () => {
 
   // Cargar datos de visita técnica seleccionada y autocompletar campos
   useEffect(() => {
-    if (visitaTecnicaOrigen && visitaTecnicaOrigen !== 'nueva') {
+    if (visitaTecnicaOrigen) {
       const visita = visitasCompletadas.find(v => v.id === visitaTecnicaOrigen)
       if (visita && visita !== visitaSeleccionada) { // Evitar re-procesar la misma visita
         setVisitaSeleccionada(visita)
@@ -391,34 +391,6 @@ const OrdenNueva = () => {
           return
         }
         
-        if (data.visitaTecnicaOrigen === 'nueva') {
-          // Guardar datos temporalmente en localStorage para recuperarlos después
-          const datosParaVisita = {
-            cliente: clienteSeleccionado || data.cliente,
-            clienteId: clienteObj?.id,
-            tipoServicio: data.tipoServicio,
-            descripcion: data.descripcion,
-            ubicacion: data.ubicacion,
-            prioridad: data.prioridad,
-            fechaVencimiento: data.fechaVencimiento,
-            costoEstimado: data.costoEstimado,
-            tecnicoAsignado: data.tecnicoAsignado
-          }
-          
-          localStorage.setItem('datosOrdenPendiente', JSON.stringify(datosParaVisita))
-          
-          MySwal.fire({
-            title: 'Crear Nueva Visita Técnica',
-            text: 'Se creará una nueva visita técnica. Complete la visita antes de proceder.',
-            icon: 'info',
-            confirmButtonColor: '#1e40af',
-            confirmButtonText: 'Crear Visita Técnica'
-          }).then(() => {
-            navigate('/visitas-tecnicas/nueva')
-          })
-          
-          return
-        }
       }
       
       // Validación para órdenes sin visita técnica
@@ -606,7 +578,6 @@ const OrdenNueva = () => {
                     })}
                   >
                     <option value="">Seleccionar visita técnica...</option>
-                    <option value="nueva">🆕 Crear nueva visita técnica</option>
                     <optgroup label="Visitas aprobadas disponibles">
                       {visitasCompletadas.map((visita) => (
                         <option key={visita.id} value={visita.id}>

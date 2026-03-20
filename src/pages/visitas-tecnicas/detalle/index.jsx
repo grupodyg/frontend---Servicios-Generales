@@ -86,6 +86,9 @@ const VisitaTecnicaDetalleRefactorizado = () => {
     handleAgregarPersona,
     handleEliminarPersona,
     handleGuardarPersonal,
+    handleCargarTarifasPersonal,
+    handleActualizarPrecioPersona,
+    handleGuardarPreciosPersonal,
 
     // Completar
     datosCompletado,
@@ -287,6 +290,11 @@ const VisitaTecnicaDetalleRefactorizado = () => {
             handleAgregarPersona={handleAgregarPersona}
             handleEliminarPersona={handleEliminarPersona}
             handleGuardarPersonal={handleGuardarPersonal}
+            user={user}
+            visitaActual={visitaActual}
+            handleCargarTarifasPersonal={handleCargarTarifasPersonal}
+            handleActualizarPrecioPersona={handleActualizarPrecioPersona}
+            handleGuardarPreciosPersonal={handleGuardarPreciosPersonal}
           />
         )}
 

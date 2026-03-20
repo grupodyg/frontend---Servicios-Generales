@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getCurrentTimestamp } from '../../utils/dateUtils'
+import { getFileUrl } from '../../config/api'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -254,7 +255,7 @@ const CategorizedPhotoUpload = ({
                 {fotos.map((foto, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={foto.url}
+                      src={foto.url?.startsWith('blob:') ? foto.url : getFileUrl(foto.url)}
                       alt={foto.descripcion}
                       className="w-full h-24 object-cover rounded-lg"
                     />
