@@ -1,5 +1,20 @@
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Image, Font } from '@react-pdf/renderer'
 import { getCurrentDate, formatDate, formatTime, formatDateLong, getToday } from './dateUtils'
+import { API_BASE_URL } from '../config/api'
+
+// Helper: Convertir URL relativa a absoluta para @react-pdf/renderer
+const getAbsoluteImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+    return url
+  }
+  const baseUrl = API_BASE_URL ? API_BASE_URL.replace(/\/api\/?$/, '') : ''
+  const fullUrl = `${baseUrl}${url}`
+  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+  const hasValidExtension = validExtensions.some(ext => fullUrl.toLowerCase().endsWith(ext))
+  if (hasValidExtension) return fullUrl
+  return fullUrl + (fullUrl.includes('?') ? '&ext=.jpg' : '.jpg')
+}
 
 // Registrar fuentes para mejor tipografía
 Font.register({
@@ -907,7 +922,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [] }) => {
                   <View key={index} style={stylesVisitaTecnica.photoItem}>
                     {foto.url && (
                       <Image
-                        src={foto.url}
+                        src={getAbsoluteImageUrl(foto.url)}
                         style={stylesVisitaTecnica.photo}
                       />
                     )}
