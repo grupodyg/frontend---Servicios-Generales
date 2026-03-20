@@ -254,17 +254,7 @@ const useVisitasTecnicasStore = create(
           )
 
           const response = await api.put(API_ENDPOINTS.TECHNICAL_VISIT_BY_ID(id), backendUpdates)
-
-          console.log('📦 Response from backend:', response)
-          console.log('📦 response.data:', response.data)
-          console.log('📦 response.data.approval:', response.data?.approval)
-          console.log('📦 response.data.status:', response.data?.status)
-
           const updatedVisita = transformBackendToFrontend(response.data)
-
-          console.log('🔄 Transformed visita:', updatedVisita)
-          console.log('🔄 updatedVisita.aprobacion:', updatedVisita?.aprobacion)
-          console.log('🔄 updatedVisita.estado:', updatedVisita?.estado)
 
           await get().fetchVisitas()
 
@@ -486,7 +476,6 @@ const useVisitasTecnicasStore = create(
             formData
           )
 
-          console.log('✅ Fotos subidas:', response.data)
           return response.data // Array de fotos con URLs del servidor
         } catch (error) {
           console.error('Error al subir fotos:', error)
@@ -505,7 +494,6 @@ const useVisitasTecnicasStore = create(
             formData
           )
 
-          console.log('✅ Foto subida:', response.data)
           return response.data // Objeto de foto con URL del servidor
         } catch (error) {
           console.error('Error al subir foto:', error)
@@ -517,7 +505,6 @@ const useVisitasTecnicasStore = create(
       deleteVisitaPhoto: async (visitaId, filename) => {
         try {
           await api.delete(API_ENDPOINTS.TECHNICAL_VISIT_PHOTO_DELETE(visitaId, filename))
-          console.log('🗑️ Foto eliminada:', filename)
           return true
         } catch (error) {
           console.error('Error al eliminar foto:', error)

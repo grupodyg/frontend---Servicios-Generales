@@ -502,39 +502,6 @@ const useReportesStore = create((set, get) => ({
     }
   },
 
-  // Obtener estadísticas de reportes
-  getEstadisticasReportes: () => {
-    const { reportes } = get()
-    let totalReportes = 0
-    let promedioAvance = 0
-    let reportesHoy = 0
-    
-    const hoy = getToday()
-    
-    Object.values(reportes).forEach(ordenReportes => {
-      // Verificar que ordenReportes sea un array
-      if (Array.isArray(ordenReportes)) {
-        totalReportes += ordenReportes.length
-        ordenReportes.forEach(reporte => {
-          promedioAvance += reporte.porcentajeAvance || 0
-          if (reporte.fecha === hoy) {
-            reportesHoy++
-          }
-        })
-      }
-    })
-
-    if (totalReportes > 0) {
-      promedioAvance = Math.round(promedioAvance / totalReportes)
-    }
-
-    return {
-      totalReportes,
-      promedioAvance,
-      reportesHoy
-    }
-  },
-
   // Helper para transformar informe final de backend (snake_case) a frontend (camelCase)
   normalizeInformeFinalFromBackend: (informe) => {
     if (!informe) return null
@@ -795,10 +762,11 @@ const useReportesStore = create((set, get) => ({
   // ========================================
   // OBTENER ESTADÍSTICAS DE REPORTES (DATOS REALES)
   // ========================================
-  fetchStatistics: async (days = 7) => {
+  fetchStatistics: async (days = 7, clientId = null) => {
     try {
-      // Enviar periodo al backend
-      const url = `${API_ENDPOINTS.DAILY_REPORTS_STATISTICS}?days=${days}`
+      const params = new URLSearchParams({ days })
+      if (clientId) params.append('client_id', clientId)
+      const url = `${API_ENDPOINTS.DAILY_REPORTS_STATISTICS}?${params.toString()}`
       const statistics = await api.get(url)
       return statistics
     } catch (error) {

@@ -7,30 +7,6 @@ import { getCurrentTimestamp } from '../utils/dateUtils'
 const transformBackendToFrontend = (backend) => {
   if (!backend) return null
 
-  // Transformar attached_documentation que puede ser null, string, o JSON
-  let archivosAdjuntos = []
-  let documentacionTexto = null
-
-  if (backend.attached_documentation) {
-    if (Array.isArray(backend.attached_documentation)) {
-      archivosAdjuntos = backend.attached_documentation
-    } else if (typeof backend.attached_documentation === 'string') {
-      try {
-        // Intentar parsear como JSON
-        const parsed = JSON.parse(backend.attached_documentation)
-        archivosAdjuntos = Array.isArray(parsed) ? parsed : []
-      } catch {
-        // Si no es JSON válido, es un string simple
-        // Guardarlo como texto plano para mostrar
-        documentacionTexto = backend.attached_documentation
-        // No crear archivos adjuntos para texto plano
-        archivosAdjuntos = []
-      }
-    } else if (typeof backend.attached_documentation === 'object') {
-      archivosAdjuntos = [backend.attached_documentation]
-    }
-  }
-
   return {
     id: backend.id,
     empleadoId: backend.employee_id,
@@ -40,8 +16,7 @@ const transformBackendToFrontend = (backend) => {
     fechaFin: backend.end_date,
     diasSolicitados: backend.days_requested,
     motivo: backend.reason,
-    documentacionAdjunta: documentacionTexto,
-    archivosAdjuntos: archivosAdjuntos,
+    documentacionAdjunta: backend.attached_documentation || null,
     estado: backend.status,
     aprobadoPor: backend.approved_by,
     fechaAprobacion: backend.approval_date,
@@ -203,23 +178,38 @@ const usePermisosStore = create(
         }
       },
 
+      fetchPermitAttachments: async (permitId) => {
+        try {
+          const url = `${API_ENDPOINTS.PERMIT_ATTACHMENTS}?permit_id=${encodeURIComponent(permitId)}`
+          const attachments = await api.get(url)
+          return (attachments || []).map(att => ({
+            id: att.id,
+            nombre: att.name,
+            tipo: att.file_type,
+            tamaño: att.size ? (att.size / 1024).toFixed(2) + 'KB' : null,
+            url: att.url,
+            fechaCarga: att.date_time_registration
+          }))
+        } catch (error) {
+          console.error('Error fetching permit attachments:', error)
+          return []
+        }
+      },
+
       agregarArchivoAdjunto: async (permisoId, archivoInfo) => {
-        const permiso = get().getPermisoById(permisoId)
-        if (!permiso) return
-
-        const archivosActuales = permiso.documentacionAdjunta || []
-        const nuevosArchivos = [
-          ...archivosActuales,
-          {
-            id: Date.now().toString(),
-            ...archivoInfo,
-            fechaCarga: getCurrentTimestamp()
-          }
-        ]
-
-        await get().updatePermiso(permisoId, {
-          documentacionAdjunta: nuevosArchivos
-        })
+        try {
+          const response = await api.post(API_ENDPOINTS.PERMIT_ATTACHMENTS, {
+            permit_id: permisoId,
+            name: archivoInfo.nombre,
+            file_type: archivoInfo.tipo,
+            size: archivoInfo.size || null,
+            url: archivoInfo.url
+          })
+          return response.data
+        } catch (error) {
+          console.error('Error creating permit attachment:', error)
+          throw error
+        }
       }
     }),
     {

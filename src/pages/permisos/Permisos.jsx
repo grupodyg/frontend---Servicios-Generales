@@ -16,6 +16,7 @@ const Permisos = () => {
     rechazarPermiso,
     agregarArchivoAdjunto,
     uploadPermisoFile,
+    fetchPermitAttachments,
     obtenerEstadisticas,
     inicializarDatos
   } = usePermisosStore()
@@ -26,6 +27,8 @@ const Permisos = () => {
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [permisoSeleccionado, setPermisoSeleccionado] = useState(null)
+  const [archivosAdjuntos, setArchivosAdjuntos] = useState([])
+  const [loadingArchivos, setLoadingArchivos] = useState(false)
   const [formData, setFormData] = useState({
     empleadoId: '',
     empleadoNombre: '',
@@ -150,45 +153,48 @@ const Permisos = () => {
     }
   }
 
-  const handleVerDetalles = (permiso) => {
-    console.log('🔍 Ver detalles - Permiso completo:', permiso)
-    console.log('🔍 archivosAdjuntos:', permiso.archivosAdjuntos)
-    console.log('🔍 es Array?:', Array.isArray(permiso.archivosAdjuntos))
-    if (permiso.archivosAdjuntos) {
-      console.log('🔍 Contenido archivos:', permiso.archivosAdjuntos.map((a, i) => ({
-        index: i,
-        tipo: typeof a,
-        esObjeto: typeof a === 'object',
-        keys: Object.keys(a || {}),
-        valor: a
-      })))
-    }
+  const handleVerDetalles = async (permiso) => {
     setPermisoSeleccionado(permiso)
+    setArchivosAdjuntos([])
+    setLoadingArchivos(true)
+    try {
+      const archivos = await fetchPermitAttachments(permiso.id)
+      setArchivosAdjuntos(archivos)
+    } catch (error) {
+      console.error('Error cargando archivos adjuntos:', error)
+    } finally {
+      setLoadingArchivos(false)
+    }
   }
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
-    if (file) {
-      try {
-        // Subir archivo a S3
-        const uploadResult = await uploadPermisoFile(file)
+    if (!file || !permisoSeleccionado) return
 
-        const fileInfo = {
-          nombre: uploadResult.name,
-          tipo: uploadResult.type,
-          tamaño: (uploadResult.size / 1024).toFixed(2) + 'KB',
-          url: uploadResult.url
-        }
+    try {
+      // 1. Subir archivo a Wasabi S3
+      const uploadResult = await uploadPermisoFile(file)
 
-        if (permisoSeleccionado) {
-          await agregarArchivoAdjunto(permisoSeleccionado.id, fileInfo)
-          await notificationService.success('Archivo adjuntado', '', 1000)
-        }
-      } catch (error) {
-        console.error('Error subiendo archivo:', error)
-        await notificationService.error('Error', 'No se pudo subir el archivo')
-      }
+      // 2. Crear registro en tabla permit_attachments
+      await agregarArchivoAdjunto(permisoSeleccionado.id, {
+        nombre: uploadResult.name,
+        tipo: uploadResult.type,
+        size: uploadResult.size,
+        url: uploadResult.url
+      })
+
+      // 3. Recargar la lista de adjuntos
+      const archivos = await fetchPermitAttachments(permisoSeleccionado.id)
+      setArchivosAdjuntos(archivos)
+
+      await notificationService.success('Archivo adjuntado', '', 1000)
+    } catch (error) {
+      console.error('Error subiendo archivo:', error)
+      await notificationService.error('Error', 'No se pudo subir el archivo')
     }
+
+    // Limpiar el input para permitir subir el mismo archivo de nuevo
+    e.target.value = ''
   }
 
   const calcularDias = (fechaInicio, fechaFin) => {
@@ -395,9 +401,6 @@ const Permisos = () => {
               </div>
               <div className="text-sm text-gray-600 mb-1 capitalize">{permiso.tipoPermiso}</div>
               <div className="text-xs text-gray-500 mb-1">{permiso.fechaInicio} - {permiso.fechaFin} ({permiso.diasSolicitados || 1} dias)</div>
-              {permiso.archivosAdjuntos?.length > 0 && (
-                <span className="text-xs text-blue-600">📎 {permiso.archivosAdjuntos.length} adjuntos</span>
-              )}
               <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100">
                 <button onClick={() => handleVerDetalles(permiso)} className="text-blue-600 hover:text-blue-800 font-medium text-sm">Ver detalles</button>
                 {permiso.estado === 'pending' && isAdminOrSupervisor(user) && (
@@ -456,11 +459,6 @@ const Permisos = () => {
                     {getEstadoBadge(permiso.estado)}
                   </td>
                   <td className="py-4 px-4">
-                    {permiso.archivosAdjuntos?.length > 0 && (
-                      <span className="flex items-center gap-1 text-blue-600">
-                        📎 {permiso.archivosAdjuntos.length}
-                      </span>
-                    )}
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex gap-2">
@@ -683,7 +681,7 @@ const Permisos = () => {
                   Detalles del Permiso {permisoSeleccionado.id}
                 </h3>
                 <button
-                  onClick={() => setPermisoSeleccionado(null)}
+                  onClick={() => { setPermisoSeleccionado(null); setArchivosAdjuntos([]) }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
@@ -748,16 +746,21 @@ const Permisos = () => {
                   <p className="text-gray-900">{permisoSeleccionado.motivo}</p>
                 </div>
                 
-                {permisoSeleccionado.documentacionAdjunta && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 mb-1">Documentación / Justificación</p>
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <p className="text-gray-700 whitespace-pre-wrap">
-                        {permisoSeleccionado.documentacionAdjunta}
-                      </p>
+                {permisoSeleccionado.documentacionAdjunta && (() => {
+                  const texto = permisoSeleccionado.documentacionAdjunta
+                  // No mostrar si es JSON corrupto (datos de archivo embebidos por error)
+                  if (typeof texto === 'string' && texto.startsWith('[') && texto.includes('"url"')) return null
+                  return (
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Documentación / Justificación</p>
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p className="text-gray-700 whitespace-pre-wrap">
+                          {typeof texto === 'string' ? texto : ''}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
                 
                 {permisoSeleccionado.estado === 'rejected' && permisoSeleccionado.motivoRechazo && (
                   <div>
@@ -784,65 +787,43 @@ const Permisos = () => {
                     )}
                   </div>
                   
-                  {(() => {
-                    const archivos = permisoSeleccionado.archivosAdjuntos || []
-                    const archivosArray = Array.isArray(archivos) ? archivos : []
-
-                    if (archivosArray.length === 0) {
-                      return <p className="text-sm text-gray-500">No hay archivos adjuntos</p>
-                    }
-
-                    return (
-                      <div className="space-y-2">
-                        {archivosArray.map((archivo, index) => {
-                          if (!archivo || typeof archivo !== 'object') {
-                            return null
-                          }
-
-                          return (
-                            <div
-                              key={archivo.id || index}
-                              className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3"
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className="text-2xl">📄</span>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {String(archivo.nombre || 'Documento adjunto')}
-                                  </p>
-                                  {archivo.descripcion && typeof archivo.descripcion === 'string' && (
-                                    <p className="text-xs text-gray-500">
-                                      {archivo.descripcion}
-                                    </p>
-                                  )}
-                                  {archivo.descripcion && typeof archivo.descripcion !== 'string' && (
-                                    <p className="text-xs text-gray-500">
-                                      {JSON.stringify(archivo.descripcion)}
-                                    </p>
-                                  )}
-                                  {archivo.tamaño && archivo.fechaCarga && (
-                                    <p className="text-xs text-gray-500">
-                                      {String(archivo.tamaño)} • {new Date(archivo.fechaCarga).toLocaleDateString()}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              {archivo.url && (
-                                <a
-                                  href={getFileUrl(archivo.url)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                >
-                                  Ver archivo
-                                </a>
-                              )}
+                  {loadingArchivos ? (
+                    <p className="text-sm text-gray-500">Cargando archivos...</p>
+                  ) : archivosAdjuntos.length === 0 ? (
+                    <p className="text-sm text-gray-500">No hay archivos adjuntos</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {archivosAdjuntos.map((archivo) => (
+                        <div
+                          key={archivo.id}
+                          className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">📄</span>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {archivo.nombre || 'Documento adjunto'}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {archivo.tamaño && `${archivo.tamaño} • `}
+                                {archivo.fechaCarga && new Date(archivo.fechaCarga).toLocaleDateString()}
+                              </p>
                             </div>
-                          )
-                        })}
-                      </div>
-                    )
-                  })()}
+                          </div>
+                          {archivo.url && (
+                            <a
+                              href={getFileUrl(archivo.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              Ver archivo
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

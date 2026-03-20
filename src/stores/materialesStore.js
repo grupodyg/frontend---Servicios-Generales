@@ -19,6 +19,7 @@ const transformMaterialBackendToFrontend = (backendMaterial) => {
     precioUnitario: parseFloat(backendMaterial.unit_price) || 0,
     ubicacion: backendMaterial.warehouse_location,
     proveedor: backendMaterial.supplier,
+    imagen: backendMaterial.image_url || null,
     estado: backendMaterial.status,
     fechaCreacion: backendMaterial.date_time_registration
   }
@@ -148,15 +149,25 @@ const useMaterialesStore = create(
         }
       },
 
-      createMaterial: async (materialData) => {
+      createMaterial: async (materialData, imageFile = null) => {
         set({ isLoading: true })
         try {
           const backendData = transformMaterialFrontendToBackend(materialData)
-          const response = await api.post(API_ENDPOINTS.MATERIALS, backendData)
+          let response
+
+          if (imageFile) {
+            const formData = new FormData()
+            Object.entries(backendData).forEach(([key, value]) => {
+              if (value !== null && value !== undefined) formData.append(key, value)
+            })
+            formData.append('image', imageFile)
+            response = await api.upload(API_ENDPOINTS.MATERIALS, formData)
+          } else {
+            response = await api.post(API_ENDPOINTS.MATERIALS, backendData)
+          }
+
           const createdMaterial = transformMaterialBackendToFrontend(response.data)
-
           await get().fetchMateriales()
-
           set({ isLoading: false })
           return createdMaterial
         } catch (error) {
@@ -166,20 +177,30 @@ const useMaterialesStore = create(
         }
       },
 
-      updateMaterial: async (id, updates) => {
+      updateMaterial: async (id, updates, imageFile = null, removeImage = false) => {
         set({ isLoading: true })
         try {
           const backendUpdates = transformMaterialFrontendToBackend(updates)
-          // Limpiar campos undefined (pero NO null, ya que null es válido para COALESCE)
           Object.keys(backendUpdates).forEach(key =>
             backendUpdates[key] === undefined && delete backendUpdates[key]
           )
 
-          const response = await api.put(API_ENDPOINTS.MATERIAL_BY_ID(id), backendUpdates)
+          let response
+
+          if (imageFile || removeImage) {
+            const formData = new FormData()
+            Object.entries(backendUpdates).forEach(([key, value]) => {
+              if (value !== null && value !== undefined) formData.append(key, value)
+            })
+            if (imageFile) formData.append('image', imageFile)
+            if (removeImage) formData.append('remove_image', 'true')
+            response = await api.uploadPut(API_ENDPOINTS.MATERIAL_BY_ID(id), formData)
+          } else {
+            response = await api.put(API_ENDPOINTS.MATERIAL_BY_ID(id), backendUpdates)
+          }
+
           const updatedMaterial = transformMaterialBackendToFrontend(response.data)
-
           await get().fetchMateriales()
-
           set({ isLoading: false })
           return updatedMaterial
         } catch (error) {

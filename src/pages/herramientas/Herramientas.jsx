@@ -5,6 +5,7 @@ import useAuthStore from '../../stores/authStore'
 import useHerramientasStore from '../../stores/herramientasStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { getToday, formatDateTime, formatDate } from '../../utils/dateUtils'
+import { getFileUrl } from '../../config/api'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -63,6 +64,10 @@ const Herramientas = () => {
   const [categoriaEditando, setCategoriaEditando] = useState(null)
   const [categoriaEditandoNombre, setCategoriaEditandoNombre] = useState('')
   const [categoriaEditandoPrefijo, setCategoriaEditandoPrefijo] = useState('')
+
+  // Estados para imagen en edición
+  const [imagenEditarFile, setImagenEditarFile] = useState(null)
+  const [imagenEditarPreview, setImagenEditarPreview] = useState(null)
 
   useEffect(() => {
     // Cargar herramientas, categorías y solicitudes desde la API
@@ -600,6 +605,24 @@ const Herramientas = () => {
     setShowEditarModal(true)
   }
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        MySwal.fire({ title: 'Error', text: 'Solo se permiten archivos de imagen', icon: 'error', confirmButtonColor: '#1e40af' })
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        MySwal.fire({ title: 'Error', text: 'La imagen no debe superar los 10MB', icon: 'error', confirmButtonColor: '#1e40af' })
+        return
+      }
+      setImagenEditarFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => setImagenEditarPreview(reader.result)
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleGuardarEdicion = async () => {
     try {
       const datosActualizados = {
@@ -613,7 +636,7 @@ const Herramientas = () => {
         categoriaId: herramientaSeleccionada.categoriaId
       }
 
-      await updateHerramienta(herramientaSeleccionada.id, datosActualizados)
+      await updateHerramienta(herramientaSeleccionada.id, datosActualizados, imagenEditarFile)
 
       MySwal.fire({
         title: '¡Actualizado!',
@@ -624,6 +647,8 @@ const Herramientas = () => {
       })
       setShowEditarModal(false)
       setHerramientaSeleccionada(null)
+      setImagenEditarFile(null)
+      setImagenEditarPreview(null)
     } catch (error) {
       console.error('Error actualizando herramienta:', error)
       MySwal.fire({
@@ -807,7 +832,11 @@ const Herramientas = () => {
             <div key={herramienta.id} className="bg-gray-50 rounded-lg p-3 border">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center min-w-0 flex-1">
-                  <div className="text-xl mr-2 flex-shrink-0">🛠️</div>
+                  {herramienta.imagen ? (
+                    <img src={getFileUrl(herramienta.imagen)} alt={herramienta.nombre} className="w-10 h-10 object-cover rounded mr-2 flex-shrink-0" />
+                  ) : (
+                    <div className="text-xl mr-2 flex-shrink-0">🔧</div>
+                  )}
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-gray-900 truncate">{herramienta.nombre}</div>
                     <div className="text-xs text-gray-500">{herramienta.modelo}</div>
@@ -881,7 +910,11 @@ const Herramientas = () => {
                 <tr key={herramienta.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="text-2xl mr-3">🛠️</div>
+                      {herramienta.imagen ? (
+                        <img src={getFileUrl(herramienta.imagen)} alt={herramienta.nombre} className="w-10 h-10 object-cover rounded mr-3" />
+                      ) : (
+                        <div className="text-2xl mr-3">🔧</div>
+                      )}
                       <div>
                         <div className="text-sm font-medium text-gray-900">
                           {herramienta.nombre}
@@ -1259,12 +1292,9 @@ const Herramientas = () => {
                             <div className="flex items-center space-x-3 mb-2">
                               {herramienta.imagen ? (
                                 <img
-                                  src={herramienta.imagen}
+                                  src={getFileUrl(herramienta.imagen)}
                                   alt={herramienta.nombre}
                                   className="w-12 h-12 object-cover rounded"
-                                  onError={(e) => {
-                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAxNlYyNEgxNlYxNkgyMFpNMjggMTZWMjRIMjRWMTZIMjhaTTM2IDE2VjI0SDMyVjE2SDM2WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
-                                  }}
                                 />
                               ) : (
                                 <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
@@ -1277,15 +1307,15 @@ const Herramientas = () => {
                               </div>
                             </div>
                             <div className="text-xs text-gray-500">
-                              Stock: {herramienta.stockActual} disponibles
+                              Stock: {herramienta.cantidad} disponibles
                             </div>
                           </div>
                           <button
                             onClick={() => handleAddHerramienta(herramienta)}
                             className="btn-secondary text-xs px-3 py-1"
-                            disabled={herramienta.stockActual <= 0 || selectedHerramientas.some(h => h.id === herramienta.id)}
+                            disabled={herramienta.cantidad <= 0 || selectedHerramientas.some(h => h.id === herramienta.id)}
                           >
-                            {herramienta.stockActual <= 0 ? 'No disponible' :
+                            {herramienta.cantidad <= 0 ? 'No disponible' :
                              selectedHerramientas.some(h => h.id === herramienta.id) ? 'Agregada' : '+ Agregar'}
                           </button>
                         </div>
@@ -1506,6 +1536,18 @@ const Herramientas = () => {
                     <p className="text-sm text-gray-600">{herramientaSeleccionada.descripcion}</p>
                   </div>
                 )}
+
+                {/* Imagen */}
+                {herramientaSeleccionada.imagen && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-2">📷 Imagen</h4>
+                    <img
+                      src={getFileUrl(herramientaSeleccionada.imagen)}
+                      alt={herramientaSeleccionada.nombre}
+                      className="w-full h-48 object-cover rounded-lg border"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Footer */}
@@ -1549,6 +1591,8 @@ const Herramientas = () => {
                   onClick={() => {
                     setShowEditarModal(false)
                     setHerramientaSeleccionada(null)
+                    setImagenEditarFile(null)
+                    setImagenEditarPreview(null)
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -1689,6 +1733,63 @@ const Herramientas = () => {
                     placeholder="Descripción de la herramienta..."
                   />
                 </div>
+
+                {/* Imagen de la Herramienta (Opcional) */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base">📷 Imagen</h4>
+                  {imagenEditarPreview ? (
+                    <div className="relative">
+                      <img src={imagenEditarPreview} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
+                      <button
+                        type="button"
+                        onClick={() => { setImagenEditarFile(null); setImagenEditarPreview(null) }}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-lg"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : herramientaSeleccionada.imagen ? (
+                    <div className="relative">
+                      <img src={getFileUrl(herramientaSeleccionada.imagen)} alt={herramientaSeleccionada.nombre} className="w-full h-48 object-cover rounded-lg border" />
+                      <div className="absolute bottom-2 right-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const result = await MySwal.fire({ title: 'Eliminar imagen', text: 'Se eliminará la imagen de la herramienta', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280', confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' })
+                            if (result.isConfirmed) {
+                              try {
+                                await updateHerramienta(herramientaSeleccionada.id, {}, null, true)
+                                setHerramientaSeleccionada({ ...herramientaSeleccionada, imagen: null })
+                                MySwal.fire({ title: 'Imagen eliminada', icon: 'success', timer: 1500, showConfirmButton: false })
+                              } catch (e) { MySwal.fire({ title: 'Error', text: e.message, icon: 'error' }) }
+                            }
+                          }}
+                          className="bg-red-500 text-white rounded-lg px-3 py-1 text-sm hover:bg-red-600 shadow-lg"
+                        >
+                          Eliminar
+                        </button>
+                        <label className="bg-blue-600 text-white rounded-lg px-3 py-1 text-sm cursor-pointer hover:bg-blue-700 shadow-lg">
+                          Cambiar
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                      <div className="text-center">
+                        <span className="text-2xl block mb-1">📷</span>
+                        <span className="text-sm text-gray-500">Click para seleccionar imagen</span>
+                        <span className="text-xs text-gray-400 block">JPG, PNG (máx. 10MB)</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               {/* Footer */}
@@ -1697,6 +1798,8 @@ const Herramientas = () => {
                   onClick={() => {
                     setShowEditarModal(false)
                     setHerramientaSeleccionada(null)
+                    setImagenEditarFile(null)
+                    setImagenEditarPreview(null)
                   }}
                   className="btn-secondary text-sm"
                 >

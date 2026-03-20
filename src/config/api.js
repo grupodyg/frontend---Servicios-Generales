@@ -289,6 +289,37 @@ export const api = {
 
     return await response.json();
   },
+
+  uploadPut: async (url, formData, options = {}) => {
+    const token = getAuthToken();
+    const headers = {
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    };
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: formData,
+      ...options,
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('auth-storage');
+      if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
+        window.location.href = '/';
+      }
+      throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || errorData.mensaje || `Error: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  },
 };
 
 /**

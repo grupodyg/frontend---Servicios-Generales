@@ -4,6 +4,7 @@ import useMaterialesStore from '../../stores/materialesStore'
 import useAuthStore from '../../stores/authStore'
 import useOrdenesStore from '../../stores/ordenesStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
+import { getFileUrl } from '../../config/api'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -80,6 +81,10 @@ const Materiales = () => {
     motivo: 'Compra'
   })
   const [selectedMaterials, setSelectedMaterials] = useState([])
+  const [imagenNuevoMaterial, setImagenNuevoMaterial] = useState(null)
+  const [previewNuevoMaterial, setPreviewNuevoMaterial] = useState(null)
+  const [imagenEditarMaterial, setImagenEditarMaterial] = useState(null)
+  const [previewEditarMaterial, setPreviewEditarMaterial] = useState(null)
 
   useEffect(() => {
     fetchMateriales()
@@ -221,13 +226,13 @@ const Materiales = () => {
 
   const handleSolicitudAprobacion = async (solicitudId, accion) => {
     const result = await MySwal.fire({
-      title: `¿${accion === 'aprobada' ? 'Aprobar' : 'Rechazar'} solicitud?`,
+      title: `¿${accion === 'approved' ? 'Aprobar' : 'Rechazar'} solicitud?`,
       text: 'Esta acción no se puede deshacer',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: accion === 'aprobada' ? '#059669' : '#dc2626',
+      confirmButtonColor: accion === 'approved' ? '#059669' : '#dc2626',
       cancelButtonColor: '#6b7280',
-      confirmButtonText: accion === 'aprobada' ? 'Aprobar' : 'Rechazar',
+      confirmButtonText: accion === 'approved' ? 'Aprobar' : 'Rechazar',
       cancelButtonText: 'Cancelar'
     })
 
@@ -477,6 +482,29 @@ const Materiales = () => {
     }
   }
 
+  const handleImageChange = (e, setFile, setPreview) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        MySwal.fire({ title: 'Error', text: 'Solo se permiten archivos de imagen', icon: 'error', confirmButtonColor: '#1e40af' })
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        MySwal.fire({ title: 'Error', text: 'La imagen no debe superar los 10MB', icon: 'error', confirmButtonColor: '#1e40af' })
+        return
+      }
+      setFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => setPreview(reader.result)
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const clearImageSelection = (setFile, setPreview) => {
+    setFile(null)
+    setPreview(null)
+  }
+
   const validarFormularioMaterial = () => {
     const errores = []
 
@@ -520,8 +548,8 @@ const Materiales = () => {
         precioUnitario: parseFloat(nuevoMaterial.precioUnitario) || 0
       }
 
-      await createMaterial(nuevoMaterialData)
-      
+      await createMaterial(nuevoMaterialData, imagenNuevoMaterial)
+
       MySwal.fire({
         title: '¡Material creado!',
         text: 'El nuevo material ha sido agregado al inventario',
@@ -541,6 +569,8 @@ const Materiales = () => {
         proveedor: '',
         ubicacion: ''
       })
+      setImagenNuevoMaterial(null)
+      setPreviewNuevoMaterial(null)
       setCodigoPreview('')
       setShowNuevoMaterialModal(false)
       
@@ -685,7 +715,7 @@ const Materiales = () => {
         ubicacion: materialParaEditar.ubicacion || ''
       }
 
-      await updateMaterial(materialParaEditar.id, updates)
+      await updateMaterial(materialParaEditar.id, updates, imagenEditarMaterial)
 
       MySwal.fire({
         title: '¡Material actualizado!',
@@ -697,6 +727,8 @@ const Materiales = () => {
 
       // Reset y cerrar modal
       setMaterialParaEditar(null)
+      setImagenEditarMaterial(null)
+      setPreviewEditarMaterial(null)
       setShowEditMaterialModal(false)
 
     } catch (error) {
@@ -938,12 +970,9 @@ const Materiales = () => {
                       <div className="relative mb-4 rounded-lg overflow-hidden bg-gray-100">
                         {material.imagen ? (
                           <img
-                            src={material.imagen}
+                            src={getFileUrl(material.imagen)}
                             alt={material.nombre}
                             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgMTIwVjE4MEgxNDBWMTIwSDE3NVpNMjI1IDEyMFYxODBIMTkwVjEyMEgyMjVaTTI3NSAxMjBWMTgwSDI0MFYxMjBIMjc1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
-                            }}
                           />
                         ) : (
                           <div className="w-full h-48 flex items-center justify-center bg-gray-200">
@@ -1616,6 +1645,8 @@ const Materiales = () => {
                       ubicacion: ''
                     })
                     setCodigoPreview('')
+                    setImagenNuevoMaterial(null)
+                    setPreviewNuevoMaterial(null)
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -1744,6 +1775,39 @@ const Materiales = () => {
                   />
                 </div>
 
+                {/* Imagen del Material (Opcional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Imagen del Material <span className="text-gray-400">(Opcional)</span>
+                  </label>
+                  {previewNuevoMaterial ? (
+                    <div className="relative">
+                      <img src={previewNuevoMaterial} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
+                      <button
+                        type="button"
+                        onClick={() => clearImageSelection(setImagenNuevoMaterial, setPreviewNuevoMaterial)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-lg"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                      <div className="text-center">
+                        <span className="text-2xl block mb-1">📷</span>
+                        <span className="text-sm text-gray-500">Click para seleccionar imagen</span>
+                        <span className="text-xs text-gray-400 block">JPG, PNG (max. 10MB)</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageChange(e, setImagenNuevoMaterial, setPreviewNuevoMaterial)}
+                      />
+                    </label>
+                  )}
+                </div>
+
                 <div className="flex justify-end space-x-3 pt-6 border-t">
                   <button
                     type="button"
@@ -1761,6 +1825,8 @@ const Materiales = () => {
                         ubicacion: ''
                       })
                       setCodigoPreview('')
+                      setImagenNuevoMaterial(null)
+                      setPreviewNuevoMaterial(null)
                     }}
                     className="btn-secondary"
                   >
@@ -2144,12 +2210,9 @@ const Materiales = () => {
                   <div className="relative rounded-lg overflow-hidden bg-gray-100">
                     {materialParaVer.imagen ? (
                       <img
-                        src={materialParaVer.imagen}
+                        src={getFileUrl(materialParaVer.imagen)}
                         alt={materialParaVer.nombre}
                         className="w-full h-48 sm:h-64 md:h-80 object-cover"
-                        onError={(e) => {
-                          e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNzUgMTIwVjE4MEgxNDBWMTIwSDE3NVpNMjI1IDEyMFYxODBIMTkwVjEyMEgyMjVaTTI3NSAxMjBWMTgwSDI0MFYxMjBIMjc1WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
-                        }}
                       />
                     ) : (
                       <div className="w-full h-48 sm:h-64 md:h-80 flex items-center justify-center bg-gray-200">
@@ -2326,6 +2389,8 @@ const Materiales = () => {
                   onClick={() => {
                     setShowEditMaterialModal(false)
                     setMaterialParaEditar(null)
+                    setImagenEditarMaterial(null)
+                    setPreviewEditarMaterial(null)
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -2478,12 +2543,73 @@ const Materiales = () => {
                   </div>
                 </div>
 
+                {/* Imagen del Material (Opcional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Imagen del Material <span className="text-gray-400">(Opcional)</span>
+                  </label>
+                  {previewEditarMaterial ? (
+                    <div className="relative">
+                      <img src={previewEditarMaterial} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
+                      <button
+                        type="button"
+                        onClick={() => clearImageSelection(setImagenEditarMaterial, setPreviewEditarMaterial)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-lg"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : materialParaEditar.imagen ? (
+                    <div className="relative">
+                      <img src={getFileUrl(materialParaEditar.imagen)} alt={materialParaEditar.nombre} className="w-full h-48 object-cover rounded-lg border" />
+                      <div className="absolute bottom-2 right-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const result = await MySwal.fire({ title: 'Eliminar imagen', text: 'Se eliminará la imagen del material', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#6b7280', confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' })
+                            if (result.isConfirmed) {
+                              try {
+                                await updateMaterial(materialParaEditar.id, {}, null, true)
+                                setMaterialParaEditar({ ...materialParaEditar, imagen: null })
+                                MySwal.fire({ title: 'Imagen eliminada', icon: 'success', timer: 1500, showConfirmButton: false })
+                              } catch (e) { MySwal.fire({ title: 'Error', text: e.message, icon: 'error' }) }
+                            }
+                          }}
+                          className="bg-red-500 text-white rounded-lg px-3 py-1 text-sm hover:bg-red-600 shadow-lg"
+                        >
+                          Eliminar
+                        </button>
+                        <label className="bg-blue-600 text-white rounded-lg px-3 py-1 text-sm cursor-pointer hover:bg-blue-700 shadow-lg">
+                          Cambiar
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, setImagenEditarMaterial, setPreviewEditarMaterial)} />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                      <div className="text-center">
+                        <span className="text-2xl block mb-1">📷</span>
+                        <span className="text-sm text-gray-500">Click para seleccionar imagen</span>
+                        <span className="text-xs text-gray-400 block">JPG, PNG (max. 10MB)</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageChange(e, setImagenEditarMaterial, setPreviewEditarMaterial)}
+                      />
+                    </label>
+                  )}
+                </div>
+
                 <div className="flex justify-end space-x-3 pt-6 border-t">
                   <button
                     type="button"
                     onClick={() => {
                       setShowEditMaterialModal(false)
                       setMaterialParaEditar(null)
+                      setImagenEditarMaterial(null)
+                      setPreviewEditarMaterial(null)
                     }}
                     className="btn-secondary"
                   >

@@ -19,7 +19,7 @@ import DateRangePicker from '../../components/ui/DateRangePicker'
 const Reportes = () => {
   const navigate = useNavigate()
   const { hasPermission, user } = useAuthStore()
-  const { reportes, fetchReportesByOrden, getEstadisticasReportes, fetchStatistics } = useReportesStore()
+  const { reportes, fetchReportesByOrden, fetchStatistics } = useReportesStore()
   const { ordenes, fetchOrdenes } = useOrdenesStore()
   const { getEstadisticasMateriales, getMaterialesBajoStock, fetchMateriales, fetchSolicitudes } = useMaterialesStore()
   const { clientes, fetchClientes } = useClientesStore()
@@ -28,8 +28,9 @@ const Reportes = () => {
   const [activeTab, setActiveTab] = useState('resumen')
   const [dateRange, setDateRange] = useState('semana')
   const [selectedOrder, setSelectedOrder] = useState(null)
-  const [selectedClient, setSelectedClient] = useState(null) // Nuevo: filtro por cliente
+  const [selectedClient, setSelectedClient] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [initialLoadDone, setInitialLoadDone] = useState(false)
   const [exporting, setExporting] = useState(false)
 
   // Estado para rango de fechas personalizado en Productividad
@@ -62,13 +63,12 @@ const Reportes = () => {
         console.log('📊 Cargando reportes y estadísticas...')
         const days = getPeriodDays(dateRange)
 
-        // Cargar órdenes, estadísticas, materiales Y clientes en paralelo
         const [fetchedOrdenes, statistics] = await Promise.all([
           fetchOrdenes(),
-          fetchStatistics(days),
-          fetchMateriales(),    // Cargar materiales frescos
-          fetchSolicitudes(),   // Cargar solicitudes frescas
-          fetchClientes()       // Cargar clientes para filtro
+          fetchStatistics(days, selectedClient),
+          fetchMateriales(),
+          fetchSolicitudes(),
+          fetchClientes()
         ])
 
         console.log(`✅ ${fetchedOrdenes?.length || 0} órdenes cargadas`)
@@ -85,53 +85,53 @@ const Reportes = () => {
         console.error('❌ Error cargando reportes:', error)
       } finally {
         setLoading(false)
+        setInitialLoadDone(true)
       }
     }
     loadData()
   }, [fetchOrdenes, fetchStatistics, fetchMateriales, fetchSolicitudes, fetchClientes])
 
-  // Recargar estadísticas cuando cambia el periodo
+  // Recargar estadísticas cuando cambia el periodo o el cliente
   useEffect(() => {
+    if (!initialLoadDone) return
     const reloadStats = async () => {
-      if (!loading) {
-        try {
-          const days = getPeriodDays(dateRange)
-          console.log(`🔄 Recargando estadísticas para ${days} días...`)
-          const statistics = await fetchStatistics(days)
-          if (statistics) {
-            setDailyProductivityData(statistics.dailyProductivity || [])
-          }
-        } catch (error) {
-          console.error('Error recargando estadísticas:', error)
+      try {
+        const days = getPeriodDays(dateRange)
+        const statistics = await fetchStatistics(days, selectedClient)
+        if (statistics) {
+          setTechnicianStats(statistics.technicians || [])
+          setGeneralStats(statistics.general || null)
+          setDailyProductivityData(statistics.dailyProductivity || [])
+          setKpisData(statistics.kpis || null)
         }
+      } catch (error) {
+        console.error('Error recargando estadísticas:', error)
       }
     }
     reloadStats()
-  }, [dateRange, fetchStatistics, loading])
+  }, [dateRange, selectedClient, fetchStatistics, initialLoadDone])
 
   // Recargar productividad cuando cambia el período de productividad
   useEffect(() => {
+    if (!initialLoadDone || activeTab !== 'productividad') return
     const reloadProductivityStats = async () => {
-      if (!loading && activeTab === 'productividad') {
-        try {
-          let days
-          if (productivityPeriod === 'personalizado' && productivityDateRange.startDate && productivityDateRange.endDate) {
-            days = differenceInDays(productivityDateRange.endDate, productivityDateRange.startDate) + 1
-          } else {
-            days = getPeriodDays(productivityPeriod)
-          }
-          console.log(`🔄 Recargando productividad para ${days} días...`)
-          const statistics = await fetchStatistics(days)
-          if (statistics) {
-            setDailyProductivityData(statistics.dailyProductivity || [])
-          }
-        } catch (error) {
-          console.error('Error recargando productividad:', error)
+      try {
+        let days
+        if (productivityPeriod === 'personalizado' && productivityDateRange.startDate && productivityDateRange.endDate) {
+          days = differenceInDays(productivityDateRange.endDate, productivityDateRange.startDate) + 1
+        } else {
+          days = getPeriodDays(productivityPeriod)
         }
+        const statistics = await fetchStatistics(days, selectedClient)
+        if (statistics) {
+          setDailyProductivityData(statistics.dailyProductivity || [])
+        }
+      } catch (error) {
+        console.error('Error recargando productividad:', error)
       }
     }
     reloadProductivityStats()
-  }, [productivityPeriod, productivityDateRange, fetchStatistics, loading, activeTab])
+  }, [productivityPeriod, productivityDateRange, selectedClient, fetchStatistics, initialLoadDone, activeTab])
 
   // Usar datos reales de productividad - SIN datos inventados
   const productivityData = useMemo(() => {
@@ -172,12 +172,15 @@ const Reportes = () => {
     return labels[status] || status
   }
 
-  // Datos de órdenes por estado (normalizado)
-  const ordenesEstado = useMemo(() => {
-    const filteredOrdenes = selectedClient
+  // Órdenes filtradas por cliente seleccionado
+  const filteredOrdenes = useMemo(() => {
+    return selectedClient
       ? ordenes.filter(o => o.clienteId === selectedClient)
       : ordenes
+  }, [ordenes, selectedClient])
 
+  // Datos de órdenes por estado (normalizado)
+  const ordenesEstado = useMemo(() => {
     return [
       {
         name: 'Completadas',
@@ -195,7 +198,7 @@ const Reportes = () => {
         color: '#6b7280'
       },
     ]
-  }, [ordenes, selectedClient])
+  }, [filteredOrdenes])
 
   // Usar datos REALES de eficiencia por técnico (del backend)
   const eficienciaTecnicos = useMemo(() => {
@@ -215,7 +218,6 @@ const Reportes = () => {
     return []
   }, [technicianStats])
 
-  const estadisticasReportes = getEstadisticasReportes()
   const estadisticasMateriales = getEstadisticasMateriales()
   const materialesBajoStock = getMaterialesBajoStock()
 
@@ -304,10 +306,10 @@ const Reportes = () => {
       doc.setTextColor(0, 0, 0)
 
       const resumenData = [
-        ['Total Órdenes de Trabajo', ordenes.length.toString()],
-        ['Reportes Diarios', estadisticasReportes.totalReportes.toString()],
-        ['Reportes Hoy', estadisticasReportes.reportesHoy.toString()],
-        ['Eficiencia Promedio', `${estadisticasReportes.promedioAvance}%`],
+        ['Total Órdenes de Trabajo', filteredOrdenes.length.toString()],
+        ['Reportes Diarios', (generalStats?.total_reports || 0).toString()],
+        ['Reportes Hoy', (generalStats?.reports_today || 0).toString()],
+        ['Avance Promedio', `${generalStats?.avg_progress || 0}%`],
         ['Alertas Materiales', materialesBajoStock.length.toString()],
       ]
 
@@ -340,7 +342,7 @@ const Reportes = () => {
       const ordenesData = ordenesEstado.map(item => [
         item.name,
         item.value.toString(),
-        `${((item.value / ordenes.length) * 100).toFixed(1)}%`
+        `${filteredOrdenes.length > 0 ? ((item.value / filteredOrdenes.length) * 100).toFixed(1) : '0.0'}%`
       ])
 
       autoTable(doc, {
@@ -652,7 +654,7 @@ const Reportes = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs sm:text-sm text-gray-600">Total Órdenes de trabajo</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{ordenes.length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{filteredOrdenes.length}</p>
               </div>
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <span className="text-lg sm:text-xl">📋</span>
@@ -670,7 +672,7 @@ const Reportes = () => {
               <div>
                 <p className="text-xs sm:text-sm text-gray-600">Reportes Diarios</p>
                 <p className="text-xl sm:text-2xl font-bold text-blue-600">
-                  {generalStats?.total_reports || estadisticasReportes.totalReportes || 0}
+                  {generalStats?.total_reports || 0}
                 </p>
               </div>
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -679,7 +681,7 @@ const Reportes = () => {
             </div>
             <div className="mt-2">
               <span className="text-xs sm:text-sm text-blue-600">
-                {generalStats?.reports_today || estadisticasReportes.reportesHoy || 0} hoy
+                {generalStats?.reports_today || 0} hoy
               </span>
             </div>
           </div>
@@ -689,7 +691,7 @@ const Reportes = () => {
               <div>
                 <p className="text-xs sm:text-sm text-gray-600">Avance Promedio</p>
                 <p className="text-xl sm:text-2xl font-bold text-green-600">
-                  {generalStats?.avg_progress || estadisticasReportes.promedioAvance || 0}%
+                  {generalStats?.avg_progress || 0}%
                 </p>
               </div>
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">

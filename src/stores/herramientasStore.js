@@ -43,6 +43,7 @@ const transformToolBackendToFrontend = (backendTool) => {
     categoriaId: backendTool.category_id,
     categoriaNombre: backendTool.category_name,
     categoriaPrefix: backendTool.category_prefix,
+    imagen: backendTool.image_url || null,
     estado: backendTool.status,
     fechaCreacion: backendTool.date_time_registration
   }
@@ -269,15 +270,25 @@ const useHerramientasStore = create(
         }
       },
 
-      createHerramienta: async (herramientaData) => {
+      createHerramienta: async (herramientaData, imageFile = null) => {
         set({ isLoading: true })
         try {
           const backendData = transformToolFrontendToBackend(herramientaData)
-          const response = await api.post(API_ENDPOINTS.TOOLS, backendData)
+          let response
+
+          if (imageFile) {
+            const formData = new FormData()
+            Object.entries(backendData).forEach(([key, value]) => {
+              if (value !== null && value !== undefined) formData.append(key, value)
+            })
+            formData.append('image', imageFile)
+            response = await api.upload(API_ENDPOINTS.TOOLS, formData)
+          } else {
+            response = await api.post(API_ENDPOINTS.TOOLS, backendData)
+          }
+
           const createdHerramienta = transformToolBackendToFrontend(response.data)
-
           await get().fetchHerramientas()
-
           set({ isLoading: false })
           return createdHerramienta
         } catch (error) {
@@ -287,7 +298,7 @@ const useHerramientasStore = create(
         }
       },
 
-      updateHerramienta: async (id, updates) => {
+      updateHerramienta: async (id, updates, imageFile = null, removeImage = false) => {
         set({ isLoading: true })
         try {
           const backendUpdates = transformToolFrontendToBackend(updates)
@@ -295,11 +306,22 @@ const useHerramientasStore = create(
             (backendUpdates[key] === undefined || backendUpdates[key] === null) && delete backendUpdates[key]
           )
 
-          const response = await api.put(API_ENDPOINTS.TOOL_BY_ID(id), backendUpdates)
+          let response
+
+          if (imageFile || removeImage) {
+            const formData = new FormData()
+            Object.entries(backendUpdates).forEach(([key, value]) => {
+              if (value !== null && value !== undefined) formData.append(key, value)
+            })
+            if (imageFile) formData.append('image', imageFile)
+            if (removeImage) formData.append('remove_image', 'true')
+            response = await api.uploadPut(API_ENDPOINTS.TOOL_BY_ID(id), formData)
+          } else {
+            response = await api.put(API_ENDPOINTS.TOOL_BY_ID(id), backendUpdates)
+          }
+
           const updatedHerramienta = transformToolBackendToFrontend(response.data)
-
           await get().fetchHerramientas()
-
           set({ isLoading: false })
           return updatedHerramienta
         } catch (error) {

@@ -21,6 +21,8 @@ const HerramientaNueva = () => {
   const [marcaEditando, setMarcaEditando] = useState(null)
   const [marcaEditandoNombre, setMarcaEditandoNombre] = useState('')
   const [marcasPersonalizadas, setMarcasPersonalizadas] = useState([])
+  const [imagenFile, setImagenFile] = useState(null)
+  const [imagenPreview, setImagenPreview] = useState(null)
   
   const {
     register,
@@ -197,6 +199,24 @@ const HerramientaNueva = () => {
     setMarcaEditandoNombre('')
   }
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        MySwal.fire({ title: 'Error', text: 'Solo se permiten archivos de imagen', icon: 'error', confirmButtonColor: '#1e40af' })
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        MySwal.fire({ title: 'Error', text: 'La imagen no debe superar los 10MB', icon: 'error', confirmButtonColor: '#1e40af' })
+        return
+      }
+      setImagenFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => setImagenPreview(reader.result)
+      reader.readAsDataURL(file)
+    }
+  }
+
   const onSubmit = async (data) => {
     setIsLoading(true)
 
@@ -217,7 +237,7 @@ const HerramientaNueva = () => {
       console.log('Datos de herramienta a crear:', herramientaData)
 
       // Crear herramienta en la API
-      const nuevaHerramienta = await createHerramienta(herramientaData)
+      const nuevaHerramienta = await createHerramienta(herramientaData, imagenFile)
       console.log('Herramienta creada:', nuevaHerramienta)
 
       MySwal.fire({
@@ -401,6 +421,39 @@ const HerramientaNueva = () => {
                 </p>
               </div>
             )}
+
+            {/* Imagen de la Herramienta (Opcional) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Imagen de la Herramienta <span className="text-gray-500">(Opcional)</span>
+              </label>
+              {imagenPreview ? (
+                <div className="relative">
+                  <img src={imagenPreview} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
+                  <button
+                    type="button"
+                    onClick={() => { setImagenFile(null); setImagenPreview(null) }}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-lg"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                  <div className="text-center">
+                    <span className="text-2xl block mb-1">📷</span>
+                    <span className="text-sm text-gray-500">Click para seleccionar imagen</span>
+                    <span className="text-xs text-gray-400 block">JPG, PNG (máx. 10MB)</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              )}
+            </div>
           </div>
         </div>
 

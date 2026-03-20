@@ -65,10 +65,8 @@ const OrdenNueva = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      console.log('🔄 [OrdenNueva] Iniciando carga de datos...')
-
       try {
-        const [clientesData, visitasData, materialesData, herramientasData, tecnicosData, tiposServicioData] = await Promise.all([
+        await Promise.all([
           fetchClientes(),
           fetchVisitas(),
           fetchMateriales(),
@@ -76,41 +74,8 @@ const OrdenNueva = () => {
           fetchTecnicos(),
           fetchTiposServicio()
         ])
-
-        console.log('✅ [OrdenNueva] Datos cargados desde el backend:')
-        console.log('  📋 Clientes:', clientesData?.length || 0, 'registros')
-        console.log('  📅 Visitas:', visitasData?.length || 0, 'registros')
-        console.log('  📦 Materiales:', materialesData?.length || 0, 'registros')
-        console.log('  🛠️ Herramientas:', herramientasData?.length || 0, 'registros')
-        console.log('  👷 Técnicos:', tecnicosData?.length || 0, 'registros')
-        console.log('  🔧 Tipos Servicio:', tiposServicioData?.length || 0, 'registros')
-
-        // Verificar datos filtrados (selectores)
-        setTimeout(() => {
-          const tiposActivos = getTiposServicioActivos()
-          const tecnicosNombres = getNombresTecnicos()
-          const clientesActivos = clientes.filter(c => c.estado === 'activo')
-          const visitasCompletadas = visitas.filter(v => v.estado === 'aprobada' && !v.ordenGenerada)
-
-          console.log('📊 [OrdenNueva] Datos filtrados para el formulario:')
-          console.log('  ✓ Tipos Servicio Activos:', tiposActivos.length)
-          console.log('  ✓ Técnicos Activos:', tecnicosNombres.length)
-          console.log('  ✓ Clientes Activos:', clientesActivos.length)
-          console.log('  ✓ Visitas Aprobadas (sin orden):', visitasCompletadas.length)
-
-          if (tiposActivos.length === 0) {
-            console.warn('⚠️ [OrdenNueva] No hay tipos de servicio activos disponibles')
-          }
-          if (clientesActivos.length === 0) {
-            console.warn('⚠️ [OrdenNueva] No hay clientes activos disponibles')
-          }
-          if (tecnicosNombres.length === 0) {
-            console.warn('⚠️ [OrdenNueva] No hay técnicos activos disponibles')
-          }
-        }, 500)
-
       } catch (error) {
-        console.error('❌ [OrdenNueva] Error cargando datos:', error)
+        console.error('Error cargando datos:', error)
       }
     }
 
@@ -159,12 +124,6 @@ const OrdenNueva = () => {
     // Verificar si el cliente de la visita existe en la lista de clientes activos
     const clienteExiste = clientesActivos.some(c => c.nombre === visita.cliente)
     
-    console.log('Autocompletando campos:', {
-      visitaCliente: visita.cliente,
-      clienteExiste,
-      clientesActivos: clientesActivos.map(c => c.nombre)
-    })
-    
     // Sincronizar estado del cliente
     setClienteSeleccionado(visita.cliente)
     
@@ -204,7 +163,6 @@ const OrdenNueva = () => {
         id: foto.id || `loaded-photo-${visita.id}-${Date.now()}-${index}`
       }))
       setPhotos(fotosConId)
-      console.log(`✅ Cargadas ${fotosConId.length} fotos de la visita técnica`)
     }
     
     // Cargar listas editables desde la visita técnica
@@ -222,7 +180,6 @@ const OrdenNueva = () => {
         }
       })
       setMaterialesVisitaEditables(materialesEnriquecidos)
-      console.log(`✅ Visita técnica incluye ${visita.materialesEstimados.length} materiales estimados (enriquecidos con stock)`)
     } else {
       setMaterialesVisitaEditables([])
     }
@@ -236,14 +193,12 @@ const OrdenNueva = () => {
         return { ...h, cantidad: h.cantidad || 1 }
       })
       setHerramientasVisitaEditables(herramientasNormalizadas)
-      console.log(`✅ Visita técnica incluye ${visita.herramientasRequeridas.length} herramientas requeridas (normalizadas)`)
     } else {
       setHerramientasVisitaEditables([])
     }
     
     if (visita.listaPersonal && Array.isArray(visita.listaPersonal)) {
       setPersonalVisitaEditable([...visita.listaPersonal])
-      console.log(`✅ Visita técnica incluye ${visita.listaPersonal.length} tipos de personal`)
     } else {
       setPersonalVisitaEditable([])
     }
