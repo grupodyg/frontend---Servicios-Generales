@@ -295,7 +295,8 @@ const OrdenDetalle = () => {
     const colores = {
       baja: 'text-green-600 bg-green-50',
       media: 'text-yellow-600 bg-yellow-50',
-      alta: 'text-red-600 bg-red-50'
+      alta: 'text-red-600 bg-red-50',
+      urgente: 'text-purple-600 bg-purple-50'
     }
     return colores[prioridad] || 'text-gray-600 bg-gray-50'
   }
@@ -570,9 +571,14 @@ const OrdenDetalle = () => {
               <p className={`text-lg font-bold px-3 py-1 rounded-full ${getPrioridadColor(orden.prioridad)}`}>
                 {orden.prioridad?.toUpperCase()}
               </p>
+              {orden.esEmergencia && (
+                <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-300 animate-pulse">
+                  EMERGENCIA
+                </span>
+              )}
             </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <span className="text-xl">⚡</span>
+            <div className={`w-12 h-12 ${orden.esEmergencia ? 'bg-red-100' : 'bg-yellow-100'} rounded-lg flex items-center justify-center`}>
+              <span className="text-xl">{orden.esEmergencia ? '🚨' : '⚡'}</span>
             </div>
           </div>
         </div>

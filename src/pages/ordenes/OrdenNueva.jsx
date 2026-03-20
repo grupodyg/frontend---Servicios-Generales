@@ -139,6 +139,13 @@ const OrdenNueva = () => {
   const tipoVisita = watch('tipoVisita')
   const visitaTecnicaOrigen = watch('visitaTecnicaOrigen')
 
+  // Cuando se activa emergencia, forzar prioridad a 'alta' si la actual no es válida
+  useEffect(() => {
+    if (isEmergency && prioridad !== 'alta' && prioridad !== 'urgente') {
+      setValue('prioridad', 'alta')
+    }
+  }, [isEmergency, prioridad, setValue])
+
   // Filtrar visitas técnicas aprobadas sin orden generada
   const visitasCompletadas = visitas.filter(v => v.estado === 'aprobada' && !v.ordenGenerada)
 
@@ -423,6 +430,7 @@ const OrdenNueva = () => {
         solicitadoPor: user.name,
         numeroOrdenCompra: data.ordenCompraNumero || null,
         estado: isEmergency ? 'urgente' : 'pendiente',
+        esEmergencia: isEmergency,
         // Incluir archivo de orden de compra si existe
         // Incluir inventario solo si es sin_visita y se seleccionaron elementos
         ...(tipoVisita === 'sin_visita' && (materialesSeleccionados.length > 0 || herramientasSeleccionadas.length > 0) && {
@@ -800,8 +808,8 @@ const OrdenNueva = () => {
                   }`}
                   {...register('prioridad', { required: 'La prioridad es requerida' })}
                 >
-                  <option value="baja">🟢 Baja</option>
-                  <option value="media">🟡 Media</option>
+                  {!isEmergency && <option value="baja">🟢 Baja</option>}
+                  {!isEmergency && <option value="media">🟡 Media</option>}
                   <option value="alta">🔴 Alta</option>
                   <option value="urgente">🚨 Urgente</option>
                 </select>

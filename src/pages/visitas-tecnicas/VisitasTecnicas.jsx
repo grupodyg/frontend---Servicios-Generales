@@ -212,10 +212,14 @@ const VisitasTecnicas = () => {
                 value={filtros.estado}
                 onChange={(e) => setFiltros({ estado: e.target.value })}
               >
-                <option value="todos">Todos</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="completada">Completada</option>
-                <option value="cancelada">Cancelada</option>
+                <option value="todos">Todos los estados</option>
+                <option value={VISITA_ESTADOS.PENDING}>Pendiente</option>
+                <option value={VISITA_ESTADOS.ASSIGNED}>Asignada</option>
+                <option value={VISITA_ESTADOS.IN_PROGRESS}>En Progreso</option>
+                <option value={VISITA_ESTADOS.COMPLETED}>Completada</option>
+                <option value={VISITA_ESTADOS.APPROVED}>Aprobada</option>
+                <option value={VISITA_ESTADOS.REJECTED}>Rechazada</option>
+                <option value={VISITA_ESTADOS.CANCELLED}>Cancelada</option>
               </select>
             </div>
             

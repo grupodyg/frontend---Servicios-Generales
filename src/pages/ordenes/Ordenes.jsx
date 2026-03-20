@@ -61,7 +61,8 @@ const Ordenes = () => {
     const colores = {
       baja: 'text-green-600',
       media: 'text-yellow-600',
-      alta: 'text-red-600'
+      alta: 'text-red-600',
+      urgente: 'text-purple-600'
     }
     return colores[prioridad] || 'text-gray-600'
   }
@@ -326,8 +327,13 @@ const Ordenes = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-gray-900">#{orden.id}</span>
                   <span className={`text-xs font-medium ${getPrioridadColor(orden.prioridad)}`}>
-                    {orden.prioridad === 'alta' ? '🔴' : orden.prioridad === 'media' ? '🟡' : '🟢'} {orden.prioridad?.charAt(0).toUpperCase() + orden.prioridad?.slice(1)}
+                    {orden.prioridad === 'urgente' ? '🚨' : orden.prioridad === 'alta' ? '🔴' : orden.prioridad === 'media' ? '🟡' : '🟢'} {orden.prioridad?.charAt(0).toUpperCase() + orden.prioridad?.slice(1)}
                   </span>
+                  {orden.esEmergencia && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-300 animate-pulse">
+                      EMERGENCIA
+                    </span>
+                  )}
                 </div>
                 {getEstadoBadge(orden.estado)}
               </div>
@@ -415,9 +421,16 @@ const Ordenes = () => {
                 ordenes.map((orden) => (
                   <tr key={orden.id} className="hover:bg-gray-50">
                     <td className="px-3 py-3">
-                      <div className="text-sm font-semibold text-gray-900">{orden.id}</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {orden.id}
+                        {orden.esEmergencia && (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-300 animate-pulse">
+                            EMERGENCIA
+                          </span>
+                        )}
+                      </div>
                       <div className={`text-xs mt-0.5 font-medium ${getPrioridadColor(orden.prioridad)}`}>
-                        {orden.prioridad === 'alta' ? '🔴' : orden.prioridad === 'media' ? '🟡' : '🟢'} {orden.prioridad?.charAt(0).toUpperCase() + orden.prioridad?.slice(1)}
+                        {orden.prioridad === 'urgente' ? '🚨' : orden.prioridad === 'alta' ? '🔴' : orden.prioridad === 'media' ? '🟡' : '🟢'} {orden.prioridad?.charAt(0).toUpperCase() + orden.prioridad?.slice(1)}
                       </div>
                     </td>
                     <td className="px-3 py-3">

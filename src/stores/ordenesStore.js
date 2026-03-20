@@ -49,6 +49,7 @@ const transformBackendToFrontend = (backendOrder) => {
     solpe: backendOrder.solpe,
     fechaActualizacionRecursos: backendOrder.resources_update_date,
     estado: backendOrder.status,
+    esEmergencia: backendOrder.is_emergency || false,
     fechaCreacion: backendOrder.date_time_registration,
     fechaModificacion: backendOrder.date_time_modification
   }
@@ -96,7 +97,8 @@ const transformFrontendToBackend = (frontendOrder) => {
     selected_tools: frontendOrder.herramientasSeleccionadas || null,
     solpe: frontendOrder.solpe || null,
     resources_update_date: frontendOrder.fechaActualizacionRecursos || null,
-    status: frontendOrder.estado // No usar valor por defecto - mantener undefined para que COALESCE preserve el valor actual
+    status: frontendOrder.estado, // No usar valor por defecto - mantener undefined para que COALESCE preserve el valor actual
+    is_emergency: frontendOrder.esEmergencia || false
   }
 }
 
