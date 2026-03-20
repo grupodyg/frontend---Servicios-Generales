@@ -1113,11 +1113,14 @@ const useVisitaDetalle = () => {
       const total = subtotal + igv
 
       const presupuestoData = {
-        cliente: {
+        cliente: visitaActual.cliente,
+        clienteData: {
           nombre: visitaActual.cliente,
           ruc: '',
           email: visitaActual.email || '',
-          telefono: visitaActual.telefono || ''
+          telefono: visitaActual.telefono || '',
+          direccion: visitaActual.direccion || '',
+          contacto: visitaActual.contacto || ''
         },
         items: items,
         validezDias: 30,

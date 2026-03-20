@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { api, API_ENDPOINTS } from '../config/api'
-import { getCurrentTimestamp, getToday, addDays, toDateOnly } from '../utils/dateUtils'
+import { getCurrentTimestamp } from '../utils/dateUtils'
 
 // 🔄 FUNCIONES DE TRANSFORMACIÓN DE DATOS (Backend ↔ Frontend)
 
@@ -167,10 +167,8 @@ const normalizarPresupuesto = (presupuesto) => {
       ...presupuesto,
       cliente: clienteNombre,
       clienteData: {
-        nombre: clienteNombre,
-        ruc: presupuesto.cliente.ruc || '',
-        email: presupuesto.cliente.email || '',
-        telefono: presupuesto.cliente.telefono || ''
+        ...presupuesto.cliente,
+        nombre: clienteNombre
       }
     }
   }
@@ -460,24 +458,6 @@ const usePresupuestosStore = create(
           console.error('Error en agregarPrecios:', error)
           throw error
         }
-      },
-
-      // Crear presupuesto desde visita técnica
-      createPresupuestoDesdeVisita: async (datosVisita) => {
-        const presupuestoData = {
-          cliente: datosVisita.cliente,
-          fechaCotizacion: getToday(),
-          fechaVencimiento: toDateOnly(addDays(new Date(), datosVisita.validezDias || 30)),
-          validezDias: datosVisita.validezDias || 30,
-          condicionesPago: datosVisita.condicionesPago || 'A definir',
-          observaciones: datosVisita.observaciones,
-          elaboradoPor: datosVisita.elaboradoPor || 'Sistema',
-          visitaTecnicaId: datosVisita.visitaId,
-          tienePreciosAsignados: false,
-          estado: 'pending'
-        }
-
-        return await get().createPresupuesto(presupuestoData)
       },
 
       // Filtrar presupuestos

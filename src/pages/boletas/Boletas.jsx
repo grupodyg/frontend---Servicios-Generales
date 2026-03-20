@@ -806,7 +806,18 @@ const Boletas = () => {
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">📄</span>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{boletaSeleccionada.archivoNombre || 'boleta.pdf'}</p>
+                          {boletaSeleccionada.archivoUrl ? (
+                            <a
+                              href={boletaSeleccionada.archivoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                            >
+                              {boletaSeleccionada.archivoNombre || 'boleta.pdf'}
+                            </a>
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900">{boletaSeleccionada.archivoNombre || 'boleta.pdf'}</p>
+                          )}
                           <p className="text-xs text-gray-500">{boletaSeleccionada.archivoTamaño ? `${(boletaSeleccionada.archivoTamaño / 1024).toFixed(2)} KB` : 'N/A'}</p>
                         </div>
                       </div>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import usePresupuestosStore, { getClienteNombre, limpiarDatosCorruptos } from '../../stores/presupuestosStore'
 import useAuthStore from '../../stores/authStore'
-import { formatDateLong, getCurrentDate } from '../../utils/dateUtils'
+import { formatDate, getCurrentDate } from '../../utils/dateUtils'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -379,11 +379,11 @@ const Presupuestos = () => {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-gray-500">Fecha:</span>
-                    <span className="ml-1 text-gray-900">{new Date(presupuesto.fechaCotizacion).toLocaleDateString()}</span>
+                    <span className="ml-1 text-gray-900">{formatDate(presupuesto.fechaCotizacion) || '-'}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Vence:</span>
-                    <span className="ml-1 text-gray-900">{new Date(presupuesto.fechaVencimiento).toLocaleDateString()}</span>
+                    <span className="ml-1 text-gray-900">{formatDate(presupuesto.fechaVencimiento) || '-'}</span>
                   </div>
                   {canViewPrices(user) && (
                     <div className="col-span-2">
@@ -518,7 +518,7 @@ const Presupuestos = () => {
                       </div>
                     </td>
                     <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(presupuesto.fechaCotizacion).toLocaleDateString()}
+                      {formatDate(presupuesto.fechaCotizacion) || '-'}
                     </td>
                     {canViewPrices(user) && (
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
@@ -545,7 +545,7 @@ const Presupuestos = () => {
                       })()}
                     </td>
                     <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(presupuesto.fechaVencimiento).toLocaleDateString()}
+                      {formatDate(presupuesto.fechaVencimiento) || '-'}
                     </td>
                     <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {presupuesto.elaboradoPor || '-'}

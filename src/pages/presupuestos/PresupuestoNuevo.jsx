@@ -664,7 +664,9 @@ const PresupuestoNuevo = () => {
             nombre: clienteSeleccionado.nombre,
             ruc: clienteSeleccionado.ruc || clienteSeleccionado.dni,
             email: clienteSeleccionado.email,
-            telefono: clienteSeleccionado.telefono
+            telefono: clienteSeleccionado.telefono,
+            direccion: clienteSeleccionado.direccion,
+            contacto: clienteSeleccionado.contactoPrincipal?.nombre
           },
           fechaCotizacion: fechaHoy.toISOString().split('T')[0],
           fechaVencimiento: fechaVencimiento.toISOString().split('T')[0],
