@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { isAdminOrSupervisor } from '../../../../utils/roleUtils'
+import { isAdmin, isAdminOrSupervisor } from '../../../../utils/roleUtils'
 import { getFileUrl } from '../../../../config/api'
 import { formatCoordinates, openInBestMapApp } from '../../../../utils/mapUtils'
 
@@ -14,6 +14,7 @@ const TabResumen = memo(({
   handleGenerarCotizacion
 }) => {
   const navigate = useNavigate()
+  const esAdmin = isAdmin(user)
 
   // Calcular totales de materiales
   const totalesMateriales = useMemo(() => {
@@ -80,12 +81,14 @@ const TabResumen = memo(({
             <p className="text-[10px] sm:text-xs text-slate-300">Dias Est.</p>
           </div>
         </div>
-        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/20">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-            <span className="text-sm sm:text-base text-slate-300">Costo Total Estimado:</span>
-            <span className="text-2xl sm:text-3xl font-bold">S/ {totalGeneral.toFixed(2)}</span>
+        {esAdmin && (
+          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/20">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+              <span className="text-sm sm:text-base text-slate-300">Costo Total Estimado:</span>
+              <span className="text-2xl sm:text-3xl font-bold">S/ {totalGeneral.toFixed(2)}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Estado del Lugar */}
@@ -168,7 +171,7 @@ const TabResumen = memo(({
             <h3 className="text-lg font-semibold text-gray-800">Materiales</h3>
           </div>
           <div className="sm:text-right">
-            <p className="text-xl sm:text-2xl font-bold text-blue-600">S/ {totalesMateriales.totalCosto.toFixed(2)}</p>
+            {esAdmin && <p className="text-xl sm:text-2xl font-bold text-blue-600">S/ {totalesMateriales.totalCosto.toFixed(2)}</p>}
             <p className="text-xs text-gray-500">{totalesMateriales.totalItems} items</p>
           </div>
         </div>
@@ -180,8 +183,8 @@ const TabResumen = memo(({
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-blue-800">Material</th>
                   <th className="px-3 py-2 text-center text-xs font-semibold text-blue-800 w-20">Cant.</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-blue-800 w-24">P. Unit.</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-blue-800 w-24">Subtotal</th>
+                  {esAdmin && <th className="px-3 py-2 text-right text-xs font-semibold text-blue-800 w-24">P. Unit.</th>}
+                  {esAdmin && <th className="px-3 py-2 text-right text-xs font-semibold text-blue-800 w-24">Subtotal</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -192,8 +195,8 @@ const TabResumen = memo(({
                       {m.unidad && <span className="text-gray-400 text-xs ml-1">({m.unidad})</span>}
                     </td>
                     <td className="px-3 py-2 text-center text-gray-600">{m.cantidad}</td>
-                    <td className="px-3 py-2 text-right text-gray-600">S/ {(m.precioUnitario || 0).toFixed(2)}</td>
-                    <td className="px-3 py-2 text-right font-semibold text-gray-800">S/ {(m.cantidad * (m.precioUnitario || 0)).toFixed(2)}</td>
+                    {esAdmin && <td className="px-3 py-2 text-right text-gray-600">S/ {(m.precioUnitario || 0).toFixed(2)}</td>}
+                    {esAdmin && <td className="px-3 py-2 text-right font-semibold text-gray-800">S/ {(m.cantidad * (m.precioUnitario || 0)).toFixed(2)}</td>}
                   </tr>
                 ))}
               </tbody>
@@ -222,7 +225,7 @@ const TabResumen = memo(({
             <h3 className="text-lg font-semibold text-gray-800">Herramientas</h3>
           </div>
           <div className="sm:text-right">
-            <p className="text-xl sm:text-2xl font-bold text-amber-600">S/ {totalesHerramientas.totalCosto.toFixed(2)}</p>
+            {esAdmin && <p className="text-xl sm:text-2xl font-bold text-amber-600">S/ {totalesHerramientas.totalCosto.toFixed(2)}</p>}
             <p className="text-xs text-gray-500">{totalesHerramientas.totalItems} herramientas ({totalesHerramientas.totalCantidad} unidades)</p>
           </div>
         </div>
@@ -234,8 +237,8 @@ const TabResumen = memo(({
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-amber-800">Herramienta</th>
                   <th className="px-3 py-2 text-center text-xs font-semibold text-amber-800 w-20">Cant.</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-amber-800 w-24">Valor Unit.</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-amber-800 w-24">Subtotal</th>
+                  {esAdmin && <th className="px-3 py-2 text-right text-xs font-semibold text-amber-800 w-24">Valor Unit.</th>}
+                  {esAdmin && <th className="px-3 py-2 text-right text-xs font-semibold text-amber-800 w-24">Subtotal</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -250,14 +253,18 @@ const TabResumen = memo(({
                       )}
                     </td>
                     <td className="px-3 py-2 text-center text-gray-600">{h.cantidad}</td>
-                    <td className="px-3 py-2 text-right text-gray-600">
-                      {h.valor > 0 ? `S/ ${h.valor.toFixed(2)}` : '-'}
-                    </td>
-                    <td className="px-3 py-2 text-right font-semibold text-gray-800">
-                      {(h.valorTotal || (h.valor || 0) * h.cantidad) > 0
-                        ? `S/ ${(h.valorTotal || (h.valor || 0) * h.cantidad).toFixed(2)}`
-                        : '-'}
-                    </td>
+                    {esAdmin && (
+                      <td className="px-3 py-2 text-right text-gray-600">
+                        {h.valor > 0 ? `S/ ${h.valor.toFixed(2)}` : '-'}
+                      </td>
+                    )}
+                    {esAdmin && (
+                      <td className="px-3 py-2 text-right font-semibold text-gray-800">
+                        {(h.valorTotal || (h.valor || 0) * h.cantidad) > 0
+                          ? `S/ ${(h.valorTotal || (h.valor || 0) * h.cantidad).toFixed(2)}`
+                          : '-'}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -285,9 +292,9 @@ const TabResumen = memo(({
             <h3 className="text-lg font-semibold text-gray-800">Personal Requerido</h3>
           </div>
           <div className="sm:text-right">
-            {totalPersonal.totalCosto > 0 ? (
+            {esAdmin && totalPersonal.totalCosto > 0 ? (
               <>
-                <p className="text-xl sm:text-2xl font-bold text-green-600">S/ {totalPersonal.totalCosto.toFixed(2)}</p>
+                {esAdmin && <p className="text-xl sm:text-2xl font-bold text-green-600">S/ {totalPersonal.totalCosto.toFixed(2)}</p>}
                 <p className="text-xs text-gray-500">{totalPersonal.totalPersonas} personas - {totalPersonal.totalDias} dias estimados</p>
               </>
             ) : (
@@ -307,7 +314,7 @@ const TabResumen = memo(({
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-green-800">Especialidad</th>
                     <th className="px-3 py-2 text-center text-xs font-semibold text-green-800 w-24">Dias Est.</th>
-                    {totalPersonal.totalCosto > 0 && (
+                    {esAdmin && totalPersonal.totalCosto > 0 && (
                       <>
                         <th className="px-3 py-2 text-right text-xs font-semibold text-green-800 w-24">Tarifa/Dia</th>
                         <th className="px-3 py-2 text-right text-xs font-semibold text-green-800 w-24">Subtotal</th>
@@ -332,7 +339,7 @@ const TabResumen = memo(({
                             {p.diasEstimados} dias
                           </span>
                         </td>
-                        {totalPersonal.totalCosto > 0 && (
+                        {esAdmin && totalPersonal.totalCosto > 0 && (
                           <>
                             <td className="px-3 py-2 text-right text-gray-600">
                               {p.tarifaDiaria > 0 ? `S/ ${parseFloat(p.tarifaDiaria).toFixed(2)}` : '-'}

@@ -23,6 +23,14 @@ import withReactContent from 'sweetalert2-react-content'
 
 const MySwal = withReactContent(Swal)
 
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2000,
+  timerProgressBar: true,
+})
+
 // Listas predefinidas
 export const MATERIALES_COMUNES = [
   'Filtros HVAC', 'Refrigerante R-410A', 'Refrigerante R-22', 'Termostatos',
@@ -439,7 +447,7 @@ const useVisitaDetalle = () => {
       setInputMaterial('')
       setMaterialDelInventario(false)
 
-      MySwal.fire({ icon: 'success', title: 'Material agregado', timer: 1500, showConfirmButton: false })
+      Toast.fire({ icon: 'success', title: 'Material agregado' })
     } catch (error) {
       console.error('Error al agregar material:', error)
       MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar el material' })
@@ -467,7 +475,7 @@ const useVisitaDetalle = () => {
         setVisitaActual(prev => ({ ...prev, materialesEstimados: materialesActualizados }))
         await fetchVisitas()
 
-        MySwal.fire({ icon: 'success', title: 'Material eliminado', timer: 1500, showConfirmButton: false })
+        Toast.fire({ icon: 'success', title: 'Material eliminado' })
       } catch (error) {
         console.error('Error al eliminar material:', error)
         MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el material' })
@@ -506,7 +514,7 @@ const useVisitaDetalle = () => {
 
       handleCerrarModalEditarMaterial()
 
-      MySwal.fire({ icon: 'success', title: 'Material actualizado', timer: 1500, showConfirmButton: false })
+      Toast.fire({ icon: 'success', title: 'Material actualizado' })
     } catch (error) {
       console.error('Error al actualizar material:', error)
       MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el material' })
@@ -597,7 +605,7 @@ const useVisitaDetalle = () => {
     setInputHerramienta('')
     setHerramientaSeleccionadaInventario(null)
 
-    MySwal.fire({ icon: 'success', title: 'Herramienta agregada', timer: 1500, showConfirmButton: false })
+    Toast.fire({ icon: 'success', title: 'Herramienta agregada' })
   }, [nuevaHerramienta, herramientas, herramientaSeleccionadaInventario, herramientasInventario])
 
   const handleEliminarHerramienta = useCallback((id) => {
@@ -611,7 +619,7 @@ const useVisitaDetalle = () => {
       setVisitaActual(prev => ({ ...prev, herramientasRequeridas: herramientas }))
       await fetchVisitas()
 
-      MySwal.fire({ icon: 'success', title: 'Herramientas guardadas', timer: 1500, showConfirmButton: false })
+      Toast.fire({ icon: 'success', title: 'Herramientas guardadas' })
     } catch (error) {
       console.error('Error al guardar herramientas:', error)
       MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron guardar las herramientas' })
