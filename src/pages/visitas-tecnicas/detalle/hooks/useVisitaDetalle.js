@@ -907,6 +907,11 @@ const useVisitaDetalle = () => {
     }
 
     // Completar
+    if (!datosCompletado.nombreProyecto?.trim()) {
+      camposFaltantes.push('Nombre del proyecto')
+      tabs.push('completar')
+    }
+
     if (!datosCompletado.firmaTecnico) {
       camposFaltantes.push('Firma del técnico')
       tabs.push('completar')
