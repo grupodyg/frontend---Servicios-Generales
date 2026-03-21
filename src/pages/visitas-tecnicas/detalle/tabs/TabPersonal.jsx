@@ -34,7 +34,7 @@ const TabPersonal = memo(({
   // Determinar si se pueden asignar precios
   const puedeAsignarPrecios = useMemo(() => {
     if (!visitaActual || !user) return false
-    const estadosPermitidos = [VISITA_ESTADOS.COMPLETED, 'completed', VISITA_ESTADOS.APPROVED, 'approved']
+    const estadosPermitidos = [VISITA_ESTADOS.COMPLETED, VISITA_ESTADOS.APPROVED]
     return isAdmin(user) && estadosPermitidos.includes(visitaActual.estado)
   }, [visitaActual, user])
 
