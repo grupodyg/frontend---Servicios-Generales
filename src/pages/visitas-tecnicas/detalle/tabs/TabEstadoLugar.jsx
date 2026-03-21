@@ -109,12 +109,14 @@ const TabEstadoLugar = memo(({
           </div>
         ) : (
           <div className="space-y-4">
-            {visitaActual.estadoLugar?.descripcion ? (
+            {(visitaActual.estadoLugar?.descripcion || visitaActual.estadoLugar?.observaciones || visitaActual.estadoLugar?.fotos?.length > 0) ? (
               <>
-                <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Descripcion</h3>
-                  <p className="text-gray-600">{visitaActual.estadoLugar.descripcion}</p>
-                </div>
+                {visitaActual.estadoLugar.descripcion && (
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-2">Descripcion</h3>
+                    <p className="text-gray-600">{visitaActual.estadoLugar.descripcion}</p>
+                  </div>
+                )}
 
                 {visitaActual.estadoLugar.observaciones && (
                   <div>

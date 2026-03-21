@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { pdf } from '@react-pdf/renderer'
+import { jsPDF } from 'jspdf'
 import useReportesStore from '../../stores/reportesStore'
 import useAuthStore from '../../stores/authStore'
 import useOrdenesStore from '../../stores/ordenesStore'
@@ -68,73 +69,197 @@ const InformeFinal = ({ ordenId, onClose }) => {
     }
   }, [ordenId, getInformeFinalByOrden, orden?.visitaTecnicaId, visitas])
 
-  // Función para descargar documentos por tipo
+  // Estado para controlar la generación de PDF de documentos de seguridad
+  const [generandoDocSeguridad, setGenerandoDocSeguridad] = useState(null)
+
+  // Función para exportar un PDF consolidado por tipo de documento
   const handleDownloadDocumentsByType = async (tipo) => {
     const reportesOrden = reportes[ordenId] || []
     const documentos = []
-    
+    const tipoLabel = tipo === 'ats' ? 'ATS' : tipo === 'ptr' ? 'PTR' : 'Aspectos Ambientales'
+
     // Recopilar documentos según el tipo
     reportesOrden.forEach((reporte, index) => {
       let documento = null
-      let nombreArchivo = ''
-      
+
       switch(tipo) {
-        case 'ats':
-          documento = reporte.atsDoc
-          nombreArchivo = `ATS_Reporte_${index + 1}_${reporte.fecha || ''}.pdf`
-          break
-        case 'ptr':
-          documento = reporte.ptrDoc
-          nombreArchivo = `PTR_Reporte_${index + 1}_${reporte.fecha || ''}.pdf`
-          break
-        case 'aspectos':
-          documento = reporte.aspectosAmbientalesDoc
-          nombreArchivo = `AspectosAmbientales_Reporte_${index + 1}_${reporte.fecha || ''}.pdf`
-          break
+        case 'ats': documento = reporte.atsDoc; break
+        case 'ptr': documento = reporte.ptrDoc; break
+        case 'aspectos': documento = reporte.aspectosAmbientalesDoc; break
       }
 
       if (documento) {
         documentos.push({
           url: documento.url || documento,
-          nombre: documento.nombre || documento.name || nombreArchivo,
+          nombre: documento.nombre || documento.name || `${tipoLabel}_Reporte_${index + 1}`,
           reporteIndex: index + 1,
           fecha: reporte.fecha
         })
       }
     })
-    
+
     if (documentos.length === 0) {
       await notificationService.warning(
         'Sin documentos',
-        `No hay documentos ${tipo === 'ats' ? 'ATS' : tipo === 'ptr' ? 'PTR' : 'de Aspectos Ambientales'} disponibles para descargar`,
+        `No hay documentos ${tipoLabel} disponibles para exportar`,
         3000
       )
       return
     }
-    
-    // Descargar cada documento
-    for (const doc of documentos) {
-      try {
-        // Crear un enlace temporal para descargar
-        const link = document.createElement('a')
-        link.href = getFileUrl(doc.url)
-        link.download = doc.nombre
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        
-        // Pequeña pausa entre descargas para evitar bloqueos del navegador
-        await new Promise(resolve => setTimeout(resolve, 500))
-      } catch (error) {
-        console.error(`Error descargando ${doc.nombre}:`, error)
+
+    setGenerandoDocSeguridad(tipo)
+
+    try {
+      const pdfDoc = new jsPDF()
+      const pageWidth = pdfDoc.internal.pageSize.getWidth()
+      const pageHeight = pdfDoc.internal.pageSize.getHeight()
+      const margin = 15
+      const contentWidth = pageWidth - margin * 2
+
+      // --- Portada ---
+      pdfDoc.setFillColor(0, 51, 102)
+      pdfDoc.rect(0, 0, pageWidth, 60, 'F')
+      pdfDoc.setTextColor(255, 255, 255)
+      pdfDoc.setFontSize(22)
+      pdfDoc.text(`Documentos ${tipoLabel}`, pageWidth / 2, 30, { align: 'center' })
+      pdfDoc.setFontSize(12)
+      pdfDoc.text(`Orden de Trabajo: OT-${orden?.correlativo || ordenId}`, pageWidth / 2, 45, { align: 'center' })
+
+      pdfDoc.setTextColor(0, 0, 0)
+      pdfDoc.setFontSize(11)
+      let yPos = 80
+      pdfDoc.text(`Cliente: ${orden?.clienteNombre || orden?.cliente || '-'}`, margin, yPos)
+      yPos += 8
+      pdfDoc.text(`Instalación: ${orden?.instalacionNombre || orden?.instalacion || '-'}`, margin, yPos)
+      yPos += 8
+      pdfDoc.text(`Total de documentos: ${documentos.length}`, margin, yPos)
+      yPos += 8
+      pdfDoc.text(`Fecha de exportación: ${formatDate(new Date())}`, margin, yPos)
+
+      // Tabla resumen de documentos incluidos
+      yPos += 20
+      pdfDoc.setFontSize(13)
+      pdfDoc.setTextColor(0, 51, 102)
+      pdfDoc.text('Índice de documentos', margin, yPos)
+      yPos += 10
+      pdfDoc.setFontSize(10)
+      pdfDoc.setTextColor(0, 0, 0)
+      documentos.forEach((doc, i) => {
+        pdfDoc.text(`${i + 1}. Reporte #${doc.reporteIndex} - ${doc.fecha || 'Sin fecha'} - ${doc.nombre}`, margin + 5, yPos)
+        yPos += 7
+        if (yPos > pageHeight - 20) { pdfDoc.addPage(); yPos = 20 }
+      })
+
+      // --- Páginas de documentos ---
+      for (let i = 0; i < documentos.length; i++) {
+        const docItem = documentos[i]
+        const fileUrl = getFileUrl(docItem.url)
+
+        try {
+          const response = await fetch(fileUrl)
+          const blob = await response.blob()
+          const contentType = blob.type || ''
+
+          if (contentType.startsWith('image/')) {
+            // Convertir imagen a base64 y agregarla como página
+            const base64 = await new Promise((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result)
+              reader.onerror = reject
+              reader.readAsDataURL(blob)
+            })
+
+            pdfDoc.addPage()
+
+            // Header de la página
+            pdfDoc.setFillColor(240, 240, 240)
+            pdfDoc.rect(0, 0, pageWidth, 25, 'F')
+            pdfDoc.setFontSize(10)
+            pdfDoc.setTextColor(0, 51, 102)
+            pdfDoc.text(`${tipoLabel} - Reporte #${docItem.reporteIndex}`, margin, 10)
+            pdfDoc.setTextColor(100, 100, 100)
+            pdfDoc.text(`Fecha: ${docItem.fecha || 'N/A'}`, margin, 18)
+            pdfDoc.text(`${i + 1} de ${documentos.length}`, pageWidth - margin, 10, { align: 'right' })
+
+            // Calcular dimensiones de la imagen manteniendo proporción
+            const img = new Image()
+            await new Promise((resolve, reject) => {
+              img.onload = resolve
+              img.onerror = reject
+              img.src = base64
+            })
+
+            const imgAspect = img.width / img.height
+            const availableHeight = pageHeight - 25 - margin * 2
+            let imgWidth = contentWidth
+            let imgHeight = imgWidth / imgAspect
+
+            if (imgHeight > availableHeight) {
+              imgHeight = availableHeight
+              imgWidth = imgHeight * imgAspect
+            }
+
+            const imgX = margin + (contentWidth - imgWidth) / 2
+            const imgY = 30
+
+            const format = contentType.includes('png') ? 'PNG' : 'JPEG'
+            pdfDoc.addImage(base64, format, imgX, imgY, imgWidth, imgHeight)
+          } else {
+            // Para archivos PDF u otros: agregar página de referencia
+            pdfDoc.addPage()
+            pdfDoc.setFillColor(240, 240, 240)
+            pdfDoc.rect(0, 0, pageWidth, 25, 'F')
+            pdfDoc.setFontSize(10)
+            pdfDoc.setTextColor(0, 51, 102)
+            pdfDoc.text(`${tipoLabel} - Reporte #${docItem.reporteIndex}`, margin, 10)
+            pdfDoc.setTextColor(100, 100, 100)
+            pdfDoc.text(`Fecha: ${docItem.fecha || 'N/A'}`, margin, 18)
+            pdfDoc.text(`${i + 1} de ${documentos.length}`, pageWidth - margin, 10, { align: 'right' })
+
+            // Descargar el archivo PDF original aparte
+            const link = document.createElement('a')
+            link.href = fileUrl
+            link.download = `${tipoLabel}_Reporte_${docItem.reporteIndex}_${docItem.fecha || ''}.pdf`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+
+            pdfDoc.setFontSize(14)
+            pdfDoc.setTextColor(0, 0, 0)
+            const centerY = pageHeight / 2 - 20
+            pdfDoc.text('Documento PDF adjunto', pageWidth / 2, centerY, { align: 'center' })
+            pdfDoc.setFontSize(10)
+            pdfDoc.setTextColor(100, 100, 100)
+            pdfDoc.text(`Archivo: ${docItem.nombre}`, pageWidth / 2, centerY + 12, { align: 'center' })
+            pdfDoc.text('Este documento se descargó como archivo separado.', pageWidth / 2, centerY + 22, { align: 'center' })
+          }
+        } catch (error) {
+          console.error(`Error procesando documento ${docItem.nombre}:`, error)
+          // Agregar página de error
+          pdfDoc.addPage()
+          pdfDoc.setFontSize(12)
+          pdfDoc.setTextColor(200, 0, 0)
+          pdfDoc.text(`No se pudo cargar: ${docItem.nombre}`, pageWidth / 2, pageHeight / 2, { align: 'center' })
+        }
       }
+
+      // Guardar el PDF consolidado
+      pdfDoc.save(`${tipoLabel}_OT-${orden?.correlativo || ordenId}.pdf`)
+
+      await notificationService.success(
+        'PDF generado',
+        `Se exportó el PDF con ${documentos.length} documento(s) ${tipoLabel}`,
+        3000
+      )
+    } catch (error) {
+      console.error('Error generando PDF de documentos:', error)
+      await notificationService.error(
+        'Error',
+        'No se pudo generar el PDF consolidado'
+      )
+    } finally {
+      setGenerandoDocSeguridad(null)
     }
-    
-    await notificationService.success(
-      'Descarga iniciada',
-      `Se están descargando ${documentos.length} documento(s) ${tipo === 'ats' ? 'ATS' : tipo === 'ptr' ? 'PTR' : 'de Aspectos Ambientales'}`,
-      3000
-    )
   }
 
   const handleGenerarInforme = async () => {
@@ -1180,56 +1305,71 @@ const InformeFinal = ({ ordenId, onClose }) => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Botón ATS */}
-                  <button 
+                  <button
                     onClick={() => handleDownloadDocumentsByType('ats')}
-                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors"
+                    disabled={generandoDocSeguridad !== null}
+                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-2xl mb-2">📋</span>
+                    {generandoDocSeguridad === 'ats' ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
+                    ) : (
+                      <span className="text-2xl mb-2">📋</span>
+                    )}
                     <span className="font-medium text-gray-900">Todos los ATS</span>
                     <span className="text-xs text-gray-600 mt-1">
                       {(() => {
-                        const count = (reportes[ordenId] || []).filter(r => r.atsDocument).length
+                        const count = (reportes[ordenId] || []).filter(r => r.atsDoc).length
                         return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
                       })()}
                     </span>
                   </button>
-                  
+
                   {/* Botón PTR */}
-                  <button 
+                  <button
                     onClick={() => handleDownloadDocumentsByType('ptr')}
-                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors"
+                    disabled={generandoDocSeguridad !== null}
+                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-2xl mb-2">⚠️</span>
+                    {generandoDocSeguridad === 'ptr' ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
+                    ) : (
+                      <span className="text-2xl mb-2">⚠️</span>
+                    )}
                     <span className="font-medium text-gray-900">Todos los PTR</span>
                     <span className="text-xs text-gray-600 mt-1">
                       {(() => {
-                        const count = (reportes[ordenId] || []).filter(r => r.ptrDocument).length
+                        const count = (reportes[ordenId] || []).filter(r => r.ptrDoc).length
                         return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
                       })()}
                     </span>
                   </button>
-                  
+
                   {/* Botón Aspectos Ambientales */}
-                  <button 
+                  <button
                     onClick={() => handleDownloadDocumentsByType('aspectos')}
-                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors"
+                    disabled={generandoDocSeguridad !== null}
+                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-2xl mb-2">🌱</span>
+                    {generandoDocSeguridad === 'aspectos' ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
+                    ) : (
+                      <span className="text-2xl mb-2">🌱</span>
+                    )}
                     <span className="font-medium text-gray-900">Aspectos Ambientales</span>
                     <span className="text-xs text-gray-600 mt-1">
                       {(() => {
-                        const count = (reportes[ordenId] || []).filter(r => r.aspectosAmbientalesDocument).length
+                        const count = (reportes[ordenId] || []).filter(r => r.aspectosAmbientalesDoc).length
                         return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
                       })()}
                     </span>
                   </button>
                 </div>
-                
+
                 {/* Información adicional */}
                 <div className="mt-4 p-3 bg-amber-100 rounded-lg">
                   <p className="text-xs text-amber-800">
-                    <strong>Nota:</strong> Los documentos se descargarán individualmente en tu carpeta de descargas. 
-                    Cada archivo está nombrado con el tipo de documento, número de reporte y fecha.
+                    <strong>Nota:</strong> Se generará un PDF consolidado con todos los documentos del tipo seleccionado.
+                    El archivo incluye portada, índice y cada documento adjuntado en los reportes.
                   </p>
                 </div>
               </div>
