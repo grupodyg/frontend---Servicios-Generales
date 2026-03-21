@@ -550,7 +550,7 @@ const useVisitaDetalle = () => {
     setTimeout(() => setMostrarDropdownHerramienta(false), 150)
   }, [])
 
-  const handleAgregarHerramienta = useCallback(() => {
+  const handleAgregarHerramienta = useCallback(async () => {
     if (!nuevaHerramienta.nombre.trim()) {
       MySwal.fire({ icon: 'warning', title: 'Nombre requerido', text: 'Ingrese el nombre de la herramienta' })
       return
@@ -600,17 +600,52 @@ const useVisitaDetalle = () => {
       inventarioId: herramientaInventario?.id || null
     }
 
-    setHerramientas(prev => [...prev, nuevaHerramientaCompleta])
-    setNuevaHerramienta({ nombre: '', cantidad: 1 })
-    setInputHerramienta('')
-    setHerramientaSeleccionadaInventario(null)
+    const herramientasActualizadas = [...herramientas, nuevaHerramientaCompleta]
 
-    Toast.fire({ icon: 'success', title: 'Herramienta agregada' })
-  }, [nuevaHerramienta, herramientas, herramientaSeleccionadaInventario, herramientasInventario])
+    try {
+      await updateVisitaTecnica(visitaActual.id, { herramientasRequeridas: herramientasActualizadas })
 
-  const handleEliminarHerramienta = useCallback((id) => {
-    setHerramientas(prev => prev.filter(h => h.id !== id))
-  }, [])
+      setHerramientas(herramientasActualizadas)
+      setVisitaActual(prev => ({ ...prev, herramientasRequeridas: herramientasActualizadas }))
+      setNuevaHerramienta({ nombre: '', cantidad: 1 })
+      setInputHerramienta('')
+      setHerramientaSeleccionadaInventario(null)
+
+      Toast.fire({ icon: 'success', title: 'Herramienta agregada' })
+    } catch (error) {
+      console.error('Error al agregar herramienta:', error)
+      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar la herramienta' })
+    }
+  }, [nuevaHerramienta, herramientas, herramientaSeleccionadaInventario, herramientasInventario, visitaActual, updateVisitaTecnica])
+
+  const handleEliminarHerramienta = useCallback(async (id) => {
+    const result = await MySwal.fire({
+      title: '¿Eliminar herramienta?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (result.isConfirmed) {
+      try {
+        const herramientasActualizadas = herramientas.filter(h => h.id !== id)
+
+        await updateVisitaTecnica(visitaActual.id, { herramientasRequeridas: herramientasActualizadas })
+
+        setHerramientas(herramientasActualizadas)
+        setVisitaActual(prev => ({ ...prev, herramientasRequeridas: herramientasActualizadas }))
+
+        Toast.fire({ icon: 'success', title: 'Herramienta eliminada' })
+      } catch (error) {
+        console.error('Error al eliminar herramienta:', error)
+        MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar la herramienta' })
+      }
+    }
+  }, [herramientas, visitaActual, updateVisitaTecnica])
 
   const handleGuardarHerramientas = useCallback(async () => {
     try {
@@ -637,7 +672,7 @@ const useVisitaDetalle = () => {
     }
   }, [])
 
-  const handleAgregarPersona = useCallback(() => {
+  const handleAgregarPersona = useCallback(async () => {
     const especialidadFinal = mostrarInputEspecialidad ? especialidadPersonalizada : nuevaPersona.especialidad
 
     if (!especialidadFinal.trim()) {
@@ -657,17 +692,58 @@ const useVisitaDetalle = () => {
       observaciones: nuevaPersona.observaciones
     }
 
-    setListaPersonal(prev => [...prev, nuevaPersonaCompleta])
-    setNuevaPersona({ especialidad: '', diasEstimados: '', observaciones: '' })
-    setEspecialidadPersonalizada('')
-    setMostrarInputEspecialidad(false)
+    const listaActualizada = [...listaPersonal, nuevaPersonaCompleta]
 
-    MySwal.fire({ icon: 'success', title: 'Personal agregado', timer: 1500, showConfirmButton: false })
-  }, [nuevaPersona, mostrarInputEspecialidad, especialidadPersonalizada])
+    try {
+      await updateVisitaTecnica(visitaActual.id, {
+        listaPersonal: listaActualizada,
+        requerimientosAdicionales: requerimientosAdicionales
+      })
 
-  const handleEliminarPersona = useCallback((id) => {
-    setListaPersonal(prev => prev.filter(p => p.id !== id))
-  }, [])
+      setListaPersonal(listaActualizada)
+      setVisitaActual(prev => ({ ...prev, listaPersonal: listaActualizada }))
+      setNuevaPersona({ especialidad: '', diasEstimados: '', observaciones: '' })
+      setEspecialidadPersonalizada('')
+      setMostrarInputEspecialidad(false)
+
+      Toast.fire({ icon: 'success', title: 'Personal agregado' })
+    } catch (error) {
+      console.error('Error al agregar personal:', error)
+      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar el personal' })
+    }
+  }, [nuevaPersona, mostrarInputEspecialidad, especialidadPersonalizada, listaPersonal, requerimientosAdicionales, visitaActual, updateVisitaTecnica])
+
+  const handleEliminarPersona = useCallback(async (id) => {
+    const result = await MySwal.fire({
+      title: '¿Eliminar personal?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (result.isConfirmed) {
+      try {
+        const listaActualizada = listaPersonal.filter(p => p.id !== id)
+
+        await updateVisitaTecnica(visitaActual.id, {
+          listaPersonal: listaActualizada,
+          requerimientosAdicionales: requerimientosAdicionales
+        })
+
+        setListaPersonal(listaActualizada)
+        setVisitaActual(prev => ({ ...prev, listaPersonal: listaActualizada }))
+
+        Toast.fire({ icon: 'success', title: 'Personal eliminado' })
+      } catch (error) {
+        console.error('Error al eliminar personal:', error)
+        MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el personal' })
+      }
+    }
+  }, [listaPersonal, requerimientosAdicionales, visitaActual, updateVisitaTecnica])
 
   const handleGuardarPersonal = useCallback(async () => {
     try {

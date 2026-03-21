@@ -102,14 +102,16 @@ const TabResumen = memo(({
           <h3 className="text-lg font-semibold text-gray-800">Estado del Lugar</h3>
         </div>
 
-        {visitaActual.estadoLugar?.descripcion ? (
+        {(visitaActual.estadoLugar?.descripcion || visitaActual.estadoLugar?.observaciones || visitaActual.estadoLugar?.fotos?.length > 0) ? (
           <div className="space-y-4">
-            <div className="bg-purple-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-purple-800 mb-2">Descripcion</h4>
-              <p className="text-gray-700 text-sm leading-relaxed">
-                {visitaActual.estadoLugar.descripcion}
-              </p>
-            </div>
+            {visitaActual.estadoLugar.descripcion && (
+              <div className="bg-purple-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-purple-800 mb-2">Descripcion</h4>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {visitaActual.estadoLugar.descripcion}
+                </p>
+              </div>
+            )}
 
             {visitaActual.estadoLugar.observaciones && (
               <div className="bg-amber-50 rounded-lg p-4">
