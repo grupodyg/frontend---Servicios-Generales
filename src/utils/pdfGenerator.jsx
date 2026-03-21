@@ -718,7 +718,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
               <Text style={stylesVisitaTecnica.infoLabel}>Fecha de Visita</Text>
               <Text style={stylesVisitaTecnica.infoValue}>
                 {new Date(visita.fechaVisita).toLocaleDateString('es-ES', {
-                  day: '2-digit', month: 'long', year: 'numeric'
+                  timeZone: 'America/Lima', day: '2-digit', month: 'long', year: 'numeric'
                 })}
               </Text>
             </View>
@@ -900,7 +900,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
               <View style={stylesVisitaTecnica.summaryItem}>
                 <Text style={stylesVisitaTecnica.summaryLabel}>Fecha de Completado:</Text>
                 <Text style={stylesVisitaTecnica.summaryValue}>
-                  {new Date(visita.fechaCompletada).toLocaleDateString('es-ES')} - {new Date(visita.fechaCompletada).toLocaleTimeString('es-ES')}
+                  {new Date(visita.fechaCompletada).toLocaleDateString('es-ES', { timeZone: 'America/Lima' })} - {new Date(visita.fechaCompletada).toLocaleTimeString('es-ES', { timeZone: 'America/Lima' })}
                 </Text>
               </View>
             )}
@@ -1492,6 +1492,7 @@ const formatFechaCotizacion = (fecha) => {
     const date = new Date(fecha)
     if (isNaN(date.getTime())) return '-'
     return date.toLocaleDateString('es-PE', {
+      timeZone: 'America/Lima',
       day: '2-digit',
       month: 'long',
       year: 'numeric'

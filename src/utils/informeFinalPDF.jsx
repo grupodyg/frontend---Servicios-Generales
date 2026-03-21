@@ -231,18 +231,20 @@ const styles = StyleSheet.create({
   }
 })
 
+const TIMEZONE = 'America/Lima'
+
 const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto }) => {
-  // Formatear fecha
+  // Formatear fecha - SIEMPRE con timeZone explícito para evitar desfase en producción (Railway/UTC)
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
     const date = new Date(dateStr)
-    return date.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    return date.toLocaleDateString('es-PE', { timeZone: TIMEZONE, day: '2-digit', month: '2-digit', year: '2-digit' })
   }
 
   const formatDateFull = (dateStr) => {
     if (!dateStr) return ''
     const date = new Date(dateStr)
-    return date.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return date.toLocaleDateString('es-PE', { timeZone: TIMEZONE, day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
   // Helper: Convertir URL relativa a absoluta y asegurar extensión válida

@@ -60,7 +60,6 @@ const Reportes = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log('📊 Cargando reportes y estadísticas...')
         const days = getPeriodDays(dateRange)
 
         const [fetchedOrdenes, statistics] = await Promise.all([
@@ -71,8 +70,6 @@ const Reportes = () => {
           fetchClientes()
         ])
 
-        console.log(`✅ ${fetchedOrdenes?.length || 0} órdenes cargadas`)
-        console.log('📈 Estadísticas cargadas:', statistics)
 
         // Actualizar estado con datos reales
         if (statistics) {

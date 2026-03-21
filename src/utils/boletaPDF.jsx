@@ -180,6 +180,7 @@ export const BoletaPDFDocument = ({ boleta }) => {
             <Text style={styles.label}>Fecha de Emisión:</Text>
             <Text style={styles.value}>
               {boleta.fechaSubida ? new Date(boleta.fechaSubida).toLocaleDateString('es-ES', {
+                timeZone: 'America/Lima',
                 day: '2-digit',
                 month: 'long',
                 year: 'numeric'

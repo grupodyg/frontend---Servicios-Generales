@@ -164,13 +164,32 @@ const styles = StyleSheet.create({
 })
 
 // Función para formatear fecha al estilo del PDF original
+// Usa Intl API con timeZone explícito para evitar desfase en producción (Railway/UTC)
+const TIMEZONE = 'America/Lima'
+
 const formatearFecha = (fecha) => {
   if (!fecha) return ''
   const date = new Date(fecha)
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-  
-  return `${dias[date.getDay()]} ${date.getDate()} ${meses[date.getMonth()]} ${date.getFullYear()}`
+
+  // Obtener componentes en timezone de Lima para evitar desfase
+  const parts = new Intl.DateTimeFormat('es-PE', {
+    timeZone: TIMEZONE,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).formatToParts(date)
+
+  const get = (type) => parts.find(p => p.type === type)?.value || ''
+  const weekday = get('weekday')
+  const day = get('day')
+  const month = get('month')
+  const year = get('year')
+
+  // Capitalizar primera letra del día y mes
+  const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1)
+
+  return `${capitalize(weekday)} ${day} ${capitalize(month)} ${year}`
 }
 
 // Función para agrupar reportes por fecha

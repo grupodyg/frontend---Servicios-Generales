@@ -185,7 +185,7 @@ const useVisitaDetalle = () => {
             setTecnicosAsignados(visitaEncontrada.tecnicosAsignados)
           }
 
-          if (visitaEncontrada.estadoLugar?.descripcion) {
+          if (visitaEncontrada.estadoLugar?.descripcion || visitaEncontrada.estadoLugar?.observaciones || visitaEncontrada.estadoLugar?.fotos?.length > 0) {
             setEstadoLugar(visitaEncontrada.estadoLugar)
           }
 
