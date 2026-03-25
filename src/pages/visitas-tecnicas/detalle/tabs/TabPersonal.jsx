@@ -12,6 +12,8 @@ const TabPersonal = memo(({
   mostrarInputEspecialidad,
   requerimientosAdicionales,
   setRequerimientosAdicionales,
+  totalDiasEstimados,
+  setTotalDiasEstimados,
   editMode,
   handleEspecialidadChange,
   handleAgregarPersona,
@@ -26,10 +28,18 @@ const TabPersonal = memo(({
 }) => {
   const [modoPreciosActivo, setModoPreciosActivo] = useState(false)
 
-  // Calcular total de dias
-  const totalDias = useMemo(() => {
+  // Calcular límites de días: mínimo = max individual, máximo = suma total
+  const sumaDias = useMemo(() => {
     return listaPersonal.reduce((sum, p) => sum + (p.diasEstimados || 0), 0)
   }, [listaPersonal])
+
+  const minDias = useMemo(() => {
+    if (listaPersonal.length === 0) return 0
+    return Math.max(...listaPersonal.map(p => p.diasEstimados || 0))
+  }, [listaPersonal])
+
+  // Valor mostrado: usar totalDiasEstimados si existe, sino la suma
+  const totalDias = totalDiasEstimados != null ? totalDiasEstimados : sumaDias
 
   // Determinar si se pueden asignar precios
   const puedeAsignarPrecios = useMemo(() => {
@@ -306,7 +316,29 @@ const TabPersonal = memo(({
                     Total: {listaPersonal.length} personas
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900 text-center">
-                    {totalDias} dias
+                    {editMode ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <input
+                          type="number"
+                          className="w-20 px-2 py-1 text-sm text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold"
+                          value={totalDias}
+                          min={minDias}
+                          max={sumaDias}
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? '' : parseInt(e.target.value)
+                            if (val === '') {
+                              setTotalDiasEstimados(minDias)
+                            } else {
+                              const clamped = Math.min(Math.max(val, minDias), sumaDias)
+                              setTotalDiasEstimados(clamped)
+                            }
+                          }}
+                        />
+                        <span className="text-[10px] text-gray-400">min {minDias} / max {sumaDias}</span>
+                      </div>
+                    ) : (
+                      <>{totalDias} dias</>
+                    )}
                   </td>
                   {mostrarPrecios && (
                     <>

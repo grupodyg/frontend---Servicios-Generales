@@ -124,6 +124,7 @@ const VisitaTecnicaNueva = () => {
         descripcionServicio: data.descripcionServicio,
         observaciones: data.observaciones,
         solpe: data.solpe,
+        nombreProyecto: data.nombreProyecto || null,
         solicitadoPor: user.name
       }
 
@@ -273,6 +274,18 @@ const VisitaTecnicaNueva = () => {
                   className="input-field"
                   placeholder="email@ejemplo.com"
                   {...register('email')}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre del Proyecto (opcional)
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Nombre o código del proyecto..."
+                  {...register('nombreProyecto')}
                 />
               </div>
 

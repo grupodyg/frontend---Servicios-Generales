@@ -82,6 +82,8 @@ const VisitaTecnicaDetalleRefactorizado = () => {
     mostrarInputEspecialidad,
     requerimientosAdicionales,
     setRequerimientosAdicionales,
+    totalDiasEstimados,
+    setTotalDiasEstimados,
     handleEspecialidadChange,
     handleAgregarPersona,
     handleEliminarPersona,
@@ -285,6 +287,8 @@ const VisitaTecnicaDetalleRefactorizado = () => {
             mostrarInputEspecialidad={mostrarInputEspecialidad}
             requerimientosAdicionales={requerimientosAdicionales}
             setRequerimientosAdicionales={setRequerimientosAdicionales}
+            totalDiasEstimados={totalDiasEstimados}
+            setTotalDiasEstimados={setTotalDiasEstimados}
             editMode={editMode}
             handleEspecialidadChange={handleEspecialidadChange}
             handleAgregarPersona={handleAgregarPersona}

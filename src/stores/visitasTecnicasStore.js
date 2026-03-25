@@ -48,6 +48,7 @@ const transformBackendToFrontend = (backendVisit) => {
     personalRequerido: parseJsonField(backendVisit.required_personnel, { cantidad: 1, especialidades: [], diasEstimados: 1 }),
     listaPersonal: parseJsonField(backendVisit.personnel_list, []),
     requerimientosAdicionales: parseJsonField(backendVisit.required_personnel, {})?.requerimientosAdicionales || '',
+    totalDiasEstimados: parseJsonField(backendVisit.required_personnel, {})?.totalDiasEstimados || null,
     estadoLugar: parseJsonField(backendVisit.place_status, { descripcion: '', fotos: [], observaciones: '' }),
     firmaTecnico: backendVisit.technician_signature,
     fechaCompletado: backendVisit.completed_date,
@@ -103,10 +104,14 @@ const transformFrontendToBackend = (frontendVisit) => {
   if ('herramientasRequeridas' in frontendVisit) result.required_tools = serializeJsonField(frontendVisit.herramientasRequeridas)
   if ('personalRequerido' in frontendVisit) result.required_personnel = serializeJsonField(frontendVisit.personalRequerido)
   if ('listaPersonal' in frontendVisit) result.personnel_list = serializeJsonField(frontendVisit.listaPersonal)
-  // requerimientosAdicionales se almacena dentro de required_personnel (JSON)
-  if ('requerimientosAdicionales' in frontendVisit) {
+  // requerimientosAdicionales y totalDiasEstimados se almacenan dentro de required_personnel (JSON)
+  if ('requerimientosAdicionales' in frontendVisit || 'totalDiasEstimados' in frontendVisit) {
     const currentPersonnel = result.required_personnel || frontendVisit.personalRequerido || {}
-    result.required_personnel = { ...currentPersonnel, requerimientosAdicionales: frontendVisit.requerimientosAdicionales || '' }
+    result.required_personnel = {
+      ...currentPersonnel,
+      ...('requerimientosAdicionales' in frontendVisit ? { requerimientosAdicionales: frontendVisit.requerimientosAdicionales || '' } : {}),
+      ...('totalDiasEstimados' in frontendVisit ? { totalDiasEstimados: frontendVisit.totalDiasEstimados } : {})
+    }
   }
   if ('estadoLugar' in frontendVisit) result.place_status = serializeJsonField(frontendVisit.estadoLugar)
   if ('firmaTecnico' in frontendVisit) result.technician_signature = frontendVisit.firmaTecnico || null

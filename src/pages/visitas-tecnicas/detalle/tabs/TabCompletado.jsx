@@ -95,24 +95,6 @@ const TabCompletado = memo(({
       <div className="card">
         <h2 className="text-lg font-semibold mb-4">Completar Visita Tecnica</h2>
 
-        {/* Nombre del proyecto */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre del Proyecto (opcional)
-          </label>
-          {editMode || puedeCompletar ? (
-            <input
-              type="text"
-              className="input-field"
-              value={datosCompletado.nombreProyecto}
-              onChange={(e) => setDatosCompletado(prev => ({ ...prev, nombreProyecto: e.target.value }))}
-              placeholder="Nombre o codigo del proyecto..."
-            />
-          ) : (
-            <p className="text-gray-600">{datosCompletado.nombreProyecto || visitaActual.nombreProyecto || 'No especificado'}</p>
-          )}
-        </div>
-
         {/* Ubicacion GPS */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -135,6 +135,7 @@ const useVisitaDetalle = () => {
   const [especialidadPersonalizada, setEspecialidadPersonalizada] = useState('')
   const [mostrarInputEspecialidad, setMostrarInputEspecialidad] = useState(false)
   const [requerimientosAdicionales, setRequerimientosAdicionales] = useState('')
+  const [totalDiasEstimados, setTotalDiasEstimados] = useState(null)
 
   // Completado
   const [datosCompletado, setDatosCompletado] = useState({
@@ -209,6 +210,10 @@ const useVisitaDetalle = () => {
 
           if (visitaEncontrada.requerimientosAdicionales) {
             setRequerimientosAdicionales(visitaEncontrada.requerimientosAdicionales)
+          }
+
+          if (visitaEncontrada.totalDiasEstimados != null) {
+            setTotalDiasEstimados(visitaEncontrada.totalDiasEstimados)
           }
 
           if (visitaEncontrada.nombreProyecto || visitaEncontrada.firmaTecnico || visitaEncontrada.coordenadasGPS) {
@@ -694,13 +699,25 @@ const useVisitaDetalle = () => {
 
     const listaActualizada = [...listaPersonal, nuevaPersonaCompleta]
 
+    // Recalcular límites y ajustar totalDiasEstimados
+    const sumaDias = listaActualizada.reduce((sum, p) => sum + (p.diasEstimados || 0), 0)
+    const maxIndividual = Math.max(...listaActualizada.map(p => p.diasEstimados || 0))
+    let nuevoTotalDias = totalDiasEstimados
+    if (nuevoTotalDias == null || nuevoTotalDias > sumaDias) {
+      nuevoTotalDias = sumaDias
+    } else if (nuevoTotalDias < maxIndividual) {
+      nuevoTotalDias = maxIndividual
+    }
+
     try {
       await updateVisitaTecnica(visitaActual.id, {
         listaPersonal: listaActualizada,
-        requerimientosAdicionales: requerimientosAdicionales
+        requerimientosAdicionales: requerimientosAdicionales,
+        totalDiasEstimados: nuevoTotalDias
       })
 
       setListaPersonal(listaActualizada)
+      setTotalDiasEstimados(nuevoTotalDias)
       setVisitaActual(prev => ({ ...prev, listaPersonal: listaActualizada }))
       setNuevaPersona({ especialidad: '', diasEstimados: '', observaciones: '' })
       setEspecialidadPersonalizada('')
@@ -711,7 +728,7 @@ const useVisitaDetalle = () => {
       console.error('Error al agregar personal:', error)
       MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar el personal' })
     }
-  }, [nuevaPersona, mostrarInputEspecialidad, especialidadPersonalizada, listaPersonal, requerimientosAdicionales, visitaActual, updateVisitaTecnica])
+  }, [nuevaPersona, mostrarInputEspecialidad, especialidadPersonalizada, listaPersonal, requerimientosAdicionales, totalDiasEstimados, visitaActual, updateVisitaTecnica])
 
   const handleEliminarPersona = useCallback(async (id) => {
     const result = await MySwal.fire({
@@ -729,12 +746,26 @@ const useVisitaDetalle = () => {
       try {
         const listaActualizada = listaPersonal.filter(p => p.id !== id)
 
+        // Recalcular límites y ajustar totalDiasEstimados
+        const sumaDias = listaActualizada.reduce((sum, p) => sum + (p.diasEstimados || 0), 0)
+        const maxIndividual = listaActualizada.length > 0 ? Math.max(...listaActualizada.map(p => p.diasEstimados || 0)) : 0
+        let nuevoTotalDias = totalDiasEstimados
+        if (listaActualizada.length === 0) {
+          nuevoTotalDias = null
+        } else if (nuevoTotalDias == null || nuevoTotalDias > sumaDias) {
+          nuevoTotalDias = sumaDias
+        } else if (nuevoTotalDias < maxIndividual) {
+          nuevoTotalDias = maxIndividual
+        }
+
         await updateVisitaTecnica(visitaActual.id, {
           listaPersonal: listaActualizada,
-          requerimientosAdicionales: requerimientosAdicionales
+          requerimientosAdicionales: requerimientosAdicionales,
+          totalDiasEstimados: nuevoTotalDias
         })
 
         setListaPersonal(listaActualizada)
+        setTotalDiasEstimados(nuevoTotalDias)
         setVisitaActual(prev => ({ ...prev, listaPersonal: listaActualizada }))
 
         Toast.fire({ icon: 'success', title: 'Personal eliminado' })
@@ -743,19 +774,21 @@ const useVisitaDetalle = () => {
         MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el personal' })
       }
     }
-  }, [listaPersonal, requerimientosAdicionales, visitaActual, updateVisitaTecnica])
+  }, [listaPersonal, requerimientosAdicionales, totalDiasEstimados, visitaActual, updateVisitaTecnica])
 
   const handleGuardarPersonal = useCallback(async () => {
     try {
       await updateVisitaTecnica(visitaActual.id, {
         listaPersonal: listaPersonal,
-        requerimientosAdicionales: requerimientosAdicionales
+        requerimientosAdicionales: requerimientosAdicionales,
+        totalDiasEstimados: totalDiasEstimados
       })
 
       setVisitaActual(prev => ({
         ...prev,
         listaPersonal: listaPersonal,
-        requerimientosAdicionales: requerimientosAdicionales
+        requerimientosAdicionales: requerimientosAdicionales,
+        totalDiasEstimados: totalDiasEstimados
       }))
       await fetchVisitas()
 
@@ -764,7 +797,7 @@ const useVisitaDetalle = () => {
       console.error('Error al guardar personal:', error)
       MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el personal' })
     }
-  }, [listaPersonal, requerimientosAdicionales, visitaActual, updateVisitaTecnica, fetchVisitas])
+  }, [listaPersonal, requerimientosAdicionales, totalDiasEstimados, visitaActual, updateVisitaTecnica, fetchVisitas])
 
   // Handler: Cargar tarifas automáticas desde specialty_rates
   const handleCargarTarifasPersonal = useCallback(() => {
@@ -1467,6 +1500,8 @@ const useVisitaDetalle = () => {
     setMostrarInputEspecialidad,
     requerimientosAdicionales,
     setRequerimientosAdicionales,
+    totalDiasEstimados,
+    setTotalDiasEstimados,
     handleEspecialidadChange,
     handleAgregarPersona,
     handleEliminarPersona,
