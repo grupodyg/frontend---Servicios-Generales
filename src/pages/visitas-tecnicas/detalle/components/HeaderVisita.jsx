@@ -55,6 +55,11 @@ const HeaderVisita = memo(({
         <p className="text-sm text-gray-500 mt-1">
           {visitaActual.direccion} - {visitaActual.contacto}
         </p>
+        {visitaActual.tipoServicio && (
+          <p className="text-sm text-gray-500 mt-1">
+            <span className="font-medium text-gray-700">Tipo de servicio:</span> {visitaActual.tipoServicio}
+          </p>
+        )}
 
         {/* Tecnicos asignados */}
         {editMode && isAdminOrSupervisor(user) ? (

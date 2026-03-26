@@ -78,24 +78,23 @@ const InformeFinal = ({ ordenId, onClose }) => {
     const documentos = []
     const tipoLabel = tipo === 'ats' ? 'ATS' : tipo === 'ptr' ? 'PTR' : 'Aspectos Ambientales'
 
-    // Recopilar documentos según el tipo
+    // Recopilar documentos según el tipo (soporta arrays múltiples)
+    const fieldMap = { ats: 'atsDocs', ptr: 'ptrDocs', aspectos: 'aspectosAmbientalesDocs' }
+    const fieldName = fieldMap[tipo]
+
     reportesOrden.forEach((reporte, index) => {
-      let documento = null
+      const docs = reporte[fieldName] || []
 
-      switch(tipo) {
-        case 'ats': documento = reporte.atsDoc; break
-        case 'ptr': documento = reporte.ptrDoc; break
-        case 'aspectos': documento = reporte.aspectosAmbientalesDoc; break
-      }
-
-      if (documento) {
-        documentos.push({
-          url: documento.url || documento,
-          nombre: documento.nombre || documento.name || `${tipoLabel}_Reporte_${index + 1}`,
-          reporteIndex: index + 1,
-          fecha: reporte.fecha
-        })
-      }
+      docs.forEach((doc, docIndex) => {
+        if (doc) {
+          documentos.push({
+            url: doc.url || doc,
+            nombre: doc.nombre || doc.name || `${tipoLabel}_Reporte_${index + 1}_Doc_${docIndex + 1}`,
+            reporteIndex: index + 1,
+            fecha: reporte.fecha
+          })
+        }
+      })
     })
 
     if (documentos.length === 0) {
@@ -952,33 +951,42 @@ const InformeFinal = ({ ordenId, onClose }) => {
                       
                       {/* Sección de Documentos de Seguridad y Medio Ambiente */}
                       <div className="border-t pt-3 mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">📄 Documentos de Seguridad:</p>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Documentos de Seguridad:</p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          {reporte.atsDoc && (
+                          {/* ATS - múltiples documentos */}
+                          {reporte.atsDocs?.length > 0 && (
                             <div className="bg-green-50 p-2 rounded">
-                              <p className="text-xs font-medium text-gray-600">ATS:</p>
-                              <a href={getFileUrl(reporte.atsDoc.url)} target="_blank" rel="noopener noreferrer"
-                                 className="text-xs text-blue-600 hover:text-blue-800">
-                                📎 {reporte.atsDoc.nombre}
-                              </a>
+                              <p className="text-xs font-medium text-gray-600">ATS ({reporte.atsDocs.length}):</p>
+                              {reporte.atsDocs.map((doc, i) => (
+                                <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                                   className="text-xs text-blue-600 hover:text-blue-800 block truncate">
+                                  {doc.nombre || 'Ver documento'}
+                                </a>
+                              ))}
                             </div>
                           )}
-                          {reporte.aspectosAmbientalesDoc && (
+                          {/* Aspectos Ambientales - múltiples documentos */}
+                          {reporte.aspectosAmbientalesDocs?.length > 0 && (
                             <div className="bg-green-50 p-2 rounded">
-                              <p className="text-xs font-medium text-gray-600">Aspectos Amb.:</p>
-                              <a href={getFileUrl(reporte.aspectosAmbientalesDoc.url)} target="_blank" rel="noopener noreferrer"
-                                 className="text-xs text-blue-600 hover:text-blue-800">
-                                📎 {reporte.aspectosAmbientalesDoc.nombre}
-                              </a>
+                              <p className="text-xs font-medium text-gray-600">Aspectos Amb. ({reporte.aspectosAmbientalesDocs.length}):</p>
+                              {reporte.aspectosAmbientalesDocs.map((doc, i) => (
+                                <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                                   className="text-xs text-blue-600 hover:text-blue-800 block truncate">
+                                  {doc.nombre || 'Ver documento'}
+                                </a>
+                              ))}
                             </div>
                           )}
-                          {reporte.ptrDoc && (
+                          {/* PTR - múltiples documentos */}
+                          {reporte.ptrDocs?.length > 0 && (
                             <div className="bg-green-50 p-2 rounded">
-                              <p className="text-xs font-medium text-gray-600">PTR:</p>
-                              <a href={getFileUrl(reporte.ptrDoc.url)} target="_blank" rel="noopener noreferrer"
-                                 className="text-xs text-blue-600 hover:text-blue-800">
-                                📎 {reporte.ptrDoc.nombre}
-                              </a>
+                              <p className="text-xs font-medium text-gray-600">PTR ({reporte.ptrDocs.length}):</p>
+                              {reporte.ptrDocs.map((doc, i) => (
+                                <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                                   className="text-xs text-blue-600 hover:text-blue-800 block truncate">
+                                  {doc.nombre || 'Ver documento'}
+                                </a>
+                              ))}
                             </div>
                           )}
                         </div>
@@ -1318,7 +1326,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                     <span className="font-medium text-gray-900">Todos los ATS</span>
                     <span className="text-xs text-gray-600 mt-1">
                       {(() => {
-                        const count = (reportes[ordenId] || []).filter(r => r.atsDoc).length
+                        const count = (reportes[ordenId] || []).reduce((acc, r) => acc + (r.atsDocs?.length || 0), 0)
                         return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
                       })()}
                     </span>
@@ -1338,7 +1346,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                     <span className="font-medium text-gray-900">Todos los PTR</span>
                     <span className="text-xs text-gray-600 mt-1">
                       {(() => {
-                        const count = (reportes[ordenId] || []).filter(r => r.ptrDoc).length
+                        const count = (reportes[ordenId] || []).reduce((acc, r) => acc + (r.ptrDocs?.length || 0), 0)
                         return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
                       })()}
                     </span>
@@ -1358,7 +1366,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                     <span className="font-medium text-gray-900">Aspectos Ambientales</span>
                     <span className="text-xs text-gray-600 mt-1">
                       {(() => {
-                        const count = (reportes[ordenId] || []).filter(r => r.aspectosAmbientalesDoc).length
+                        const count = (reportes[ordenId] || []).reduce((acc, r) => acc + (r.aspectosAmbientalesDocs?.length || 0), 0)
                         return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
                       })()}
                     </span>

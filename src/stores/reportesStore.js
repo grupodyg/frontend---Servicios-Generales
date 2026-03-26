@@ -15,8 +15,9 @@ const useReportesStore = create((set, get) => ({
   },
 
   // Helper para normalizar documentos (JSONB) a estructura frontend
-  normalizeDocument: (doc) => {
-    if (!doc) return null
+  // Soporta: null, objeto singular (legacy), array, o string JSON
+  normalizeDocuments: (doc) => {
+    if (!doc) return []
 
     // Si es string, intentar parsear
     if (typeof doc === 'string') {
@@ -24,18 +25,22 @@ const useReportesStore = create((set, get) => ({
         doc = JSON.parse(doc)
       } catch (e) {
         console.error('Error parseando documento:', e)
-        return null
+        return []
       }
     }
 
-    // Normalizar propiedades: name -> nombre, uploadedAt -> fecha
-    return {
-      url: doc.url,
-      nombre: doc.name || doc.nombre,
-      fecha: doc.uploadedAt || doc.fecha,
-      size: doc.size,
-      type: doc.type
-    }
+    // Convertir a array si es objeto singular (compatibilidad legacy)
+    const docsArray = Array.isArray(doc) ? doc : [doc]
+
+    return docsArray
+      .filter(d => d && d.url)
+      .map(d => ({
+        url: d.url,
+        nombre: d.name || d.nombre,
+        fecha: d.uploadedAt || d.fecha,
+        size: d.size,
+        type: d.type
+      }))
   },
 
   // Helper para normalizar campos del backend (snake_case) a frontend (camelCase)
@@ -94,10 +99,10 @@ const useReportesStore = create((set, get) => ({
       descripcion: reporte.work_description || reporte.descripcion || reporte.descripcionTrabajo || '',
       porcentajeAvance: reporte.progress_percentage ?? reporte.porcentajeAvance ?? 0,
       trabajoEnAltura: reporte.work_at_height ?? reporte.trabajoEnAltura ?? false,
-      // Normalizar documentos de seguridad con la estructura correcta (name -> nombre, uploadedAt -> fecha)
-      atsDoc: get().normalizeDocument(reporte.ats_document || reporte.atsDocument),
-      ptrDoc: get().normalizeDocument(reporte.ptr_document || reporte.ptrDocument),
-      aspectosAmbientalesDoc: get().normalizeDocument(reporte.environmental_aspects_document || reporte.aspectosAmbientalesDocument),
+      // Normalizar documentos de seguridad: siempre devuelve array
+      atsDocs: get().normalizeDocuments(reporte.ats_document),
+      ptrDocs: get().normalizeDocuments(reporte.ptr_document),
+      aspectosAmbientalesDocs: get().normalizeDocuments(reporte.environmental_aspects_document),
       observaciones: reporte.observations || reporte.observaciones || '',
       proximasTareas: reporte.next_tasks || reporte.proximasTareas || '',
       horaCreacion: reporte.creation_time || reporte.horaCreacion,
@@ -352,10 +357,10 @@ const useReportesStore = create((set, get) => ({
       }
       if (updates.porcentajeAvance !== undefined) backendUpdates.progress_percentage = updates.porcentajeAvance
       if (updates.trabajoEnAltura !== undefined) backendUpdates.work_at_height = updates.trabajoEnAltura
-      if (updates.atsDocument !== undefined) backendUpdates.ats_document = updates.atsDocument
-      if (updates.ptrDocument !== undefined) backendUpdates.ptr_document = updates.ptrDocument
-      if (updates.aspectosAmbientalesDocument !== undefined) {
-        backendUpdates.environmental_aspects_document = updates.aspectosAmbientalesDocument
+      if (updates.atsDocs !== undefined) backendUpdates.ats_document = updates.atsDocs
+      if (updates.ptrDocs !== undefined) backendUpdates.ptr_document = updates.ptrDocs
+      if (updates.aspectosAmbientalesDocs !== undefined) {
+        backendUpdates.environmental_aspects_document = updates.aspectosAmbientalesDocs
       }
       if (updates.observaciones !== undefined) backendUpdates.observations = updates.observaciones
       if (updates.proximasTareas !== undefined) backendUpdates.next_tasks = updates.proximasTareas
@@ -447,9 +452,9 @@ const useReportesStore = create((set, get) => ({
         work_description: reporteData.descripcion || reporteData.descripcionTrabajo,
         progress_percentage: reporteData.porcentajeAvance || 0,
         work_at_height: reporteData.trabajoEnAltura || false,
-        ats_document: reporteData.atsDocument || null,
-        ptr_document: reporteData.ptrDocument || null,
-        environmental_aspects_document: reporteData.aspectosAmbientalesDocument || null,
+        ats_document: reporteData.atsDocs || null,
+        ptr_document: reporteData.ptrDocs || null,
+        environmental_aspects_document: reporteData.aspectosAmbientalesDocs || null,
         observations: reporteData.observaciones || null,
         next_tasks: reporteData.proximasTareas || null,
         status: reporteData.estado || 'active'
@@ -599,9 +604,9 @@ const useReportesStore = create((set, get) => ({
           fotosDespues: r.fotosDespues,
           materialesUtilizados: r.materialesUtilizados,
           observaciones: r.observaciones,
-          atsDoc: r.atsDoc,
-          ptrDoc: r.ptrDoc,
-          aspectosAmbientalesDoc: r.aspectosAmbientalesDoc,
+          atsDocs: r.atsDocs,
+          ptrDocs: r.ptrDocs,
+          aspectosAmbientalesDocs: r.aspectosAmbientalesDocs,
           trabajoEnAltura: r.trabajoEnAltura
         }))
       }

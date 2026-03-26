@@ -1798,7 +1798,7 @@ const InformeSimpleDocument = ({ orden, informeFinal, reportes }) => {
   const fechaHoy = formatDateLong(getCurrentDate())
   
   // Obtener el usuario actual (simulado)
-  const creadoPor = localStorage.getItem('currentUserName') || 'Sandra Juarez'
+  const creadoPor = localStorage.getItem('currentUserName') || 'N/A'
   
   return (
     <Document>
@@ -1843,7 +1843,7 @@ const InformeSimpleDocument = ({ orden, informeFinal, reportes }) => {
           <View style={stylesInforme.infoRow}>
             <Text style={stylesInforme.infoLabel}>DIRECCIÓN:</Text>
             <Text style={stylesInforme.infoValue}>
-              {orden?.ubicacion || 'NESTLE PERÚ S.A. CHOCOLATES'}
+              {orden?.ubicacion || 'N/A'}
             </Text>
           </View>
           <View style={stylesInforme.infoRow}>
@@ -2035,7 +2035,7 @@ const InformeSimpleDocument = ({ orden, informeFinal, reportes }) => {
 const InformeCompletoDocument = ({ orden, informeFinal, reportes }) => {
   const fechaHoy = formatDateLong(getCurrentDate())
   
-  const creadoPor = localStorage.getItem('currentUserName') || 'Sandra Juarez'
+  const creadoPor = localStorage.getItem('currentUserName') || 'N/A'
   
   return (
     <Document>
@@ -2080,7 +2080,7 @@ const InformeCompletoDocument = ({ orden, informeFinal, reportes }) => {
           <View style={stylesInforme.infoRow}>
             <Text style={stylesInforme.infoLabel}>DIRECCIÓN:</Text>
             <Text style={stylesInforme.infoValue}>
-              {orden?.ubicacion || 'NESTLE PERÚ S.A. CHOCOLATES'}
+              {orden?.ubicacion || 'N/A'}
             </Text>
           </View>
           <View style={stylesInforme.infoRow}>
@@ -2213,88 +2213,98 @@ const InformeCompletoDocument = ({ orden, informeFinal, reportes }) => {
           </Text>
           
           {/* Lista de documentos por reporte */}
-          {reportes?.map((reporte, index) => (
-            <View key={index} style={{ marginBottom: 15, padding: 8, backgroundColor: '#f9f9f9', borderRadius: 3 }}>
-              <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#003366', marginBottom: 8 }}>
-                📅 Reporte {index + 1} - {reporte.fecha}
-              </Text>
-              
-              {/* ATS */}
-              {reporte.atsDocument && (
-                <View style={{ marginBottom: 5 }}>
-                  <Text style={{ fontSize: 9, color: '#333' }}>
-                    ✅ ATS (Análisis de Trabajo Seguro) - Adjunto
-                  </Text>
-                  <Text style={{ fontSize: 8, color: '#666', marginLeft: 20 }}>
-                    Archivo: {reporte.atsDocument.name || 'ats_documento.pdf'}
-                  </Text>
-                </View>
-              )}
-              
-              {/* Aspectos Ambientales */}
-              {reporte.aspectosAmbientalesDocument && (
-                <View style={{ marginBottom: 5 }}>
-                  <Text style={{ fontSize: 9, color: '#333' }}>
-                    ✅ Aspectos Ambientales - Adjunto
-                  </Text>
-                  <Text style={{ fontSize: 8, color: '#666', marginLeft: 20 }}>
-                    Archivo: {reporte.aspectosAmbientalesDocument.name || 'aspectos_ambientales.pdf'}
-                  </Text>
-                </View>
-              )}
-              
-              {/* PTR */}
-              {reporte.ptrDocument && (
-                <View style={{ marginBottom: 5 }}>
-                  <Text style={{ fontSize: 9, color: '#333' }}>
-                    ✅ PTR (Permiso de Trabajo de Riesgo) - Adjunto
-                  </Text>
-                  <Text style={{ fontSize: 8, color: '#666', marginLeft: 20 }}>
-                    Archivo: {reporte.ptrDocument.name || 'ptr_documento.pdf'}
-                  </Text>
-                </View>
-              )}
-              
-              {/* Si no hay documentos */}
-              {!reporte.atsDocument && !reporte.aspectosAmbientalesDocument && !reporte.ptrDocument && (
-                <Text style={{ fontSize: 8, fontStyle: 'italic', color: '#999' }}>
-                  Sin documentos de seguridad adjuntos
+          {reportes?.map((reporte, index) => {
+            const ats = reporte.atsDocs || []
+            const aspectos = reporte.aspectosAmbientalesDocs || []
+            const ptr = reporte.ptrDocs || []
+            const sinDocs = ats.length === 0 && aspectos.length === 0 && ptr.length === 0
+
+            return (
+              <View key={index} style={{ marginBottom: 15, padding: 8, backgroundColor: '#f9f9f9', borderRadius: 3 }}>
+                <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#003366', marginBottom: 8 }}>
+                  Reporte {index + 1} - {reporte.fecha}
                 </Text>
-              )}
-            </View>
-          ))}
-          
-          {/* Resumen de documentación final */}
-          {informeFinal && (
-            <View style={{ marginTop: 20, padding: 10, backgroundColor: '#e8f4f8', borderRadius: 3 }}>
-              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#003366', marginBottom: 8 }}>
-                📋 DOCUMENTACIÓN FINAL DEL SERVICIO
-              </Text>
-              
-              {informeFinal.atsDocument && (
-                <Text style={{ fontSize: 9, color: '#333', marginBottom: 3 }}>
-                  ✅ ATS Final - {informeFinal.atsDocument.name || 'Adjunto'}
+
+                {/* ATS */}
+                {ats.map((doc, i) => (
+                  <View key={`ats-${i}`} style={{ marginBottom: 4 }}>
+                    <Text style={{ fontSize: 9, color: '#333' }}>
+                      ATS (Analisis de Trabajo Seguro) - Adjunto
+                    </Text>
+                    <Text style={{ fontSize: 8, color: '#666', marginLeft: 20 }}>
+                      Archivo: {doc.nombre || doc.name || `ats_${i + 1}.pdf`}
+                    </Text>
+                  </View>
+                ))}
+
+                {/* Aspectos Ambientales */}
+                {aspectos.map((doc, i) => (
+                  <View key={`asp-${i}`} style={{ marginBottom: 4 }}>
+                    <Text style={{ fontSize: 9, color: '#333' }}>
+                      Aspectos Ambientales - Adjunto
+                    </Text>
+                    <Text style={{ fontSize: 8, color: '#666', marginLeft: 20 }}>
+                      Archivo: {doc.nombre || doc.name || `aspectos_${i + 1}.pdf`}
+                    </Text>
+                  </View>
+                ))}
+
+                {/* PTR */}
+                {ptr.map((doc, i) => (
+                  <View key={`ptr-${i}`} style={{ marginBottom: 4 }}>
+                    <Text style={{ fontSize: 9, color: '#333' }}>
+                      PTR (Permiso de Trabajo de Riesgo) - Adjunto
+                    </Text>
+                    <Text style={{ fontSize: 8, color: '#666', marginLeft: 20 }}>
+                      Archivo: {doc.nombre || doc.name || `ptr_${i + 1}.pdf`}
+                    </Text>
+                  </View>
+                ))}
+
+                {/* Si no hay documentos */}
+                {sinDocs && (
+                  <Text style={{ fontSize: 8, fontStyle: 'italic', color: '#999' }}>
+                    Sin documentos de seguridad adjuntos
+                  </Text>
+                )}
+              </View>
+            )
+          })}
+
+          {/* Resumen total de documentación */}
+          {reportes?.length > 0 && (() => {
+            const totalAts = reportes.reduce((acc, r) => acc + (r.atsDocs?.length || 0), 0)
+            const totalAspectos = reportes.reduce((acc, r) => acc + (r.aspectosAmbientalesDocs?.length || 0), 0)
+            const totalPtr = reportes.reduce((acc, r) => acc + (r.ptrDocs?.length || 0), 0)
+            const totalDocs = totalAts + totalAspectos + totalPtr
+
+            return totalDocs > 0 ? (
+              <View style={{ marginTop: 20, padding: 10, backgroundColor: '#e8f4f8', borderRadius: 3 }}>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#003366', marginBottom: 8 }}>
+                  RESUMEN DE DOCUMENTACION
                 </Text>
-              )}
-              
-              {informeFinal.aspectosAmbientalesDocument && (
-                <Text style={{ fontSize: 9, color: '#333', marginBottom: 3 }}>
-                  ✅ Aspectos Ambientales Final - {informeFinal.aspectosAmbientalesDocument.name || 'Adjunto'}
+                {totalAts > 0 && (
+                  <Text style={{ fontSize: 9, color: '#333', marginBottom: 3 }}>
+                    ATS: {totalAts} documento(s)
+                  </Text>
+                )}
+                {totalAspectos > 0 && (
+                  <Text style={{ fontSize: 9, color: '#333', marginBottom: 3 }}>
+                    Aspectos Ambientales: {totalAspectos} documento(s)
+                  </Text>
+                )}
+                {totalPtr > 0 && (
+                  <Text style={{ fontSize: 9, color: '#333', marginBottom: 3 }}>
+                    PTR: {totalPtr} documento(s)
+                  </Text>
+                )}
+                <Text style={{ fontSize: 8, fontStyle: 'italic', color: '#666', marginTop: 10 }}>
+                  Nota: Los documentos originales estan adjuntos a este informe y pueden ser
+                  visualizados con un lector de PDF compatible.
                 </Text>
-              )}
-              
-              {informeFinal.ptrDocument && (
-                <Text style={{ fontSize: 9, color: '#333', marginBottom: 3 }}>
-                  ✅ PTR Final - {informeFinal.ptrDocument.name || 'Adjunto'}
-                </Text>
-              )}
-              
-              <Text style={{ fontSize: 8, fontStyle: 'italic', color: '#666', marginTop: 10 }}>
-                Nota: Los documentos originales están adjuntos a este informe y pueden ser 
-                visualizados con un lector de PDF compatible.
-              </Text>
-            </View>
-          )}
+              </View>
+            ) : null
+          })()}
         </View>
         
         {/* Footer */}

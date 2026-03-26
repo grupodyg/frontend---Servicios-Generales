@@ -1,6 +1,6 @@
 import React, { memo } from 'react'
 import { getCurrentLocation, formatCoordinates, openInBestMapApp } from '../../../../utils/mapUtils'
-import { isTecnico } from '../../../../utils/roleUtils'
+import { isTecnico, isAdminOrSupervisor } from '../../../../utils/roleUtils'
 import { ESTADOS_COMPLETABLES, VISITA_ESTADOS } from '../../../../constants/visitasTecnicasConstants'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -26,7 +26,7 @@ const TabCompletado = memo(({
   saveSignature
 }) => {
   // Verificar si puede completar
-  const puedeCompletar = isTecnico(user) && ESTADOS_COMPLETABLES.includes(visitaActual.estado)
+  const puedeCompletar = (isTecnico(user) || isAdminOrSupervisor(user)) && ESTADOS_COMPLETABLES.includes(visitaActual.estado)
 
   // Obtener ubicacion GPS
   const handleObtenerUbicacion = async () => {

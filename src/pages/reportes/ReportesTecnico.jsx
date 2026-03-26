@@ -157,21 +157,21 @@ const ReportesTecnico = () => {
                       </div>
 
                       {/* Documentos de Seguridad */}
-                      {(reporte.atsDoc || reporte.ptrDoc || reporte.aspectosAmbientalesDoc) && (
+                      {(reporte.atsDocs?.length > 0 || reporte.ptrDocs?.length > 0 || reporte.aspectosAmbientalesDocs?.length > 0) && (
                         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                          {reporte.atsDoc && (
+                          {reporte.atsDocs?.length > 0 && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">
-                              📋 ATS
+                              ATS ({reporte.atsDocs.length})
                             </span>
                           )}
-                          {reporte.ptrDoc && (
+                          {reporte.ptrDocs?.length > 0 && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800">
-                              ⚠️ PTR
+                              PTR ({reporte.ptrDocs.length})
                             </span>
                           )}
-                          {reporte.aspectosAmbientalesDoc && (
+                          {reporte.aspectosAmbientalesDocs?.length > 0 && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800">
-                              🌱 Amb.
+                              Amb. ({reporte.aspectosAmbientalesDocs.length})
                             </span>
                           )}
                         </div>

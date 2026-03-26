@@ -150,6 +150,13 @@ export const API_ENDPOINTS = {
 
   PAYMENT_CONDITIONS: `${API_BASE_URL}/api/payment-conditions`,
   PAYMENT_CONDITION_BY_ID: (id) => `${API_BASE_URL}/api/payment-conditions/${id}`,
+
+  // ========================================
+  // DATABASE BACKUPS
+  // ========================================
+  BACKUPS: `${API_BASE_URL}/api/backups`,
+  BACKUP_DOWNLOAD: (filename) => `${API_BASE_URL}/api/backups/download/${filename}`,
+  BACKUP_DELETE: (filename) => `${API_BASE_URL}/api/backups/${filename}`,
 };
 
 // Helper function to get auth token

@@ -291,7 +291,7 @@ const useVisitaDetalle = () => {
 
   const puedeEditarFirma = useCallback(() => {
     if (!visitaActual) return false
-    if (isTecnico(user)) {
+    if (isTecnico(user) || isAdminOrSupervisor(user)) {
       return ESTADOS_FIRMABLES.includes(visitaActual.estado)
     }
     return false

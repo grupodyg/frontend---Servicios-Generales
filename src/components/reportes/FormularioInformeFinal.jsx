@@ -18,10 +18,14 @@ const FormularioInformeFinal = ({ ordenData, reportes, materialesUtilizados, onG
     defaultValues: {
       asunto: ordenData?.nombreProyecto || ordenData?.descripcion || '',
       area: '',
-      fechaInicio: ordenData?.fechaCreacion || '',
+      fechaInicio: ordenData?.fechaCreacion
+        ? new Date(ordenData.fechaCreacion).toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+        : '',
       fechaFin: getToday(),
       intervenciones: reportes.map(rep => ({
-        fecha: rep.fecha,
+        fecha: rep.fecha
+          ? new Date(rep.fecha).toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+          : '',
         descripcion: rep.descripcion,
         estatus: 'Finalizado',
         observaciones: rep.observaciones || 'Ninguna'
@@ -195,7 +199,8 @@ const FormularioInformeFinal = ({ ordenData, reportes, materialesUtilizados, onG
                       </label>
                       <input
                         type="date"
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+                        readOnly
                         {...register(`intervenciones.${index}.fecha`)}
                       />
                     </div>

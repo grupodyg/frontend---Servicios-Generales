@@ -1233,93 +1233,78 @@ const OrdenDetalle = () => {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                           {/* ATS */}
-                          <div className={`border rounded-lg p-4 ${reporte.atsDoc ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                          <div className={`border rounded-lg p-4 ${reporte.atsDocs?.length > 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
                             <div className="flex items-start justify-between">
-                              <div>
+                              <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-900">ATS</p>
-                                <p className="text-xs text-gray-600 mt-1">Análisis de Trabajo Seguro</p>
-                                {reporte.atsDoc ? (
-                                  <div className="mt-2">
-                                    <a
-                                      href={getFileUrl(reporte.atsDoc.url)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-                                    >
-                                      📎 {reporte.atsDoc.nombre || 'Ver documento'}
-                                    </a>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {reporte.atsDoc.fecha ? new Date(reporte.atsDoc.fecha).toLocaleDateString() : ''}
-                                    </p>
+                                <p className="text-xs text-gray-600 mt-1">Analisis de Trabajo Seguro</p>
+                                {reporte.atsDocs?.length > 0 ? (
+                                  <div className="mt-2 space-y-1">
+                                    {reporte.atsDocs.map((doc, i) => (
+                                      <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                                         className="text-sm text-blue-600 hover:text-blue-800 block truncate">
+                                        {doc.nombre || 'Ver documento'}
+                                      </a>
+                                    ))}
                                   </div>
                                 ) : (
-                                  <p className="text-sm text-red-600 mt-2">⚠️ No adjuntado</p>
+                                  <p className="text-sm text-red-600 mt-2">No adjuntado</p>
                                 )}
                               </div>
-                              <span className={`text-2xl ${reporte.atsDoc ? 'text-green-500' : 'text-gray-300'}`}>
-                                {reporte.atsDoc ? '✓' : '○'}
+                              <span className={`text-2xl ${reporte.atsDocs?.length > 0 ? 'text-green-500' : 'text-gray-300'}`}>
+                                {reporte.atsDocs?.length > 0 ? '✓' : '○'}
                               </span>
                             </div>
                           </div>
 
                           {/* Aspectos Ambientales */}
-                          <div className={`border rounded-lg p-4 ${reporte.aspectosAmbientalesDoc ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                          <div className={`border rounded-lg p-4 ${reporte.aspectosAmbientalesDocs?.length > 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
                             <div className="flex items-start justify-between">
-                              <div>
+                              <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-900">Aspectos Ambientales</p>
-                                <p className="text-xs text-gray-600 mt-1">Documentación ambiental</p>
-                                {reporte.aspectosAmbientalesDoc ? (
-                                  <div className="mt-2">
-                                    <a
-                                      href={getFileUrl(reporte.aspectosAmbientalesDoc.url)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-                                    >
-                                      📎 {reporte.aspectosAmbientalesDoc.nombre || 'Ver documento'}
-                                    </a>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {reporte.aspectosAmbientalesDoc.fecha ? new Date(reporte.aspectosAmbientalesDoc.fecha).toLocaleDateString() : ''}
-                                    </p>
+                                <p className="text-xs text-gray-600 mt-1">Documentacion ambiental</p>
+                                {reporte.aspectosAmbientalesDocs?.length > 0 ? (
+                                  <div className="mt-2 space-y-1">
+                                    {reporte.aspectosAmbientalesDocs.map((doc, i) => (
+                                      <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                                         className="text-sm text-blue-600 hover:text-blue-800 block truncate">
+                                        {doc.nombre || 'Ver documento'}
+                                      </a>
+                                    ))}
                                   </div>
                                 ) : (
                                   <p className="text-sm text-gray-500 mt-2">Opcional</p>
                                 )}
                               </div>
-                              <span className={`text-2xl ${reporte.aspectosAmbientalesDoc ? 'text-green-500' : 'text-gray-300'}`}>
-                                {reporte.aspectosAmbientalesDoc ? '✓' : '○'}
+                              <span className={`text-2xl ${reporte.aspectosAmbientalesDocs?.length > 0 ? 'text-green-500' : 'text-gray-300'}`}>
+                                {reporte.aspectosAmbientalesDocs?.length > 0 ? '✓' : '○'}
                               </span>
                             </div>
                           </div>
 
                           {/* PTR */}
-                          <div className={`border rounded-lg p-4 ${reporte.ptrDoc ? 'bg-green-50 border-green-200' : reporte.trabajoEnAltura ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}`}>
+                          <div className={`border rounded-lg p-4 ${reporte.ptrDocs?.length > 0 ? 'bg-green-50 border-green-200' : reporte.trabajoEnAltura ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}`}>
                             <div className="flex items-start justify-between">
-                              <div>
+                              <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-900">PTR</p>
                                 <p className="text-xs text-gray-600 mt-1">Permiso de Trabajo de Riesgo</p>
-                                {reporte.ptrDoc ? (
-                                  <div className="mt-2">
-                                    <a
-                                      href={getFileUrl(reporte.ptrDoc.url)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-                                    >
-                                      📎 {reporte.ptrDoc.nombre || 'Ver documento'}
-                                    </a>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {reporte.ptrDoc.fecha ? new Date(reporte.ptrDoc.fecha).toLocaleDateString() : ''}
-                                    </p>
+                                {reporte.ptrDocs?.length > 0 ? (
+                                  <div className="mt-2 space-y-1">
+                                    {reporte.ptrDocs.map((doc, i) => (
+                                      <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                                         className="text-sm text-blue-600 hover:text-blue-800 block truncate">
+                                        {doc.nombre || 'Ver documento'}
+                                      </a>
+                                    ))}
                                   </div>
                                 ) : (
                                   <p className={`text-sm mt-2 ${reporte.trabajoEnAltura ? 'text-orange-600' : 'text-gray-500'}`}>
-                                    {reporte.trabajoEnAltura ? '⚠️ Requerido (trabajo en altura)' : 'Opcional'}
+                                    {reporte.trabajoEnAltura ? 'Requerido (trabajo en altura)' : 'Opcional'}
                                   </p>
                                 )}
                               </div>
-                              <span className={`text-2xl ${reporte.ptrDoc ? 'text-green-500' : reporte.trabajoEnAltura ? 'text-orange-500' : 'text-gray-300'}`}>
-                                {reporte.ptrDoc ? '✓' : reporte.trabajoEnAltura ? '!' : '○'}
+                              <span className={`text-2xl ${reporte.ptrDocs?.length > 0 ? 'text-green-500' : reporte.trabajoEnAltura ? 'text-orange-500' : 'text-gray-300'}`}>
+                                {reporte.ptrDocs?.length > 0 ? '✓' : reporte.trabajoEnAltura ? '!' : '○'}
                               </span>
                             </div>
                           </div>

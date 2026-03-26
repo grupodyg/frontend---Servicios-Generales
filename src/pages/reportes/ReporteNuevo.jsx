@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import useReportesStore from '../../stores/reportesStore'
@@ -30,13 +30,22 @@ const ReporteNuevo = () => {
   const [fotosDespues, setFotosDespues] = useState([])
   const [bloqueado, setBloqueado] = useState(false)
   const [trabajoEnAltura, setTrabajoEnAltura] = useState(false)
-  const [atsDoc, setAtsDoc] = useState(null)
-  const [aspectosAmbientalesDoc, setAspectosAmbientalesDoc] = useState(null)
-  const [ptrDoc, setPtrDoc] = useState(null)
+  const [atsDocs, setAtsDocs] = useState([])
+  const [aspectosAmbientalesDocs, setAspectosAmbientalesDocs] = useState([])
+  const [ptrDocs, setPtrDocs] = useState([])
   const [materialesUtilizados, setMaterialesUtilizados] = useState([])
   const [instalacionSeleccionada, setInstalacionSeleccionada] = useState('')
   const [porcentajeAnterior, setPorcentajeAnterior] = useState(0)
   const [cargandoReportes, setCargandoReportes] = useState(false)
+
+  // Limpiar blob URLs al desmontar para evitar memory leaks
+  useEffect(() => {
+    return () => {
+      [atsDocs, ptrDocs, aspectosAmbientalesDocs].flat().forEach(doc => {
+        if (doc?.url?.startsWith('blob:')) URL.revokeObjectURL(doc.url)
+      })
+    }
+  }, [])
 
   // Obtener instalaciones basadas en la especialidad del técnico
   const instalaciones = getInstalacionesByEspecialidad(user?.especialidad || 'HVAC') || []
@@ -111,58 +120,76 @@ const ReporteNuevo = () => {
   // Calcular el cambio en el porcentaje
   const cambioPorcentaje = porcentajeAvance - porcentajeAnterior
 
-  // Función para manejar la carga de documentos
-  const handleDocumentUpload = (e, setDocument, docType) => {
-    const file = e.target.files[0]
-    if (file) {
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
-      if (!allowedTypes.includes(file.type)) {
-        MySwal.fire({
-          title: 'Archivo no válido',
-          text: 'Solo se permiten archivos PDF o imágenes (JPG, PNG)',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
-        return
-      }
+  const ALLOWED_DOC_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
+  const MAX_DOC_SIZE = 5 * 1024 * 1024 // 5MB
 
-      if (file.size > 5 * 1024 * 1024) {
-        MySwal.fire({
-          title: 'Archivo muy grande',
-          text: 'El archivo no debe exceder 5MB',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
-        return
-      }
+  // Función para manejar la carga de múltiples documentos
+  const handleDocumentUpload = (e, setDocuments, docType) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
 
-      const fileData = {
-        file: file,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        url: URL.createObjectURL(file),
-        fecha: getCurrentTimestamp()
-      }
-
-      setDocument(fileData)
+    const invalidType = files.find(f => !ALLOWED_DOC_TYPES.includes(f.type))
+    if (invalidType) {
+      MySwal.fire({
+        title: 'Archivo no válido',
+        text: `"${invalidType.name}" no es un formato permitido. Solo PDF o imágenes (JPG, PNG)`,
+        icon: 'error',
+        confirmButtonColor: '#1e40af'
+      })
+      e.target.value = ''
+      return
     }
+
+    const oversized = files.find(f => f.size > MAX_DOC_SIZE)
+    if (oversized) {
+      MySwal.fire({
+        title: 'Archivo muy grande',
+        text: `"${oversized.name}" excede 5MB`,
+        icon: 'error',
+        confirmButtonColor: '#1e40af'
+      })
+      e.target.value = ''
+      return
+    }
+
+    const newDocs = files.map(file => ({
+      file,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      url: URL.createObjectURL(file),
+      fecha: getCurrentTimestamp()
+    }))
+
+    setDocuments(prev => [...prev, ...newDocs])
+    e.target.value = '' // Reset input para permitir seleccionar los mismos archivos
+  }
+
+  // Función para eliminar un documento individual de la lista
+  const handleRemoveDocument = (setDocuments, index) => {
+    setDocuments(prev => {
+      const removed = prev[index]
+      if (removed?.url?.startsWith('blob:')) {
+        URL.revokeObjectURL(removed.url)
+      }
+      return prev.filter((_, i) => i !== index)
+    })
   }
 
   const onSubmit = async (data) => {
     try {
       // Validación de documentos obligatorios
-      if (!atsDoc || !atsDoc.file) {
+      if (atsDocs.length === 0) {
         MySwal.fire({
           title: 'Documento requerido',
-          text: 'El documento ATS es obligatorio',
+          text: 'Debe adjuntar al menos un documento ATS',
           icon: 'warning',
           confirmButtonColor: '#1e40af'
         })
         return
       }
 
-      if (trabajoEnAltura && (!ptrDoc || !ptrDoc.file)) {
+      if (trabajoEnAltura && ptrDocs.length === 0) {
         MySwal.fire({
           title: 'Documento requerido',
           text: 'El PTR es obligatorio cuando hay trabajo en altura',
@@ -223,19 +250,25 @@ const ReporteNuevo = () => {
           await uploadReportPhotos(reporteId, fotosDespues, 'after')
         }
 
-        // PASO 4: Subir documento ATS
-        if (atsDoc && atsDoc.file) {
-          await uploadReportDocument(reporteId, atsDoc.file, 'ats')
+        // PASO 4: Subir documentos ATS (múltiples)
+        for (const doc of atsDocs) {
+          if (doc.file) {
+            await uploadReportDocument(reporteId, doc.file, 'ats')
+          }
         }
 
-        // PASO 5: Subir documento PTR (si existe)
-        if (ptrDoc && ptrDoc.file) {
-          await uploadReportDocument(reporteId, ptrDoc.file, 'ptr')
+        // PASO 5: Subir documentos PTR (múltiples)
+        for (const doc of ptrDocs) {
+          if (doc.file) {
+            await uploadReportDocument(reporteId, doc.file, 'ptr')
+          }
         }
 
-        // PASO 6: Subir documento Aspectos Ambientales (si existe)
-        if (aspectosAmbientalesDoc && aspectosAmbientalesDoc.file) {
-          await uploadReportDocument(reporteId, aspectosAmbientalesDoc.file, 'environmental_aspects')
+        // PASO 6: Subir documentos Aspectos Ambientales (múltiples)
+        for (const doc of aspectosAmbientalesDocs) {
+          if (doc.file) {
+            await uploadReportDocument(reporteId, doc.file, 'environmental_aspects')
+          }
         }
       } catch (uploadError) {
         // ROLLBACK: Si falla la subida de archivos, eliminar el reporte creado
@@ -266,9 +299,9 @@ const ReporteNuevo = () => {
               <li>Reporte base: ✓</li>
               ${fotosAntes.length > 0 ? `<li>Fotos antes: ${fotosAntes.length} ✓</li>` : ''}
               ${fotosDespues.length > 0 ? `<li>Fotos después: ${fotosDespues.length} ✓</li>` : ''}
-              ${atsDoc ? '<li>Documento ATS: ✓</li>' : ''}
-              ${ptrDoc ? '<li>Documento PTR: ✓</li>' : ''}
-              ${aspectosAmbientalesDoc ? '<li>Documento Aspectos Ambientales: ✓</li>' : ''}
+              ${atsDocs.length > 0 ? `<li>Documentos ATS: ${atsDocs.length} ✓</li>` : ''}
+              ${ptrDocs.length > 0 ? `<li>Documentos PTR: ${ptrDocs.length} ✓</li>` : ''}
+              ${aspectosAmbientalesDocs.length > 0 ? `<li>Documentos Aspectos Ambientales: ${aspectosAmbientalesDocs.length} ✓</li>` : ''}
               ${materialesUtilizados.length > 0 ? `<li>Materiales: ${materialesUtilizados.length} ✓</li>` : ''}
             </ul>
           </div>
@@ -458,128 +491,142 @@ const ReporteNuevo = () => {
           {/* ATS */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
-              📋 ATS (Análisis de Trabajo Seguro) *
+              ATS (Analisis de Trabajo Seguro) *
             </h3>
-            <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center ${
-              atsDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'
-            }`}>
-              {atsDoc ? (
-                <div className="space-y-2">
-                  <span className="text-green-600 text-xl sm:text-2xl">✓</span>
-                  <p className="text-sm font-medium text-gray-700 break-all line-clamp-2" title={atsDoc.name}>
-                    {atsDoc.name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setAtsDoc(null)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    id="ats-upload"
-                    className="hidden"
-                    accept=".pdf,image/*"
-                    onChange={(e) => handleDocumentUpload(e, setAtsDoc, 'ATS')}
-                  />
-                  <label htmlFor="ats-upload" className="cursor-pointer">
-                    <span className="text-4xl text-gray-400 block mb-2">📎</span>
-                    <span className="text-sm text-blue-600 hover:text-blue-800">
-                      Seleccionar Archivo
-                    </span>
-                  </label>
-                </>
-              )}
+
+            {/* Lista de documentos cargados */}
+            {atsDocs.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {atsDocs.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center min-w-0 flex-1">
+                      <span className="text-green-600 mr-2 flex-shrink-0">&#10003;</span>
+                      <p className="text-xs text-gray-700 truncate" title={doc.name}>{doc.name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDocument(setAtsDocs, index)}
+                      className="text-red-400 hover:text-red-600 ml-2 flex-shrink-0"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Zona de carga */}
+            <div className="border-2 border-dashed rounded-lg p-4 text-center border-gray-300 bg-gray-50">
+              <input
+                type="file"
+                id="ats-upload"
+                className="hidden"
+                accept=".pdf,image/*"
+                multiple
+                onChange={(e) => handleDocumentUpload(e, setAtsDocs, 'ATS')}
+              />
+              <label htmlFor="ats-upload" className="cursor-pointer">
+                <span className="text-3xl text-gray-400 block mb-1">+</span>
+                <span className="text-sm text-blue-600 hover:text-blue-800">
+                  {atsDocs.length > 0 ? 'Agregar mas archivos' : 'Seleccionar Archivos'}
+                </span>
+              </label>
             </div>
           </div>
 
           {/* Aspectos Ambientales */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
-              🌱 Aspectos Ambientales
+              Aspectos Ambientales
             </h3>
-            <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center ${
-              aspectosAmbientalesDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'
-            }`}>
-              {aspectosAmbientalesDoc ? (
-                <div className="space-y-2">
-                  <span className="text-green-600 text-2xl">✓</span>
-                  <p className="text-sm font-medium text-gray-700 break-all line-clamp-2" title={aspectosAmbientalesDoc.name}>
-                    {aspectosAmbientalesDoc.name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setAspectosAmbientalesDoc(null)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    id="aspectos-upload"
-                    className="hidden"
-                    accept=".pdf,image/*"
-                    onChange={(e) => handleDocumentUpload(e, setAspectosAmbientalesDoc, 'Aspectos')}
-                  />
-                  <label htmlFor="aspectos-upload" className="cursor-pointer">
-                    <span className="text-4xl text-gray-400 block mb-2">📎</span>
-                    <span className="text-sm text-blue-600 hover:text-blue-800">
-                      Seleccionar Archivo
-                    </span>
-                  </label>
-                </>
-              )}
+
+            {aspectosAmbientalesDocs.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {aspectosAmbientalesDocs.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center min-w-0 flex-1">
+                      <span className="text-green-600 mr-2 flex-shrink-0">&#10003;</span>
+                      <p className="text-xs text-gray-700 truncate" title={doc.name}>{doc.name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDocument(setAspectosAmbientalesDocs, index)}
+                      className="text-red-400 hover:text-red-600 ml-2 flex-shrink-0"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="border-2 border-dashed rounded-lg p-4 text-center border-gray-300 bg-gray-50">
+              <input
+                type="file"
+                id="aspectos-upload"
+                className="hidden"
+                accept=".pdf,image/*"
+                multiple
+                onChange={(e) => handleDocumentUpload(e, setAspectosAmbientalesDocs, 'Aspectos')}
+              />
+              <label htmlFor="aspectos-upload" className="cursor-pointer">
+                <span className="text-3xl text-gray-400 block mb-1">+</span>
+                <span className="text-sm text-blue-600 hover:text-blue-800">
+                  {aspectosAmbientalesDocs.length > 0 ? 'Agregar mas archivos' : 'Seleccionar Archivos'}
+                </span>
+              </label>
             </div>
           </div>
 
           {/* PTR */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
             <h3 className="text-sm font-medium text-gray-700 mb-3">
-              ⚠️ PTR (Permiso de Trabajo de Riesgo) {trabajoEnAltura && '*'}
+              PTR (Permiso de Trabajo de Riesgo) {trabajoEnAltura && '*'}
             </h3>
-            <div className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center ${
-              ptrDoc ? 'border-green-300 bg-green-50' : 
-              trabajoEnAltura ? 'border-orange-300 bg-orange-50' : 
-              'border-gray-300 bg-gray-50'
+
+            {ptrDocs.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {ptrDocs.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center min-w-0 flex-1">
+                      <span className="text-green-600 mr-2 flex-shrink-0">&#10003;</span>
+                      <p className="text-xs text-gray-700 truncate" title={doc.name}>{doc.name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDocument(setPtrDocs, index)}
+                      className="text-red-400 hover:text-red-600 ml-2 flex-shrink-0"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className={`border-2 border-dashed rounded-lg p-4 text-center ${
+              trabajoEnAltura && ptrDocs.length === 0 ? 'border-orange-300 bg-orange-50' : 'border-gray-300 bg-gray-50'
             }`}>
-              {ptrDoc ? (
-                <div className="space-y-2">
-                  <span className="text-green-600 text-2xl">✓</span>
-                  <p className="text-sm font-medium text-gray-700 break-all line-clamp-2" title={ptrDoc.name}>
-                    {ptrDoc.name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setPtrDoc(null)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    id="ptr-upload"
-                    className="hidden"
-                    accept=".pdf,image/*"
-                    onChange={(e) => handleDocumentUpload(e, setPtrDoc, 'PTR')}
-                  />
-                  <label htmlFor="ptr-upload" className="cursor-pointer">
-                    <span className="text-4xl text-gray-400 block mb-2">📎</span>
-                    <span className="text-sm text-blue-600 hover:text-blue-800">
-                      Seleccionar Archivo
-                    </span>
-                  </label>
-                </>
-              )}
+              <input
+                type="file"
+                id="ptr-upload"
+                className="hidden"
+                accept=".pdf,image/*"
+                multiple
+                onChange={(e) => handleDocumentUpload(e, setPtrDocs, 'PTR')}
+              />
+              <label htmlFor="ptr-upload" className="cursor-pointer">
+                <span className="text-3xl text-gray-400 block mb-1">+</span>
+                <span className="text-sm text-blue-600 hover:text-blue-800">
+                  {ptrDocs.length > 0 ? 'Agregar mas archivos' : 'Seleccionar Archivos'}
+                </span>
+              </label>
             </div>
           </div>
         </div>
@@ -646,8 +693,8 @@ const ReporteNuevo = () => {
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-blue-800">
-              Seleccione los materiales del inventario. Los materiales seleccionados se descontarán 
-              automáticamente del inventario cuando se guarde el reporte.
+              Puede agregar materiales manualmente o seleccionarlos del inventario.
+              Los materiales del inventario se descontarán automáticamente del stock al guardar el reporte.
             </p>
           </div>
 

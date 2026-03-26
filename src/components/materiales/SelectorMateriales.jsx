@@ -11,6 +11,9 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
   const [materialesLocal, setMaterialesLocal] = useState(materialesSeleccionados)
   const debounceTimer = useRef(null)
 
+  // Estado para ingreso manual
+  const [materialManual, setMaterialManual] = useState({ nombre: '', cantidad: 1, unidad: 'unidad' })
+
   // Cargar categorías y materiales iniciales
   useEffect(() => {
     const loadInitialData = async () => {
@@ -115,17 +118,39 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
       return
     }
 
-    const material = (materiales || []).find(m => m.id === id)
-    if (material && cantidad > material.stockActual) {
-      alert(`Stock máximo disponible: ${material.stockActual} ${material.unidad}`)
-      return
+    const materialLocal = materialesLocal.find(m => m.id === id)
+    if (materialLocal && !materialLocal.esManual) {
+      const material = (materiales || []).find(m => m.id === id)
+      if (material && cantidad > material.stockActual) {
+        alert(`Stock máximo disponible: ${material.stockActual} ${material.unidad}`)
+        return
+      }
     }
 
-    const nuevosMaterieles = materialesLocal.map(m => 
+    const nuevosMaterieles = materialesLocal.map(m =>
       m.id === id ? { ...m, cantidad } : m
     )
     setMaterialesLocal(nuevosMaterieles)
     onMaterialesChange(nuevosMaterieles)
+  }
+
+  const handleAgregarMaterialManual = () => {
+    const nombre = materialManual.nombre.trim()
+    if (!nombre) return
+    if (materialManual.cantidad <= 0) return
+
+    const nuevoMaterial = {
+      id: `manual-${Date.now()}`,
+      nombre,
+      cantidad: materialManual.cantidad,
+      unidad: materialManual.unidad || 'unidad',
+      precioUnitario: 0,
+      esManual: true
+    }
+    const nuevosMaterieles = [...materialesLocal, nuevoMaterial]
+    setMaterialesLocal(nuevosMaterieles)
+    onMaterialesChange(nuevosMaterieles)
+    setMaterialManual({ nombre: '', cantidad: 1, unidad: 'unidad' })
   }
 
   const handleEliminarMaterial = (id) => {
@@ -136,17 +161,80 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
 
   const calcularTotal = () => {
     return materialesLocal.reduce((total, material) => {
-      return total + (material.precioUnitario * material.cantidad)
+      return total + ((material.precioUnitario || 0) * material.cantidad)
     }, 0)
   }
 
   return (
     <div className="space-y-4">
-      {/* Filtros */}
+      {/* Ingreso manual de material */}
+      <div className="border border-green-200 rounded-lg overflow-hidden bg-green-50">
+        <div className="bg-green-100 px-4 py-2 border-b border-green-200">
+          <h3 className="text-sm font-semibold text-green-900">
+            Agregar Material Manualmente
+          </h3>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div className="sm:col-span-5">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del material</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Escriba el nombre del material..."
+                value={materialManual.nombre}
+                onChange={(e) => setMaterialManual(prev => ({ ...prev, nombre: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarMaterialManual() } }}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+              <input
+                type="number"
+                min="1"
+                className="input-field text-center"
+                value={materialManual.cantidad}
+                onChange={(e) => setMaterialManual(prev => ({ ...prev, cantidad: parseInt(e.target.value) || 1 }))}
+              />
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unidad</label>
+              <select
+                className="input-field"
+                value={materialManual.unidad}
+                onChange={(e) => setMaterialManual(prev => ({ ...prev, unidad: e.target.value }))}
+              >
+                <option value="unidad">Unidad</option>
+                <option value="kg">Kg</option>
+                <option value="m">Metro</option>
+                <option value="litro">Litro</option>
+                <option value="rollo">Rollo</option>
+                <option value="caja">Caja</option>
+                <option value="bolsa">Bolsa</option>
+                <option value="galón">Galón</option>
+                <option value="par">Par</option>
+                <option value="juego">Juego</option>
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <button
+                type="button"
+                onClick={handleAgregarMaterialManual}
+                disabled={!materialManual.nombre.trim()}
+                className="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                + Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros del inventario */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Buscar Material
+            Buscar en Inventario
           </label>
           <input
             type="text"
@@ -250,8 +338,13 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
               <div key={material.id} className="bg-white rounded-lg p-3 border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{material.nombre}</h4>
-                    {canViewPrices(user) && (
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-gray-900">{material.nombre}</h4>
+                      {material.esManual && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Manual</span>
+                      )}
+                    </div>
+                    {canViewPrices(user) && material.precioUnitario > 0 && (
                       <p className="text-sm text-gray-600">
                         S/ {material.precioUnitario.toFixed(2)} x {material.cantidad} =
                         <span className="font-semibold ml-1">
@@ -260,12 +353,12 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 ml-4">
                     <input
                       type="number"
                       min="1"
-                      max={Math.max(1, material.stockActual || 1)}
+                      max={material.esManual ? undefined : Math.max(1, material.stockActual || 1)}
                       value={material.cantidad}
                       onChange={(e) => handleActualizarCantidad(material.id, parseInt(e.target.value) || 0)}
                       className="w-20 px-2 py-1 border border-gray-300 rounded-md text-center"

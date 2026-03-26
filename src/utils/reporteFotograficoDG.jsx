@@ -445,7 +445,7 @@ const generarDatosDemo = () => {
         '/ilovepdf_pages-to-jpg/Reporte_20240822_100256 (1)_pages-to-jpg-0001.jpg',
         '/ilovepdf_pages-to-jpg/Reporte_20240822_100256 (1)_pages-to-jpg-0002.jpg'
       ].slice(0, 2 + Math.floor(Math.random() * 2)),
-      creadoPor: 'Sandra Juarez'
+      creadoPor: localStorage.getItem('currentUserName') || 'N/A'
     })
   }
   
