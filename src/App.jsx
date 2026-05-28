@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import useAuthStore from './stores/authStore'
+import useBrandingStore from './stores/brandingStore'
 import { isAdmin } from './utils/roleUtils'
 
 // Layouts
@@ -88,6 +90,19 @@ const PublicRoute = ({ children }) => {
 }
 
 function App() {
+  const fetchBranding = useBrandingStore((state) => state.fetchPublic)
+  const companyName = useBrandingStore((state) => state.companyName)
+  const companySubtitle = useBrandingStore((state) => state.companySubtitle)
+
+  useEffect(() => {
+    fetchBranding()
+  }, [fetchBranding])
+
+  useEffect(() => {
+    const parts = [companyName, companySubtitle].filter(Boolean)
+    document.title = parts.join(' - ')
+  }, [companyName, companySubtitle])
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Router future={{

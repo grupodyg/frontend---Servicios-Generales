@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { pdf } from '@react-pdf/renderer'
-import { jsPDF } from 'jspdf'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import useReportesStore from '../../stores/reportesStore'
 import useAuthStore from '../../stores/authStore'
 import useOrdenesStore from '../../stores/ordenesStore'
@@ -10,7 +10,7 @@ import notificationService from '../../services/notificationService'
 import useComunicacionesStore from '../../stores/comunicacionesStore'
 import FormularioInformeFinal from '../reportes/FormularioInformeFinal'
 import InformeFinalPDF from '../../utils/informeFinalPDF'
-import { getCurrentDate, getCurrentTimestamp, getToday, formatDate, formatDateTime } from '../../utils/dateUtils'
+import { getCurrentDate, getToday, formatDate, formatDateTime } from '../../utils/dateUtils'
 import ReporteFotograficoEstandar from '../../utils/reporteFotograficoEstandar'
 import SignatureCanvas from '../common/SignatureCanvas'
 import { getFileUrl } from '../../config/api'
@@ -72,23 +72,177 @@ const InformeFinal = ({ ordenId, onClose }) => {
   // Estado para controlar la generación de PDF de documentos de seguridad
   const [generandoDocSeguridad, setGenerandoDocSeguridad] = useState(null)
 
-  // Función para exportar un PDF consolidado por tipo de documento
+  // Sanitizar texto para WinAnsiEncoding (StandardFonts de pdf-lib)
+  // Reemplaza caracteres Unicode no soportados por equivalentes ASCII
+  const sanitizeForPdf = (text) => {
+    if (!text) return ''
+    const str = String(text)
+    const replacements = [
+      [/[\u201C\u201D\u201E\u201F\u0093\u0094]/g, '"'],  // comillas tipográficas dobles
+      [/[\u2018\u2019\u201A\u201B\u0091\u0092]/g, "'"],  // comillas tipográficas simples
+      [/[\u2013\u2014\u2015]/g, '-'],                       // guiones largos
+      [/\u2026/g, '...'],                                   // elipsis
+      [/\u2022/g, '*'],                                     // bullet
+      [/[\u00A0]/g, ' '],                                   // non-breaking space
+      [/[\u200B\u200C\u200D\uFEFF]/g, ''],                 // zero-width chars
+    ]
+    let result = str
+    for (const [pattern, replacement] of replacements) {
+      result = result.replace(pattern, replacement)
+    }
+    // Eliminar cualquier caracter restante fuera de WinAnsi (0x00-0xFF)
+    return result.replace(/[^\x00-\xFF]/g, '')
+  }
+
+  // Configuración dinámica de tipos de documentos de seguridad
+  // Fuente única de verdad para tipos, labels, campos e iconos
+  const SECURITY_DOC_TYPES = useMemo(() => [
+    { key: 'ats', label: 'ATS', buttonLabel: 'Todos los ATS', field: 'atsDocs', icon: '\u{1F4CB}' },
+    { key: 'ptr', label: 'PTR', buttonLabel: 'Todos los PTR', field: 'ptrDocs', icon: '\u26A0\uFE0F' },
+    { key: 'aspectos', label: 'Aspectos Ambientales', buttonLabel: 'Aspectos Ambientales', field: 'aspectosAmbientalesDocs', icon: '\u{1F331}' }
+  ], [])
+
+  // Helper: dibuja una página de portada en el PDF consolidado
+  const drawCoverPage = async (pdfDoc, font, fontBold, tipoLabel, documentos) => {
+    const page = pdfDoc.addPage()
+    const { width, height } = page.getSize()
+    const margin = 40
+
+    // Header con fondo
+    page.drawRectangle({ x: 0, y: height - 80, width, height: 80, color: rgb(0, 0.2, 0.4) })
+    const titulo = sanitizeForPdf(`Documentos ${tipoLabel}`)
+    page.drawText(titulo, {
+      x: width / 2 - fontBold.widthOfTextAtSize(titulo, 22) / 2,
+      y: height - 45, size: 22, font: fontBold, color: rgb(1, 1, 1)
+    })
+    const subtitulo = sanitizeForPdf(`Orden de Trabajo: OT-${orden?.correlativo || ordenId}`)
+    page.drawText(subtitulo, {
+      x: width / 2 - font.widthOfTextAtSize(subtitulo, 12) / 2,
+      y: height - 65, size: 12, font, color: rgb(1, 1, 1)
+    })
+
+    // Datos de la orden
+    let yPos = height - 120
+    const lineHeight = 18
+    const infoLines = [
+      sanitizeForPdf(`Cliente: ${orden?.clienteNombre || orden?.cliente || '-'}`),
+      sanitizeForPdf(`Instalacion: ${orden?.instalacionNombre || orden?.instalacion || '-'}`),
+      `Total de documentos: ${documentos.length}`,
+      `Fecha de exportacion: ${formatDate(new Date())}`
+    ]
+    for (const line of infoLines) {
+      page.drawText(line, { x: margin, y: yPos, size: 11, font, color: rgb(0, 0, 0) })
+      yPos -= lineHeight
+    }
+
+    // Índice de documentos
+    yPos -= 15
+    page.drawText('Indice de documentos', {
+      x: margin, y: yPos, size: 13, font: fontBold, color: rgb(0, 0.2, 0.4)
+    })
+    yPos -= 20
+
+    for (let i = 0; i < documentos.length; i++) {
+      const doc = documentos[i]
+      const text = sanitizeForPdf(`${i + 1}. Reporte #${doc.reporteIndex} - ${doc.fecha || 'Sin fecha'} - ${doc.nombre}`)
+      if (yPos < 40) {
+        const newPage = pdfDoc.addPage()
+        yPos = newPage.getSize().height - 40
+        newPage.drawText(text, { x: margin + 10, y: yPos, size: 9, font, color: rgb(0, 0, 0) })
+        yPos -= 14
+      } else {
+        page.drawText(text, { x: margin + 10, y: yPos, size: 9, font, color: rgb(0, 0, 0) })
+        yPos -= 14
+      }
+    }
+  }
+
+  // Helper: embebe una imagen en el PDF consolidado como página completa
+  const embedImageAsPage = async (pdfDoc, font, arrayBuffer, contentType, docItem, docIndex, totalDocs, tipoLabel) => {
+    const isPng = contentType.includes('png')
+    const embeddedImage = isPng
+      ? await pdfDoc.embedPng(arrayBuffer)
+      : await pdfDoc.embedJpg(arrayBuffer)
+
+    const imgDims = embeddedImage.scale(1)
+    const page = pdfDoc.addPage()
+    const { width: pageW, height: pageH } = page.getSize()
+    const margin = 40
+    const headerHeight = 35
+
+    // Header
+    page.drawRectangle({ x: 0, y: pageH - headerHeight, width: pageW, height: headerHeight, color: rgb(0.94, 0.94, 0.94) })
+    page.drawText(sanitizeForPdf(`${tipoLabel} - Reporte #${docItem.reporteIndex}`), {
+      x: margin, y: pageH - 15, size: 9, font, color: rgb(0, 0.2, 0.4)
+    })
+    page.drawText(sanitizeForPdf(`Fecha: ${docItem.fecha || 'N/A'}`), {
+      x: margin, y: pageH - 27, size: 8, font, color: rgb(0.4, 0.4, 0.4)
+    })
+    const counter = `${docIndex + 1} de ${totalDocs}`
+    page.drawText(counter, {
+      x: pageW - margin - font.widthOfTextAtSize(counter, 9), y: pageH - 15, size: 9, font, color: rgb(0.4, 0.4, 0.4)
+    })
+
+    // Calcular dimensiones manteniendo proporción
+    const availableW = pageW - margin * 2
+    const availableH = pageH - headerHeight - margin * 2
+    const imgAspect = imgDims.width / imgDims.height
+    let drawW = availableW
+    let drawH = drawW / imgAspect
+    if (drawH > availableH) {
+      drawH = availableH
+      drawW = drawH * imgAspect
+    }
+
+    page.drawImage(embeddedImage, {
+      x: margin + (availableW - drawW) / 2,
+      y: pageH - headerHeight - margin - drawH,
+      width: drawW,
+      height: drawH
+    })
+  }
+
+  // Helper: embebe las páginas de un PDF existente en el PDF consolidado
+  const embedPdfPages = async (pdfDoc, font, arrayBuffer, docItem, docIndex, totalDocs, tipoLabel) => {
+    const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true })
+    const pageCount = sourcePdf.getPageCount()
+    const copiedPages = await pdfDoc.copyPages(sourcePdf, Array.from({ length: pageCount }, (_, i) => i))
+
+    for (let p = 0; p < copiedPages.length; p++) {
+      const copiedPage = copiedPages[p]
+      pdfDoc.addPage(copiedPage)
+
+      // Overlay de header solo en la primera página del documento
+      if (p === 0) {
+        const { width: pw, height: ph } = copiedPage.getSize()
+        copiedPage.drawRectangle({
+          x: 0, y: ph - 20, width: pw, height: 20,
+          color: rgb(1, 1, 1), opacity: 0.85
+        })
+        copiedPage.drawText(
+          sanitizeForPdf(`${tipoLabel} #${docIndex + 1}/${totalDocs} - Reporte #${docItem.reporteIndex} - ${docItem.fecha || 'N/A'}${pageCount > 1 ? ` (${pageCount} pags)` : ''}`),
+          { x: 10, y: ph - 14, size: 7, font, color: rgb(0, 0.2, 0.4) }
+        )
+      }
+    }
+  }
+
+  // Función principal: exportar un PDF consolidado por tipo de documento
   const handleDownloadDocumentsByType = async (tipo) => {
     const reportesOrden = reportes[ordenId] || []
+    const tipoConfig = SECURITY_DOC_TYPES.find(t => t.key === tipo)
+    if (!tipoConfig) return
+
+    const { label: tipoLabel, field: fieldName } = tipoConfig
     const documentos = []
-    const tipoLabel = tipo === 'ats' ? 'ATS' : tipo === 'ptr' ? 'PTR' : 'Aspectos Ambientales'
 
-    // Recopilar documentos según el tipo (soporta arrays múltiples)
-    const fieldMap = { ats: 'atsDocs', ptr: 'ptrDocs', aspectos: 'aspectosAmbientalesDocs' }
-    const fieldName = fieldMap[tipo]
-
+    // Recopilar documentos del tipo seleccionado de todos los reportes
     reportesOrden.forEach((reporte, index) => {
       const docs = reporte[fieldName] || []
-
       docs.forEach((doc, docIndex) => {
-        if (doc) {
+        if (doc?.url) {
           documentos.push({
-            url: doc.url || doc,
+            url: doc.url,
             nombre: doc.nombre || doc.name || `${tipoLabel}_Reporte_${index + 1}_Doc_${docIndex + 1}`,
             reporteIndex: index + 1,
             fecha: reporte.fecha
@@ -109,147 +263,84 @@ const InformeFinal = ({ ordenId, onClose }) => {
     setGenerandoDocSeguridad(tipo)
 
     try {
-      const pdfDoc = new jsPDF()
-      const pageWidth = pdfDoc.internal.pageSize.getWidth()
-      const pageHeight = pdfDoc.internal.pageSize.getHeight()
-      const margin = 15
-      const contentWidth = pageWidth - margin * 2
+      const pdfDoc = await PDFDocument.create()
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+      const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-      // --- Portada ---
-      pdfDoc.setFillColor(0, 51, 102)
-      pdfDoc.rect(0, 0, pageWidth, 60, 'F')
-      pdfDoc.setTextColor(255, 255, 255)
-      pdfDoc.setFontSize(22)
-      pdfDoc.text(`Documentos ${tipoLabel}`, pageWidth / 2, 30, { align: 'center' })
-      pdfDoc.setFontSize(12)
-      pdfDoc.text(`Orden de Trabajo: OT-${orden?.correlativo || ordenId}`, pageWidth / 2, 45, { align: 'center' })
+      // Portada con índice
+      await drawCoverPage(pdfDoc, font, fontBold, tipoLabel, documentos)
 
-      pdfDoc.setTextColor(0, 0, 0)
-      pdfDoc.setFontSize(11)
-      let yPos = 80
-      pdfDoc.text(`Cliente: ${orden?.clienteNombre || orden?.cliente || '-'}`, margin, yPos)
-      yPos += 8
-      pdfDoc.text(`Instalación: ${orden?.instalacionNombre || orden?.instalacion || '-'}`, margin, yPos)
-      yPos += 8
-      pdfDoc.text(`Total de documentos: ${documentos.length}`, margin, yPos)
-      yPos += 8
-      pdfDoc.text(`Fecha de exportación: ${formatDate(new Date())}`, margin, yPos)
+      // Procesar cada documento
+      let docsOk = 0
+      let docsError = 0
 
-      // Tabla resumen de documentos incluidos
-      yPos += 20
-      pdfDoc.setFontSize(13)
-      pdfDoc.setTextColor(0, 51, 102)
-      pdfDoc.text('Índice de documentos', margin, yPos)
-      yPos += 10
-      pdfDoc.setFontSize(10)
-      pdfDoc.setTextColor(0, 0, 0)
-      documentos.forEach((doc, i) => {
-        pdfDoc.text(`${i + 1}. Reporte #${doc.reporteIndex} - ${doc.fecha || 'Sin fecha'} - ${doc.nombre}`, margin + 5, yPos)
-        yPos += 7
-        if (yPos > pageHeight - 20) { pdfDoc.addPage(); yPos = 20 }
-      })
-
-      // --- Páginas de documentos ---
       for (let i = 0; i < documentos.length; i++) {
         const docItem = documentos[i]
         const fileUrl = getFileUrl(docItem.url)
 
         try {
           const response = await fetch(fileUrl)
-          const blob = await response.blob()
-          const contentType = blob.type || ''
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          const arrayBuffer = await response.arrayBuffer()
+          const contentType = response.headers.get('content-type') || ''
 
-          if (contentType.startsWith('image/')) {
-            // Convertir imagen a base64 y agregarla como página
-            const base64 = await new Promise((resolve, reject) => {
-              const reader = new FileReader()
-              reader.onload = () => resolve(reader.result)
-              reader.onerror = reject
-              reader.readAsDataURL(blob)
-            })
-
-            pdfDoc.addPage()
-
-            // Header de la página
-            pdfDoc.setFillColor(240, 240, 240)
-            pdfDoc.rect(0, 0, pageWidth, 25, 'F')
-            pdfDoc.setFontSize(10)
-            pdfDoc.setTextColor(0, 51, 102)
-            pdfDoc.text(`${tipoLabel} - Reporte #${docItem.reporteIndex}`, margin, 10)
-            pdfDoc.setTextColor(100, 100, 100)
-            pdfDoc.text(`Fecha: ${docItem.fecha || 'N/A'}`, margin, 18)
-            pdfDoc.text(`${i + 1} de ${documentos.length}`, pageWidth - margin, 10, { align: 'right' })
-
-            // Calcular dimensiones de la imagen manteniendo proporción
-            const img = new Image()
-            await new Promise((resolve, reject) => {
-              img.onload = resolve
-              img.onerror = reject
-              img.src = base64
-            })
-
-            const imgAspect = img.width / img.height
-            const availableHeight = pageHeight - 25 - margin * 2
-            let imgWidth = contentWidth
-            let imgHeight = imgWidth / imgAspect
-
-            if (imgHeight > availableHeight) {
-              imgHeight = availableHeight
-              imgWidth = imgHeight * imgAspect
-            }
-
-            const imgX = margin + (contentWidth - imgWidth) / 2
-            const imgY = 30
-
-            const format = contentType.includes('png') ? 'PNG' : 'JPEG'
-            pdfDoc.addImage(base64, format, imgX, imgY, imgWidth, imgHeight)
+          if (contentType.includes('pdf') || contentType === 'application/octet-stream') {
+            // PDF real: copiar todas sus páginas al documento consolidado
+            await embedPdfPages(pdfDoc, font, arrayBuffer, docItem, i, documentos.length, tipoLabel)
+          } else if (contentType.startsWith('image/png')) {
+            await embedImageAsPage(pdfDoc, font, arrayBuffer, contentType, docItem, i, documentos.length, tipoLabel)
+          } else if (contentType.startsWith('image/')) {
+            // JPEG y otros formatos de imagen soportados por pdf-lib (embedJpg)
+            await embedImageAsPage(pdfDoc, font, arrayBuffer, contentType, docItem, i, documentos.length, tipoLabel)
           } else {
-            // Para archivos PDF u otros: agregar página de referencia
-            pdfDoc.addPage()
-            pdfDoc.setFillColor(240, 240, 240)
-            pdfDoc.rect(0, 0, pageWidth, 25, 'F')
-            pdfDoc.setFontSize(10)
-            pdfDoc.setTextColor(0, 51, 102)
-            pdfDoc.text(`${tipoLabel} - Reporte #${docItem.reporteIndex}`, margin, 10)
-            pdfDoc.setTextColor(100, 100, 100)
-            pdfDoc.text(`Fecha: ${docItem.fecha || 'N/A'}`, margin, 18)
-            pdfDoc.text(`${i + 1} de ${documentos.length}`, pageWidth - margin, 10, { align: 'right' })
-
-            // Descargar el archivo PDF original aparte
-            const link = document.createElement('a')
-            link.href = fileUrl
-            link.download = `${tipoLabel}_Reporte_${docItem.reporteIndex}_${docItem.fecha || ''}.pdf`
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-
-            pdfDoc.setFontSize(14)
-            pdfDoc.setTextColor(0, 0, 0)
-            const centerY = pageHeight / 2 - 20
-            pdfDoc.text('Documento PDF adjunto', pageWidth / 2, centerY, { align: 'center' })
-            pdfDoc.setFontSize(10)
-            pdfDoc.setTextColor(100, 100, 100)
-            pdfDoc.text(`Archivo: ${docItem.nombre}`, pageWidth / 2, centerY + 12, { align: 'center' })
-            pdfDoc.text('Este documento se descargó como archivo separado.', pageWidth / 2, centerY + 22, { align: 'center' })
+            // Tipo desconocido: intentar como PDF primero, si falla como imagen
+            try {
+              await embedPdfPages(pdfDoc, font, arrayBuffer, docItem, i, documentos.length, tipoLabel)
+            } catch {
+              try {
+                await embedImageAsPage(pdfDoc, font, arrayBuffer, 'image/jpeg', docItem, i, documentos.length, tipoLabel)
+              } catch {
+                throw new Error(`Formato no soportado: ${contentType}`)
+              }
+            }
           }
+          docsOk++
         } catch (error) {
           console.error(`Error procesando documento ${docItem.nombre}:`, error)
-          // Agregar página de error
-          pdfDoc.addPage()
-          pdfDoc.setFontSize(12)
-          pdfDoc.setTextColor(200, 0, 0)
-          pdfDoc.text(`No se pudo cargar: ${docItem.nombre}`, pageWidth / 2, pageHeight / 2, { align: 'center' })
+          docsError++
+          // Agregar página de error indicando qué documento falló
+          const errorPage = pdfDoc.addPage()
+          const { width: ew, height: eh } = errorPage.getSize()
+          const errorMsg = sanitizeForPdf(`No se pudo cargar: ${docItem.nombre}`)
+          errorPage.drawText(errorMsg, {
+            x: ew / 2 - font.widthOfTextAtSize(errorMsg, 12) / 2,
+            y: eh / 2, size: 12, font, color: rgb(0.8, 0, 0)
+          })
+          const reasonMsg = sanitizeForPdf(`Razon: ${error.message || 'Error desconocido'}`)
+          errorPage.drawText(reasonMsg, {
+            x: ew / 2 - font.widthOfTextAtSize(reasonMsg, 9) / 2,
+            y: eh / 2 - 20, size: 9, font, color: rgb(0.5, 0.5, 0.5)
+          })
         }
       }
 
-      // Guardar el PDF consolidado
-      pdfDoc.save(`${tipoLabel}_OT-${orden?.correlativo || ordenId}.pdf`)
+      // Guardar y descargar el PDF consolidado
+      const pdfBytes = await pdfDoc.save()
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${tipoLabel}_OT-${orden?.correlativo || ordenId}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
 
-      await notificationService.success(
-        'PDF generado',
-        `Se exportó el PDF con ${documentos.length} documento(s) ${tipoLabel}`,
-        3000
-      )
+      const mensaje = docsError > 0
+        ? `PDF generado con ${docsOk} documento(s) incluido(s) y ${docsError} con error`
+        : `PDF consolidado con ${docsOk} documento(s) ${tipoLabel}`
+
+      await notificationService.success('PDF generado', mensaje, 3000)
     } catch (error) {
       console.error('Error generando PDF de documentos:', error)
       await notificationService.error(
@@ -943,7 +1034,11 @@ const InformeFinal = ({ ordenId, onClose }) => {
                           <p className="text-sm font-medium text-gray-700">Materiales:</p>
                           <ul className="text-sm text-gray-600 list-disc list-inside">
                             {reporte.materialesUtilizados.map((material, idx) => (
-                              <li key={idx}>{material}</li>
+                              <li key={idx}>
+                                {typeof material === 'string'
+                                  ? material
+                                  : `${material.nombre} — ${material.cantidad} ${material.unidad}`}
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -953,42 +1048,21 @@ const InformeFinal = ({ ordenId, onClose }) => {
                       <div className="border-t pt-3 mt-3">
                         <p className="text-sm font-medium text-gray-700 mb-2">Documentos de Seguridad:</p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          {/* ATS - múltiples documentos */}
-                          {reporte.atsDocs?.length > 0 && (
-                            <div className="bg-green-50 p-2 rounded">
-                              <p className="text-xs font-medium text-gray-600">ATS ({reporte.atsDocs.length}):</p>
-                              {reporte.atsDocs.map((doc, i) => (
-                                <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
-                                   className="text-xs text-blue-600 hover:text-blue-800 block truncate">
-                                  {doc.nombre || 'Ver documento'}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                          {/* Aspectos Ambientales - múltiples documentos */}
-                          {reporte.aspectosAmbientalesDocs?.length > 0 && (
-                            <div className="bg-green-50 p-2 rounded">
-                              <p className="text-xs font-medium text-gray-600">Aspectos Amb. ({reporte.aspectosAmbientalesDocs.length}):</p>
-                              {reporte.aspectosAmbientalesDocs.map((doc, i) => (
-                                <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
-                                   className="text-xs text-blue-600 hover:text-blue-800 block truncate">
-                                  {doc.nombre || 'Ver documento'}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                          {/* PTR - múltiples documentos */}
-                          {reporte.ptrDocs?.length > 0 && (
-                            <div className="bg-green-50 p-2 rounded">
-                              <p className="text-xs font-medium text-gray-600">PTR ({reporte.ptrDocs.length}):</p>
-                              {reporte.ptrDocs.map((doc, i) => (
-                                <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
-                                   className="text-xs text-blue-600 hover:text-blue-800 block truncate">
-                                  {doc.nombre || 'Ver documento'}
-                                </a>
-                              ))}
-                            </div>
-                          )}
+                          {SECURITY_DOC_TYPES.map(({ key, label, field }) => {
+                            const docs = reporte[field] || []
+                            if (docs.length === 0) return null
+                            return (
+                              <div key={key} className="bg-green-50 p-2 rounded">
+                                <p className="text-xs font-medium text-gray-600">{label} ({docs.length}):</p>
+                                {docs.map((doc, i) => (
+                                  <a key={i} href={getFileUrl(doc.url)} target="_blank" rel="noopener noreferrer"
+                                     className="text-xs text-blue-600 hover:text-blue-800 block truncate">
+                                    {doc.nombre || 'Ver documento'}
+                                  </a>
+                                ))}
+                              </div>
+                            )
+                          })}
                         </div>
                         {reporte.trabajoEnAltura && (
                           <p className="text-xs text-orange-600 font-medium mt-2">
@@ -1312,72 +1386,33 @@ const InformeFinal = ({ ordenId, onClose }) => {
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Botón ATS */}
-                  <button
-                    onClick={() => handleDownloadDocumentsByType('ats')}
-                    disabled={generandoDocSeguridad !== null}
-                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {generandoDocSeguridad === 'ats' ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
-                    ) : (
-                      <span className="text-2xl mb-2">📋</span>
-                    )}
-                    <span className="font-medium text-gray-900">Todos los ATS</span>
-                    <span className="text-xs text-gray-600 mt-1">
-                      {(() => {
-                        const count = (reportes[ordenId] || []).reduce((acc, r) => acc + (r.atsDocs?.length || 0), 0)
-                        return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
-                      })()}
-                    </span>
-                  </button>
-
-                  {/* Botón PTR */}
-                  <button
-                    onClick={() => handleDownloadDocumentsByType('ptr')}
-                    disabled={generandoDocSeguridad !== null}
-                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {generandoDocSeguridad === 'ptr' ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
-                    ) : (
-                      <span className="text-2xl mb-2">⚠️</span>
-                    )}
-                    <span className="font-medium text-gray-900">Todos los PTR</span>
-                    <span className="text-xs text-gray-600 mt-1">
-                      {(() => {
-                        const count = (reportes[ordenId] || []).reduce((acc, r) => acc + (r.ptrDocs?.length || 0), 0)
-                        return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
-                      })()}
-                    </span>
-                  </button>
-
-                  {/* Botón Aspectos Ambientales */}
-                  <button
-                    onClick={() => handleDownloadDocumentsByType('aspectos')}
-                    disabled={generandoDocSeguridad !== null}
-                    className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {generandoDocSeguridad === 'aspectos' ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
-                    ) : (
-                      <span className="text-2xl mb-2">🌱</span>
-                    )}
-                    <span className="font-medium text-gray-900">Aspectos Ambientales</span>
-                    <span className="text-xs text-gray-600 mt-1">
-                      {(() => {
-                        const count = (reportes[ordenId] || []).reduce((acc, r) => acc + (r.aspectosAmbientalesDocs?.length || 0), 0)
-                        return `${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`
-                      })()}
-                    </span>
-                  </button>
+                  {SECURITY_DOC_TYPES.map(({ key, buttonLabel, field, icon }) => {
+                    const count = (reportes[ordenId] || []).reduce((acc, r) => acc + (r[field]?.length || 0), 0)
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleDownloadDocumentsByType(key)}
+                        disabled={generandoDocSeguridad !== null}
+                        className="flex flex-col items-center justify-center p-4 bg-white border-2 border-amber-300 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {generandoDocSeguridad === key ? (
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mb-2"></div>
+                        ) : (
+                          <span className="text-2xl mb-2">{icon}</span>
+                        )}
+                        <span className="font-medium text-gray-900">{buttonLabel}</span>
+                        <span className="text-xs text-gray-600 mt-1">
+                          {`${count} documento${count !== 1 ? 's' : ''} disponible${count !== 1 ? 's' : ''}`}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
 
-                {/* Información adicional */}
                 <div className="mt-4 p-3 bg-amber-100 rounded-lg">
                   <p className="text-xs text-amber-800">
-                    <strong>Nota:</strong> Se generará un PDF consolidado con todos los documentos del tipo seleccionado.
-                    El archivo incluye portada, índice y cada documento adjuntado en los reportes.
+                    <strong>Nota:</strong> Se genera un PDF consolidado real con todos los documentos del tipo seleccionado.
+                    Tanto archivos PDF como imagenes se integran en un unico archivo descargable.
                   </p>
                 </div>
               </div>

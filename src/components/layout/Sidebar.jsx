@@ -1,12 +1,26 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import useAuthStore from '../../stores/authStore'
+import useBrandingStore from '../../stores/brandingStore'
+import { getFileUrl } from '../../config/api'
 import { isAdmin } from '../../utils/roleUtils'
+
+const getInitials = (name) => {
+  if (!name) return ''
+  const cleaned = name.trim()
+  if (!cleaned) return ''
+  return cleaned.slice(0, 2).toUpperCase()
+}
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation()
   const { user, hasPermission } = useAuthStore()
+  const companyName = useBrandingStore((state) => state.companyName)
+  const loginLogoUrl = useBrandingStore((state) => state.loginLogoUrl)
   const [isInventoryOpen, setIsInventoryOpen] = useState(false)
+
+  const sidebarLogoSrc = loginLogoUrl ? getFileUrl(loginLogoUrl) : ''
+  const sidebarInitials = getInitials(companyName)
 
   // Abrir automáticamente el dropdown si estamos en una ruta de inventario
   useEffect(() => {
@@ -137,10 +151,19 @@ const Sidebar = ({ isOpen, onClose }) => {
     `}>
       {/* Logo */}
       <div className="flex items-center justify-between h-14 sm:h-16 border-b border-gray-200 px-4 flex-shrink-0">
-        <span className="text-xl font-bold text-corporate-blue">DIG Group</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {sidebarLogoSrc ? (
+              <img src={sidebarLogoSrc} alt={companyName || 'Logo'} className="w-full h-full object-contain" />
+            ) : (
+              <span className="text-xs font-bold text-corporate-blue">{sidebarInitials}</span>
+            )}
+          </div>
+          <span className="text-xl font-bold text-corporate-blue truncate">{companyName}</span>
+        </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+          className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex-shrink-0"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

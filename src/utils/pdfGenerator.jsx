@@ -1,6 +1,15 @@
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Image, Font } from '@react-pdf/renderer'
 import { getCurrentDate, formatDate, formatTime, formatDateLong, getToday } from './dateUtils'
 import { API_BASE_URL } from '../config/api'
+import useBrandingStore from '../stores/brandingStore'
+
+const getBranding = () => {
+  const { companyName, companySubtitle } = useBrandingStore.getState()
+  return {
+    companyName: companyName || '',
+    companySubtitle: companySubtitle || ''
+  }
+}
 
 // Helper: Convertir URL relativa a absoluta para @react-pdf/renderer
 const getAbsoluteImageUrl = (url) => {
@@ -281,11 +290,14 @@ const styles = StyleSheet.create({
 })
 
 // Componente del documento PDF para reporte de orden
-const OrdenReportDocument = ({ orden, reportes = [], userRole }) => (
+const OrdenReportDocument = ({ orden, reportes = [], userRole }) => {
+  const { companyName, companySubtitle } = getBranding()
+  const brandLine = [companyName, companySubtitle].filter(Boolean).join(' - ')
+  return (
   <Document>
     <Page size="A4" style={styles.page}>
       {/* Header */}
-      <Text style={styles.header}>DIG Group - Reporte de Orden</Text>
+      <Text style={styles.header}>{`${companyName} - Reporte de Orden`}</Text>
       
       {/* Información de la orden */}
       <View style={styles.section}>
@@ -397,11 +409,12 @@ const OrdenReportDocument = ({ orden, reportes = [], userRole }) => (
 
       {/* Footer */}
       <Text style={styles.footer}>
-        {`Reporte generado el ${formatDate(getCurrentDate())} • DIG Group - Sistema de Gestión de Mantenimiento`}
+        {`Reporte generado el ${formatDate(getCurrentDate())} • ${brandLine}`}
       </Text>
     </Page>
   </Document>
-)
+  )
+}
 
 // Documento PDF para Visita Técnica
 // Estilos mejorados para Visita Técnica
@@ -661,6 +674,7 @@ const stylesVisitaTecnica = StyleSheet.create({
 })
 
 const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
+  const { companyName, companySubtitle } = getBranding()
   const esAdmin = userRole === 'admin'
   // Obtener color del estado
   const getEstadoColor = (estado) => {
@@ -953,8 +967,8 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
         <View style={stylesVisitaTecnica.footer}>
           <View style={stylesVisitaTecnica.footerRow}>
             <View>
-              <Text style={stylesVisitaTecnica.footerBrand}>Sistema de Gestión de Servicios Generales</Text>
-              <Text style={stylesVisitaTecnica.footerText}>DIG Group - Servicios Profesionales</Text>
+              <Text style={stylesVisitaTecnica.footerBrand}>{companySubtitle}</Text>
+              <Text style={stylesVisitaTecnica.footerText}>{companyName}</Text>
             </View>
             <View>
               <Text style={stylesVisitaTecnica.footerText}>
@@ -1504,6 +1518,7 @@ const formatFechaCotizacion = (fecha) => {
 
 // Componente del documento PDF para presupuesto/cotización - REDISEÑADO
 const PresupuestoDocument = ({ presupuesto, userRole }) => {
+  const { companyName, companySubtitle } = getBranding()
   // Datos seguros del cliente
   const clienteNombre = getClienteNombreSeguro(presupuesto)
   const clienteTipo = getClienteData(presupuesto, 'tipo', '')
@@ -1543,8 +1558,8 @@ const PresupuestoDocument = ({ presupuesto, userRole }) => {
         {/* Header con logo e información */}
         <View style={stylesCotizacion.headerContainer}>
           <View style={stylesCotizacion.logoSection}>
-            <Text style={stylesCotizacion.companyName}>DIG Group S.A.C.</Text>
-            <Text style={stylesCotizacion.companyTagline}>Servicios Generales y Mantenimiento</Text>
+            <Text style={stylesCotizacion.companyName}>{companyName}</Text>
+            <Text style={stylesCotizacion.companyTagline}>{companySubtitle}</Text>
             <Text style={stylesCotizacion.companyInfo}>
               RUC: 20123456789{'\n'}
               Av. Los Ingenieros 123, Lima - Perú{'\n'}
@@ -1781,7 +1796,7 @@ const PresupuestoDocument = ({ presupuesto, userRole }) => {
               </Text>
             </View>
             <View style={stylesCotizacion.footerRight}>
-              <Text style={stylesCotizacion.footerBrand}>DIG Group S.A.C.</Text>
+              <Text style={stylesCotizacion.footerBrand}>{companyName}</Text>
               <Text style={stylesCotizacion.footerText}>www.diggroup.pe</Text>
             </View>
           </View>

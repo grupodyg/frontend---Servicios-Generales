@@ -7,6 +7,7 @@ import useOrdenesStore from '../../stores/ordenesStore'
 import useMaterialesStore from '../../stores/materialesStore'
 import useClientesStore from '../../stores/clientesStore'
 import useAuthStore from '../../stores/authStore'
+import useBrandingStore from '../../stores/brandingStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { usePDFGenerator } from '../../utils/pdfGenerator.jsx'
 import { format, subDays, startOfMonth, endOfMonth, differenceInDays, isWithinInterval, parseISO } from 'date-fns'
@@ -19,6 +20,8 @@ import DateRangePicker from '../../components/ui/DateRangePicker'
 const Reportes = () => {
   const navigate = useNavigate()
   const { hasPermission, user } = useAuthStore()
+  const companyName = useBrandingStore((state) => state.companyName)
+  const companySubtitle = useBrandingStore((state) => state.companySubtitle)
   const { reportes, fetchReportesByOrden, fetchStatistics } = useReportesStore()
   const { ordenes, fetchOrdenes } = useOrdenesStore()
   const { getEstadisticasMateriales, getMaterialesBajoStock, fetchMateriales, fetchSolicitudes } = useMaterialesStore()
@@ -279,7 +282,7 @@ const Reportes = () => {
       // Logo y Header
       doc.setFontSize(20)
       doc.setTextColor(0, 51, 102) // Corporate blue
-      doc.text('DIG Group - Reporte Administrativo Completo', pageWidth / 2, yPos, { align: 'center' })
+      doc.text(`${companyName} - Reporte Administrativo Completo`, pageWidth / 2, yPos, { align: 'center' })
 
       yPos += 10
       doc.setFontSize(10)
@@ -522,7 +525,7 @@ const Reportes = () => {
           { align: 'center' }
         )
         doc.text(
-          'DIG Group - Sistema de Gestión de Mantenimiento',
+          [companyName, companySubtitle].filter(Boolean).join(' - '),
           pageWidth / 2,
           pageHeight - 5,
           { align: 'center' }

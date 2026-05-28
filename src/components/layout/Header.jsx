@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../stores/authStore'
+import useBrandingStore from '../../stores/brandingStore'
 import NotificationBell from '../ui/NotificationBell'
 import { getCurrentDate as getDateNow, formatTime } from '../../utils/dateUtils'
 import Swal from 'sweetalert2'
@@ -11,6 +12,7 @@ const MySwal = withReactContent(Swal)
 const Header = ({ onToggleSidebar }) => {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const companySubtitle = useBrandingStore((state) => state.companySubtitle)
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   const handleLogout = async () => {
@@ -70,7 +72,7 @@ const Header = ({ onToggleSidebar }) => {
 
         <div className="hidden sm:block min-w-0">
           <h1 className="text-sm md:text-lg font-semibold text-gray-900 truncate">
-            Sistema de Gestión de Mantenimiento
+            {companySubtitle}
           </h1>
           <p className="text-xs md:text-sm text-gray-500 capitalize truncate hidden md:block">
             {getCurrentDate()}

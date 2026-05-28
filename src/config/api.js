@@ -157,6 +157,13 @@ export const API_ENDPOINTS = {
   BACKUPS: `${API_BASE_URL}/api/backups`,
   BACKUP_DOWNLOAD: (filename) => `${API_BASE_URL}/api/backups/download/${filename}`,
   BACKUP_DELETE: (filename) => `${API_BASE_URL}/api/backups/${filename}`,
+
+  // ========================================
+  // APP SETTINGS (BRANDING)
+  // ========================================
+  APP_SETTINGS_PUBLIC: `${API_BASE_URL}/api/app-settings/public`,
+  APP_SETTINGS: `${API_BASE_URL}/api/app-settings`,
+  APP_SETTINGS_LOGO: `${API_BASE_URL}/api/app-settings/logo`,
 };
 
 // Helper function to get auth token

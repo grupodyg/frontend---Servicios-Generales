@@ -297,21 +297,41 @@ const VisitaTecnicaNueva = () => {
                   </label>
                   <input
                     type="text"
-                    maxLength={15}
                     className="input-field max-w-xs"
-                    placeholder="15 dígitos"
+                    placeholder="Ej: 12345-67890-12345"
                     {...register('solpe', {
-                      pattern: {
-                        value: /^\d{0,15}$/,
-                        message: 'SOLPE debe contener solo números (máx. 15 dígitos)'
+                      validate: (value) => {
+                        if (!value) return true;
+                        if (!/^[\d-]+$/.test(value)) return 'SOLPE solo puede contener números y guiones';
+                        const sinGuiones = value.replace(/-/g, '');
+                        if (sinGuiones.length > 15) return 'SOLPE debe contener máximo 15 dígitos (los guiones no cuentan)';
+                        return true;
                       }
                     })}
+                    onKeyDown={(e) => {
+                      const allowed = /[\d\-]/.test(e.key) || ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(e.key) || e.ctrlKey || e.metaKey;
+                      if (!allowed) {
+                        e.preventDefault();
+                        return;
+                      }
+                      if (/\d/.test(e.key)) {
+                        const current = e.target.value.replace(/-/g, '');
+                        if (current.length >= 15) e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const paste = e.clipboardData.getData('text');
+                      const cleaned = paste.replace(/[^\d-]/g, '');
+                      const digitsOnly = cleaned.replace(/-/g, '');
+                      const currentDigits = e.target.value.replace(/-/g, '').length;
+                      if (digitsOnly.length + currentDigits > 15) e.preventDefault();
+                    }}
                   />
                   {errors.solpe && (
                     <p className="mt-1 text-sm text-red-600">{errors.solpe.message}</p>
                   )}
                   <p className="mt-1 text-sm text-gray-500">
-                    Solicitud de pedido (15 dígitos)
+                    Solicitud de pedido (máx. 15 dígitos, guiones permitidos)
                   </p>
                 </div>
               )}
