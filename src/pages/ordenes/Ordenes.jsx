@@ -344,6 +344,17 @@ const Ordenes = () => {
                   <div className="text-xs text-gray-500 truncate">📍 {orden.ubicacion}</div>
                 )}
                 <div className="text-xs text-gray-600">{orden.tipoServicio}</div>
+                {(orden.numeroOrdenCompra || orden.nombreProyecto) && (
+                  <div className="text-xs text-gray-600 whitespace-normal break-words">
+                    {orden.numeroOrdenCompra && (
+                      <span className="font-medium text-gray-700">OC: {orden.numeroOrdenCompra}</span>
+                    )}
+                    {orden.numeroOrdenCompra && orden.nombreProyecto && <span className="mx-1 text-gray-400">·</span>}
+                    {orden.nombreProyecto && (
+                      <span className="text-gray-500">{orden.nombreProyecto}</span>
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-1">
                   {getTipoVisitaBadge(orden)}
                 </div>
