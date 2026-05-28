@@ -436,7 +436,7 @@ const Ordenes = () => {
                     <td className="px-3 py-3">
                       <div className="text-sm text-gray-900">{orden.numeroOrdenCompra || <span className="text-gray-400 italic">-</span>}</div>
                       {orden.nombreProyecto && (
-                        <div className="text-xs text-gray-500 mt-0.5 truncate max-w-[160px]" title={orden.nombreProyecto}>
+                        <div className="text-xs text-gray-500 mt-0.5 max-w-[180px] whitespace-normal break-words">
                           {orden.nombreProyecto}
                         </div>
                       )}
