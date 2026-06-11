@@ -457,6 +457,11 @@ const VisitasTecnicas = () => {
                           {estadoBadge.icon} {estadoBadge.label}
                         </span>
                       </div>
+                      {visita.nombreProyecto && (
+                        <p className="text-sm font-semibold text-gray-900 mb-1" title={visita.nombreProyecto}>
+                          {visita.nombreProyecto}
+                        </p>
+                      )}
                       <p className="text-sm font-medium text-gray-900">{visita.cliente}</p>
                       {visita.contacto && (
                         <p className="text-xs text-gray-500">{visita.contacto}</p>

@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
-import { API_BASE_URL } from '../config/api'
+import { getFileUrl } from '../config/api'
 
 const styles = StyleSheet.create({
   page: {
@@ -113,32 +113,6 @@ const styles = StyleSheet.create({
 })
 
 const ReporteFotograficoEstandar = ({ ordenData, reportes }) => {
-  // Helper: Convertir URL relativa a absoluta y asegurar extensión válida
-  const getAbsoluteImageUrl = (url) => {
-    if (!url) return ''
-
-    // Si ya es URL absoluta, retornarla
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-      return url
-    }
-
-    // Construir URL absoluta desde ruta relativa
-    const baseUrl = API_BASE_URL ? API_BASE_URL.replace(/\/api\/?$/, '') : ''
-    const fullUrl = `${baseUrl}${url}`
-
-    // Verificar extensión válida
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-    const urlLower = fullUrl.toLowerCase()
-    const hasValidExtension = validExtensions.some(ext => urlLower.endsWith(ext))
-
-    if (hasValidExtension) {
-      return fullUrl
-    }
-
-    // Agregar .jpg si falta extensión
-    return fullUrl + (fullUrl.includes('?') ? '&ext=.jpg' : '.jpg')
-  }
-
   // Formatear fecha completa
   const formatDateFull = (dateStr) => {
     if (!dateStr) return ''
@@ -235,7 +209,7 @@ const ReporteFotograficoEstandar = ({ ordenData, reportes }) => {
                     <View style={styles.photoGrid}>
                       {reporte.fotosAntes.slice(0, 4).map((foto, fIndex) => (
                         <View key={fIndex} style={styles.photoContainer}>
-                          <Image src={getAbsoluteImageUrl(foto.url)} style={styles.photo} />
+                          <Image src={getFileUrl(foto.url)} style={styles.photo} />
                         </View>
                       ))}
                     </View>
@@ -298,7 +272,7 @@ const ReporteFotograficoEstandar = ({ ordenData, reportes }) => {
                     <View style={styles.photoGrid}>
                       {reporte.fotosAntes.slice(0, 4).map((foto, fIndex) => (
                         <View key={fIndex} style={styles.photoContainer}>
-                          <Image src={getAbsoluteImageUrl(foto.url)} style={styles.photo} />
+                          <Image src={getFileUrl(foto.url)} style={styles.photo} />
                         </View>
                       ))}
                     </View>
@@ -308,7 +282,7 @@ const ReporteFotograficoEstandar = ({ ordenData, reportes }) => {
                     <View style={styles.photoGrid}>
                       {reporte.fotosDespues.slice(0, 4).map((foto, fIndex) => (
                         <View key={fIndex} style={styles.photoContainer}>
-                          <Image src={getAbsoluteImageUrl(foto.url)} style={styles.photo} />
+                          <Image src={getFileUrl(foto.url)} style={styles.photo} />
                         </View>
                       ))}
                     </View>

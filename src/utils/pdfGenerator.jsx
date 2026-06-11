@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Image, Font } from '@react-pdf/renderer'
 import { getCurrentDate, formatDate, formatTime, formatDateLong, getToday } from './dateUtils'
-import { API_BASE_URL } from '../config/api'
+import { getFileUrl } from '../config/api'
 import useBrandingStore from '../stores/brandingStore'
 
 const getBranding = () => {
@@ -9,20 +9,6 @@ const getBranding = () => {
     companyName: companyName || '',
     companySubtitle: companySubtitle || ''
   }
-}
-
-// Helper: Convertir URL relativa a absoluta para @react-pdf/renderer
-const getAbsoluteImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-    return url
-  }
-  const baseUrl = API_BASE_URL ? API_BASE_URL.replace(/\/api\/?$/, '') : ''
-  const fullUrl = `${baseUrl}${url}`
-  const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-  const hasValidExtension = validExtensions.some(ext => fullUrl.toLowerCase().endsWith(ext))
-  if (hasValidExtension) return fullUrl
-  return fullUrl + (fullUrl.includes('?') ? '&ext=.jpg' : '.jpg')
 }
 
 // Registrar fuentes para mejor tipografía
@@ -423,6 +409,7 @@ const stylesVisitaTecnica = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#ffffff',
     padding: 25,
+    paddingBottom: 70, // Reserva espacio para el footer fijo (evita solapes en saltos de página)
     fontFamily: 'Helvetica',
     fontSize: 10
   },
@@ -650,8 +637,10 @@ const stylesVisitaTecnica = StyleSheet.create({
   },
   photo: {
     width: '100%',
-    height: 140,
-    objectFit: 'cover'
+    height: 180,
+    // 'contain': muestra la foto completa sin recortarla (cover la recortaba para llenar el recuadro)
+    objectFit: 'contain',
+    backgroundColor: '#f9fafb'
   },
   photoCaption: {
     fontSize: 7,
@@ -756,6 +745,12 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
               <Text style={stylesVisitaTecnica.infoLabel}>Teléfono</Text>
               <Text style={stylesVisitaTecnica.infoValue}>{visita.telefono}</Text>
             </View>
+            {visita.solpe && (
+              <View style={stylesVisitaTecnica.infoItem}>
+                <Text style={stylesVisitaTecnica.infoLabel}>SOLPE</Text>
+                <Text style={stylesVisitaTecnica.infoValue}>{visita.solpe}</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -842,7 +837,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
             <View style={stylesVisitaTecnica.sectionContent}>
               {visita.herramientasRequeridas.map((herramienta, index) => (
                 <View key={index} style={stylesVisitaTecnica.listItem}>
-                  <Text style={stylesVisitaTecnica.bullet}>●</Text>
+                  <Text style={stylesVisitaTecnica.bullet}>•</Text>
                   <Text style={stylesVisitaTecnica.listText}>
                     {typeof herramienta === 'string' ? herramienta :
                       `${herramienta.nombre} (${herramienta.cantidad} ${herramienta.unidad})`}
@@ -861,7 +856,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
               {visita.listaPersonal && visita.listaPersonal.length > 0 ? (
                 visita.listaPersonal.map((persona, index) => (
                   <View key={index} style={stylesVisitaTecnica.listItem}>
-                    <Text style={stylesVisitaTecnica.bullet}>●</Text>
+                    <Text style={stylesVisitaTecnica.bullet}>•</Text>
                     <Text style={stylesVisitaTecnica.listText}>
                       <Text style={{ fontWeight: 'bold' }}>{persona.especialidad}:</Text> {persona.diasEstimados} {persona.diasEstimados === 1 ? 'día' : 'días'}
                       {persona.observaciones && ` - ${persona.observaciones}`}
@@ -872,7 +867,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
                 <>
                   {visita.personalRequerido.cantidad && (
                     <View style={stylesVisitaTecnica.listItem}>
-                      <Text style={stylesVisitaTecnica.bullet}>●</Text>
+                      <Text style={stylesVisitaTecnica.bullet}>•</Text>
                       <Text style={stylesVisitaTecnica.listText}>
                         <Text style={{ fontWeight: 'bold' }}>Cantidad:</Text> {visita.personalRequerido.cantidad} personas
                       </Text>
@@ -880,7 +875,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
                   )}
                   {visita.personalRequerido.diasEstimados && (
                     <View style={stylesVisitaTecnica.listItem}>
-                      <Text style={stylesVisitaTecnica.bullet}>●</Text>
+                      <Text style={stylesVisitaTecnica.bullet}>•</Text>
                       <Text style={stylesVisitaTecnica.listText}>
                         <Text style={{ fontWeight: 'bold' }}>Días estimados:</Text> {visita.personalRequerido.diasEstimados} días
                       </Text>
@@ -888,7 +883,7 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
                   )}
                   {visita.personalRequerido.especialidades?.length > 0 && (
                     <View style={stylesVisitaTecnica.listItem}>
-                      <Text style={stylesVisitaTecnica.bullet}>●</Text>
+                      <Text style={stylesVisitaTecnica.bullet}>•</Text>
                       <Text style={stylesVisitaTecnica.listText}>
                         <Text style={{ fontWeight: 'bold' }}>Especialidades:</Text> {visita.personalRequerido.especialidades.join(', ')}
                       </Text>
@@ -932,7 +927,8 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
         {/* Registro Fotográfico - Ahora en la misma página */}
         {visita.estadoLugar?.fotos && visita.estadoLugar.fotos.length > 0 && (
           <View style={stylesVisitaTecnica.section}>
-            <Text style={stylesVisitaTecnica.sectionTitle}>📸 REGISTRO FOTOGRÁFICO</Text>
+            {/* minPresenceAhead: si no quedan ~160pt libres tras el título, salta de página (evita título huérfano) */}
+            <Text style={stylesVisitaTecnica.sectionTitle} minPresenceAhead={160}>📸 REGISTRO FOTOGRÁFICO</Text>
             <View style={stylesVisitaTecnica.photosContainer}>
               <Text style={[stylesVisitaTecnica.textContent, { marginBottom: 12 }]}>
                 Se registraron {visita.estadoLugar.fotos.length} fotografías durante la visita técnica.
@@ -940,10 +936,12 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
 
               <View style={stylesVisitaTecnica.photoGrid}>
                 {visita.estadoLugar.fotos.slice(0, 8).map((foto, index) => (
-                  <View key={index} style={stylesVisitaTecnica.photoItem}>
+                  // wrap={false}: si la foto no cabe en la página actual,
+                  // pasa completa a la siguiente (evita que se corte)
+                  <View key={index} style={stylesVisitaTecnica.photoItem} wrap={false}>
                     {foto.url && (
                       <Image
-                        src={getAbsoluteImageUrl(foto.url)}
+                        src={getFileUrl(foto.url)}
                         style={stylesVisitaTecnica.photo}
                       />
                     )}
@@ -963,8 +961,8 @@ const VisitaTecnicaDocument = ({ visita, fotos = [], userRole = 'admin' }) => {
           </View>
         )}
 
-        {/* Footer */}
-        <View style={stylesVisitaTecnica.footer}>
+        {/* Footer fijo en todas las páginas */}
+        <View style={stylesVisitaTecnica.footer} fixed>
           <View style={stylesVisitaTecnica.footerRow}>
             <View>
               <Text style={stylesVisitaTecnica.footerBrand}>{companySubtitle}</Text>

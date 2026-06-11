@@ -24,7 +24,7 @@ const PhotoUploadWithComments = ({
         quality: 0.8,
         maxWidth: 1920,
         maxHeight: 1080,
-        convertSize: 1000000, // Convert to JPEG if larger than 1MB
+        mimeType: 'image/jpeg', // Forzar JPEG: formato soportado por @react-pdf/renderer
         success: resolve,
         error: reject,
       })

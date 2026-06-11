@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
-import { API_BASE_URL } from '../config/api'
+import { getFileUrl } from '../config/api'
 
 // Registrar fuentes si es necesario
 Font.register({
@@ -247,32 +247,6 @@ const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto 
     return date.toLocaleDateString('es-PE', { timeZone: TIMEZONE, day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
-  // Helper: Convertir URL relativa a absoluta y asegurar extensión válida
-  const getAbsoluteImageUrl = (url) => {
-    if (!url) return ''
-
-    // Si ya es URL absoluta, retornarla
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-      return url
-    }
-
-    // Construir URL absoluta desde ruta relativa
-    const baseUrl = API_BASE_URL ? API_BASE_URL.replace(/\/api\/?$/, '') : ''
-    const fullUrl = `${baseUrl}${url}`
-
-    // Verificar extensión válida
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-    const urlLower = fullUrl.toLowerCase()
-    const hasValidExtension = validExtensions.some(ext => urlLower.endsWith(ext))
-
-    if (hasValidExtension) {
-      return fullUrl
-    }
-
-    // Agregar .jpg si falta extensión
-    return fullUrl + (fullUrl.includes('?') ? '&ext=.jpg' : '.jpg')
-  }
-
   return (
     <Document>
       {/* PÁGINA 1: PORTADA */}
@@ -422,7 +396,7 @@ const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto 
               <Text style={styles.photoTitle}>7. IMÁGENES DEL ANTES:</Text>
               {reporte.fotosAntes.map((foto, fotoIndex) => (
                 <View key={fotoIndex} style={styles.photoContainer}>
-                  <Image src={getAbsoluteImageUrl(foto.url)} style={styles.photo} />
+                  <Image src={getFileUrl(foto.url)} style={styles.photo} />
                 </View>
               ))}
             </View>
@@ -439,7 +413,7 @@ const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto 
               <Text style={styles.photoTitle}>IMÁGENES DEL PROCESO:</Text>
               {reporte.fotosDespues.map((foto, fotoIndex) => (
                 <View key={fotoIndex} style={styles.photoContainer}>
-                  <Image src={getAbsoluteImageUrl(foto.url)} style={styles.photo} />
+                  <Image src={getFileUrl(foto.url)} style={styles.photo} />
                 </View>
               ))}
             </View>

@@ -311,6 +311,7 @@ const useVisitaDetalle = () => {
 
       let fotosActualizadas = [...(estadoLugar.fotos || [])]
       const fotosNuevas = fotosActualizadas.filter(foto => foto.file && foto.url?.startsWith('blob:'))
+      const fotosFallidas = []
 
       if (fotosNuevas.length > 0) {
         for (let i = 0; i < fotosNuevas.length; i++) {
@@ -329,9 +330,13 @@ const useVisitaDetalle = () => {
             }
           } catch (uploadError) {
             console.error(`Error subiendo foto ${foto.name}:`, uploadError)
+            fotosFallidas.push(foto.name || foto.nombre || 'foto sin nombre')
           }
         }
       }
+
+      // No persistir fotos cuya subida falló (url blob: no es recuperable en otras sesiones)
+      fotosActualizadas = fotosActualizadas.filter(foto => !foto.url?.startsWith('blob:'))
 
       const estadoLugarActualizado = {
         descripcion: estadoLugar.descripcion,
@@ -362,13 +367,22 @@ const useVisitaDetalle = () => {
 
       setEditMode(false)
 
-      MySwal.fire({
-        icon: 'success',
-        title: 'Guardado',
-        text: 'El estado del lugar ha sido guardado correctamente',
-        timer: 2000,
-        showConfirmButton: false
-      })
+      if (fotosFallidas.length > 0) {
+        MySwal.fire({
+          icon: 'warning',
+          title: 'Guardado con advertencias',
+          html: `El estado del lugar fue guardado, pero ${fotosFallidas.length} foto(s) no se pudieron subir y fueron descartadas:<br><strong>${fotosFallidas.join(', ')}</strong><br>Por favor, vuelva a agregarlas.`,
+          confirmButtonText: 'Entendido'
+        })
+      } else {
+        MySwal.fire({
+          icon: 'success',
+          title: 'Guardado',
+          text: 'El estado del lugar ha sido guardado correctamente',
+          timer: 2000,
+          showConfirmButton: false
+        })
+      }
     } catch (error) {
       console.error('Error al guardar estado del lugar:', error)
       MySwal.fire({
@@ -907,6 +921,7 @@ const useVisitaDetalle = () => {
       // Subir fotos pendientes
       let fotosActualizadas = [...(estadoLugar.fotos || [])]
       const fotosNuevas = fotosActualizadas.filter(foto => foto.file && foto.url?.startsWith('blob:'))
+      const fotosFallidas = []
 
       if (fotosNuevas.length > 0) {
         for (const foto of fotosNuevas) {
@@ -919,8 +934,23 @@ const useVisitaDetalle = () => {
             }
           } catch (uploadError) {
             console.error(`Error subiendo foto:`, uploadError)
+            fotosFallidas.push(foto.name || foto.nombre || 'foto sin nombre')
           }
         }
+      }
+
+      // No persistir fotos cuya subida falló (url blob: no es recuperable en otras sesiones)
+      fotosActualizadas = fotosActualizadas.filter(foto => !foto.url?.startsWith('blob:'))
+
+      // Si fallaron subidas y no queda ninguna foto, abortar (la foto es requisito para completar)
+      if (fotosFallidas.length > 0 && fotosActualizadas.length === 0) {
+        MySwal.fire({
+          icon: 'error',
+          title: 'No se pudo completar',
+          html: `Ninguna foto pudo subirse al servidor:<br><strong>${fotosFallidas.join(', ')}</strong><br>Verifique su conexión e intente nuevamente.`,
+          confirmButtonText: 'Entendido'
+        })
+        return
       }
 
       // Preparar datos de actualización
@@ -957,13 +987,22 @@ const useVisitaDetalle = () => {
         setVisitaActual(visitaFinal)
       }
 
-      MySwal.fire({
-        icon: 'success',
-        title: '¡Visita completada!',
-        text: 'La visita técnica ha sido completada exitosamente',
-        timer: 2000,
-        showConfirmButton: false
-      })
+      if (fotosFallidas.length > 0) {
+        MySwal.fire({
+          icon: 'warning',
+          title: 'Visita completada con advertencias',
+          html: `La visita fue completada, pero ${fotosFallidas.length} foto(s) no se pudieron subir y fueron descartadas:<br><strong>${fotosFallidas.join(', ')}</strong>`,
+          confirmButtonText: 'Entendido'
+        })
+      } else {
+        MySwal.fire({
+          icon: 'success',
+          title: '¡Visita completada!',
+          text: 'La visita técnica ha sido completada exitosamente',
+          timer: 2000,
+          showConfirmButton: false
+        })
+      }
     } catch (error) {
       console.error('Error al completar visita:', error)
       MySwal.fire({

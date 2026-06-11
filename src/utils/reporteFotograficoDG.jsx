@@ -1,7 +1,7 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Image, Font } from '@react-pdf/renderer'
 import { getCurrentDate, getToday } from './dateUtils'
-import { API_BASE_URL } from '../config/api'
+import { getFileUrl } from '../config/api'
 
 // Registrar fuente para mejor apariencia
 Font.register({
@@ -207,32 +207,6 @@ const agruparReportesPorFecha = (reportes) => {
 
 // Componente del documento PDF con formato D&G
 const ReporteFotograficoDG = ({ orden, reportes }) => {
-  // Helper: Convertir URL relativa a absoluta y asegurar extensión válida
-  const getAbsoluteImageUrl = (url) => {
-    if (!url) return ''
-
-    // Si ya es URL absoluta, retornarla
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
-      return url
-    }
-
-    // Construir URL absoluta desde ruta relativa
-    const baseUrl = API_BASE_URL ? API_BASE_URL.replace(/\/api\/?$/, '') : ''
-    const fullUrl = `${baseUrl}${url}`
-
-    // Verificar extensión válida
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-    const urlLower = fullUrl.toLowerCase()
-    const hasValidExtension = validExtensions.some(ext => urlLower.endsWith(ext))
-
-    if (hasValidExtension) {
-      return fullUrl
-    }
-
-    // Agregar .jpg si falta extensión
-    return fullUrl + (fullUrl.includes('?') ? '&ext=.jpg' : '.jpg')
-  }
-
   const reportesAgrupados = agruparReportesPorFecha(reportes)
   const fechas = Object.keys(reportesAgrupados).sort()
 
@@ -359,7 +333,7 @@ const ReporteFotograficoDG = ({ orden, reportes }) => {
                     <View key={`antes-${fotoIdx}`} style={styles.photoContainer}>
                       <Image
                         style={styles.photo}
-                        src={getAbsoluteImageUrl(foto.url || foto)}
+                        src={getFileUrl(foto.url || foto)}
                       />
                       <Text style={styles.photoCaption}>
                         {foto.caption || 'Antes'}
@@ -372,7 +346,7 @@ const ReporteFotograficoDG = ({ orden, reportes }) => {
                     <View key={`despues-${fotoIdx}`} style={styles.photoContainer}>
                       <Image
                         style={styles.photo}
-                        src={getAbsoluteImageUrl(foto.url || foto)}
+                        src={getFileUrl(foto.url || foto)}
                       />
                       <Text style={styles.photoCaption}>
                         {foto.caption || 'Después'}
