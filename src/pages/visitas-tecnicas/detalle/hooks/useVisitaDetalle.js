@@ -10,6 +10,7 @@ import useSpecialtyRatesStore from '../../../../stores/specialtyRatesStore'
 import { usePDFGenerator } from '../../../../utils/pdfGenerator.jsx'
 import { isAdmin, isAdminOrSupervisor, isTecnico } from '../../../../utils/roleUtils'
 import { getCurrentTimestamp } from '../../../../utils/dateUtils'
+import { aNumero, esValorVacio } from '../../../../utils/numberInputUtils'
 import {
   VISITA_ESTADOS,
   ESTADOS_EDITABLE_TECNICO,
@@ -432,7 +433,9 @@ const useVisitaDetalle = () => {
       MySwal.fire({ icon: 'warning', title: 'Nombre requerido', text: 'Ingrese el nombre del material' })
       return
     }
-    if (nuevoMaterial.cantidad <= 0) {
+    // El campo de cantidad puede quedar vacío mientras se edita: se exige aquí
+    const cantidad = aNumero(nuevoMaterial.cantidad)
+    if (cantidad <= 0) {
       MySwal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0' })
       return
     }
@@ -445,13 +448,14 @@ const useVisitaDetalle = () => {
       return
     }
 
+    const precioUnitario = aNumero(nuevoMaterial.precioUnitario)
     const nuevoMaterialCompleto = {
       id: Date.now(),
       nombre: nuevoMaterial.nombre,
-      cantidad: nuevoMaterial.cantidad,
+      cantidad: cantidad,
       unidad: nuevoMaterial.unidad,
-      precioUnitario: nuevoMaterial.precioUnitario,
-      subtotal: nuevoMaterial.cantidad * nuevoMaterial.precioUnitario
+      precioUnitario: precioUnitario,
+      subtotal: cantidad * precioUnitario
     }
 
     const materialesActualizados = [...(visitaActual.materialesEstimados || []), nuevoMaterialCompleto]
@@ -515,12 +519,22 @@ const useVisitaDetalle = () => {
   const handleGuardarMaterialEditado = useCallback(async () => {
     if (!materialEditando) return
 
+    // Los campos numéricos pueden quedar vacíos mientras se edita: se exige aquí
+    const cantidad = aNumero(materialEditando.cantidad)
+    if (cantidad <= 0) {
+      MySwal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0' })
+      return
+    }
+    const precioUnitario = aNumero(materialEditando.precioUnitario)
+
     try {
       const materialesActualizados = visitaActual.materialesEstimados.map(m => {
         if (m.id === materialEditando.id) {
           return {
             ...materialEditando,
-            subtotal: materialEditando.cantidad * materialEditando.precioUnitario
+            cantidad: cantidad,
+            precioUnitario: precioUnitario,
+            subtotal: cantidad * precioUnitario
           }
         }
         return m
@@ -574,7 +588,9 @@ const useVisitaDetalle = () => {
       MySwal.fire({ icon: 'warning', title: 'Nombre requerido', text: 'Ingrese el nombre de la herramienta' })
       return
     }
-    if (nuevaHerramienta.cantidad <= 0) {
+    // El campo de cantidad puede quedar vacío mientras se edita: se exige aquí
+    const cantidad = aNumero(nuevaHerramienta.cantidad)
+    if (cantidad <= 0) {
       MySwal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0' })
       return
     }
@@ -582,7 +598,7 @@ const useVisitaDetalle = () => {
     if (herramientaSeleccionadaInventario) {
       const stockDisponible = herramientaSeleccionadaInventario.available_quantity ||
                               herramientaSeleccionadaInventario.cantidad || 0
-      if (nuevaHerramienta.cantidad > stockDisponible) {
+      if (cantidad > stockDisponible) {
         MySwal.fire({
           icon: 'warning',
           title: 'Stock insuficiente',
@@ -612,10 +628,10 @@ const useVisitaDetalle = () => {
     const nuevaHerramientaCompleta = {
       id: Date.now(),
       nombre: nuevaHerramienta.nombre,
-      cantidad: nuevaHerramienta.cantidad,
+      cantidad: cantidad,
       unidad: 'unidad',
       valor: valorUnitario,
-      valorTotal: valorUnitario * nuevaHerramienta.cantidad,
+      valorTotal: valorUnitario * cantidad,
       inventarioId: herramientaInventario?.id || null
     }
 
@@ -699,7 +715,9 @@ const useVisitaDetalle = () => {
       return
     }
 
-    if (!nuevaPersona.diasEstimados || nuevaPersona.diasEstimados < 1) {
+    // El campo de días puede quedar vacío mientras se edita: se exige aquí
+    const diasEstimados = aNumero(nuevaPersona.diasEstimados)
+    if (diasEstimados < 1) {
       MySwal.fire({ icon: 'warning', title: 'Días estimados requeridos', text: 'Ingrese los días estimados' })
       return
     }
@@ -707,7 +725,7 @@ const useVisitaDetalle = () => {
     const nuevaPersonaCompleta = {
       id: Date.now(),
       especialidad: especialidadFinal,
-      diasEstimados: parseInt(nuevaPersona.diasEstimados),
+      diasEstimados: diasEstimados,
       observaciones: nuevaPersona.observaciones
     }
 
@@ -791,18 +809,21 @@ const useVisitaDetalle = () => {
   }, [listaPersonal, requerimientosAdicionales, totalDiasEstimados, visitaActual, updateVisitaTecnica])
 
   const handleGuardarPersonal = useCallback(async () => {
+    // El campo puede quedar vacío mientras se edita: nunca debe viajar como ''
+    const totalDias = esValorVacio(totalDiasEstimados) ? null : totalDiasEstimados
+
     try {
       await updateVisitaTecnica(visitaActual.id, {
         listaPersonal: listaPersonal,
         requerimientosAdicionales: requerimientosAdicionales,
-        totalDiasEstimados: totalDiasEstimados
+        totalDiasEstimados: totalDias
       })
 
       setVisitaActual(prev => ({
         ...prev,
         listaPersonal: listaPersonal,
         requerimientosAdicionales: requerimientosAdicionales,
-        totalDiasEstimados: totalDiasEstimados
+        totalDiasEstimados: totalDias
       }))
       await fetchVisitas()
 

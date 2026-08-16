@@ -7,7 +7,10 @@ import useMaterialesStore from '../../stores/materialesStore'
 import useAuthStore from '../../stores/authStore'
 import { isTecnico } from '../../utils/roleUtils'
 import { canViewPrices } from '../../utils/permissionsUtils'
-import { API_BASE_URL, getFileUrl } from '../../config/api'
+import { parseEnteroInput, aNumero, esValorVacio } from '../../utils/numberInputUtils'
+import { getFileUrl } from '../../config/api'
+import { descargarInformeReportes } from '../../utils/informeReportesPDF'
+import notificationService from '../../services/notificationService'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Timeline from '../../components/ui/Timeline'
@@ -24,8 +27,6 @@ const OrdenDetalle = () => {
   const navigate = useNavigate()
   const { ordenes, fetchOrdenes, actualizarRecursos, fetchHistorial } = useOrdenesStore()
   const fetchReportesByOrden = useReportesStore(state => state.fetchReportesByOrden)
-  const puedeEditarReporte = useReportesStore(state => state.puedeEditarReporte)
-  const getInformeFinalByOrden = useReportesStore(state => state.getInformeFinalByOrden)
   const reportes = useReportesStore(state => state.reportes[id] || [])
   const { puedesolicitarMateriales, fetchMateriales, materiales, createSolicitud } = useMaterialesStore()
   const { user } = useAuthStore()
@@ -34,7 +35,6 @@ const OrdenDetalle = () => {
   const [activeTab, setActiveTab] = useState('general')
   const [showMaterialModal, setShowMaterialModal] = useState(false)
   const [showEstimacionModal, setShowEstimacionModal] = useState(false)
-  const [informeFinal, setInformeFinal] = useState(null)
   const [recursosServicio, setRecursosServicio] = useState({})
   const [historialOrden, setHistorialOrden] = useState([])
   const [loadingHistorial, setLoadingHistorial] = useState(false)
@@ -44,6 +44,34 @@ const OrdenDetalle = () => {
     observaciones: ''
   })
   const [selectedMaterials, setSelectedMaterials] = useState([])
+  // Identificador del informe que se está exportando: 'consolidado' o el id del reporte
+  const [exportandoInforme, setExportandoInforme] = useState(null)
+
+  // Exporta a PDF el informe de reportes y fotografías (consolidado o de un solo reporte)
+  const handleExportarInforme = async (reporte = null) => {
+    if (!orden) return
+
+    const clave = reporte ? reporte.id : 'consolidado'
+    setExportandoInforme(clave)
+    try {
+      await descargarInformeReportes({ orden, reportes, reporte })
+      await notificationService.success(
+        'Informe exportado',
+        reporte
+          ? 'El PDF del reporte se descargó correctamente'
+          : 'El PDF con todos los reportes se descargó correctamente',
+        2000
+      )
+    } catch (error) {
+      console.error('Error exportando el informe de reportes:', error)
+      await notificationService.error(
+        'Error',
+        error.message || 'No se pudo generar el PDF del informe'
+      )
+    } finally {
+      setExportandoInforme(null)
+    }
+  }
 
   // Función helper para mostrar galería de fotos con navegación
   const mostrarGaleriaFotos = (fotos, indiceInicial, reporteId, tipoFoto) => {
@@ -110,15 +138,13 @@ const OrdenDetalle = () => {
           setOrden(foundOrden)
           setRecursosServicio(foundOrden.recursos || {})
           await fetchReportesByOrden(id)
-          const informe = getInformeFinalByOrden(id)
-          setInformeFinal(informe)
         }
       } finally {
         setLoading(false)
       }
     }
     loadData()
-  }, [id, fetchOrdenes, fetchReportesByOrden, ordenes, getInformeFinalByOrden])
+  }, [id, fetchOrdenes, fetchReportesByOrden, ordenes])
 
   // Cargar historial cuando se selecciona el tab de historial
   useEffect(() => {
@@ -198,7 +224,8 @@ const OrdenDetalle = () => {
         materiales: selectedMaterials.map(material => ({
           materialId: material.id,
           nombre: material.nombre,
-          cantidadSolicitada: material.cantidadSolicitada,
+          // El campo admite quedar vacío mientras se edita: nunca viaja como ''
+          cantidadSolicitada: aNumero(material.cantidadSolicitada, 1),
           observaciones: material.observaciones || ''
         })),
         observacionesGenerales: materialRequest.observaciones
@@ -254,8 +281,10 @@ const OrdenDetalle = () => {
   }
 
   const handleUpdateMaterialQuantity = (materialId, quantity) => {
+    // Se admite el campo vacío mientras se reescribe la cifra (se repone al salir)
+    const cantidad = esValorVacio(quantity) ? '' : Math.max(1, quantity)
     const updated = selectedMaterials.map(material =>
-      material.id === materialId ? { ...material, cantidadSolicitada: Math.max(1, quantity) } : material
+      material.id === materialId ? { ...material, cantidadSolicitada: cantidad } : material
     )
     setSelectedMaterials(updated)
   }
@@ -1006,16 +1035,28 @@ const OrdenDetalle = () => {
                     Vista integrada de todos los reportes diarios con sus fotografías asociadas
                   </p>
                 </div>
-                {orden.estado !== 'completed' && (
-                  <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleExportarInforme()}
+                    className="btn-primary disabled:opacity-60"
+                    disabled={reportes.length === 0 || exportandoInforme !== null}
+                    title={
+                      reportes.length === 0
+                        ? 'No hay reportes para exportar'
+                        : 'Exportar todos los reportes con sus fotografías'
+                    }
+                  >
+                    {exportandoInforme === 'consolidado' ? '⏳ Generando PDF...' : '📄 Exportar informe (PDF)'}
+                  </button>
+                  {orden.estado !== 'completed' && (
                     <Link
                       to={`/reportes/nuevo/${orden.id}`}
                       className="btn-secondary"
                     >
                       📝 Nuevo Reporte
                     </Link>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {/* Estadísticas rápidas */}
@@ -1097,18 +1138,26 @@ const OrdenDetalle = () => {
                             </span>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="flex flex-col items-start sm:items-end gap-2">
                           <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            reporte.porcentajeAvance === 100 
-                              ? 'bg-green-100 text-green-800' 
-                              : reporte.porcentajeAvance >= 50 
-                                ? 'bg-yellow-100 text-yellow-800' 
+                            reporte.porcentajeAvance === 100
+                              ? 'bg-green-100 text-green-800'
+                              : reporte.porcentajeAvance >= 50
+                                ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-red-100 text-red-800'
                           }`}>
-                            {reporte.porcentajeAvance === 100 ? '✅ Completado' 
-                             : reporte.porcentajeAvance >= 50 ? '🔄 En progreso' 
+                            {reporte.porcentajeAvance === 100 ? '✅ Completado'
+                             : reporte.porcentajeAvance >= 50 ? '🔄 En progreso'
                              : '🔴 Iniciado'}
                           </div>
+                          <button
+                            onClick={() => handleExportarInforme(reporte)}
+                            className="btn-secondary text-sm disabled:opacity-60"
+                            disabled={exportandoInforme !== null}
+                            title="Exportar este reporte con sus fotografías"
+                          >
+                            {exportandoInforme === reporte.id ? '⏳ Generando...' : '📄 Exportar'}
+                          </button>
                         </div>
                       </div>
 
@@ -1433,7 +1482,8 @@ const OrdenDetalle = () => {
                               min="1"
                               max={material.stockActual}
                               value={material.cantidadSolicitada}
-                              onChange={(e) => handleUpdateMaterialQuantity(material.id, parseInt(e.target.value))}
+                              onChange={(e) => handleUpdateMaterialQuantity(material.id, parseEnteroInput(e.target.value))}
+                              onBlur={() => { if (esValorVacio(material.cantidadSolicitada)) handleUpdateMaterialQuantity(material.id, 1) }}
                               className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
                             />
                             <span className="text-sm text-gray-500">{material.unidad}</span>

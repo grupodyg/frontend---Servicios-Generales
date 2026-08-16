@@ -26,12 +26,33 @@ const styles = StyleSheet.create({
     marginBottom: 3,
     color: '#000'
   },
+  brandBlock: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 10
+  },
   logo: {
-    width: 500,
-    height: 180,
-    marginTop: 80,
-    marginBottom: 30,
-    alignSelf: 'center'
+    height: 90,
+    maxWidth: 300,
+    objectFit: 'contain',
+    marginBottom: 12
+  },
+  brandName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  brandSubtitle: {
+    fontSize: 10,
+    color: '#555',
+    textAlign: 'center',
+    marginTop: 2
+  },
+  projectName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20
   },
   informeNumero: {
     fontSize: 24,
@@ -79,15 +100,6 @@ const styles = StyleSheet.create({
   // Páginas internas
   contentPage: {
     padding: 40
-  },
-  pageHeader: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    alignItems: 'center'
-  },
-  smallLogo: {
-    width: 120,
-    height: 40
   },
   pageNumber: {
     position: 'absolute',
@@ -233,7 +245,18 @@ const styles = StyleSheet.create({
 
 const TIMEZONE = 'America/Lima'
 
-const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto }) => {
+const InformeFinalPDF = ({
+  ordenData,
+  reportes,
+  formularioData,
+  clienteContacto,
+  branding = { companyName: '', companySubtitle: '', logo: null },
+  fotosPreparadas = new Map()
+}) => {
+  // Las fotografías llegan ya convertidas a data URL; las que no se pudieron
+  // preparar se omiten para no invalidar el documento completo.
+  const fotoLista = (foto) => fotosPreparadas.get(getFileUrl(foto?.url || foto))
+  const fotosDisponibles = (fotos) => (fotos || []).filter((foto) => Boolean(fotoLista(foto)))
   // Formatear fecha - SIEMPRE con timeZone explícito para evitar desfase en producción (Railway/UTC)
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
@@ -264,9 +287,23 @@ const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto 
             <Text style={styles.headerText}>O.C {ordenData.numeroOrdenCompra || 'N/A'}</Text>
           </View>
 
-          {/* Logo Central */}
+          {/* Identidad de la empresa y trabajo */}
           <View>
+            <View style={styles.brandBlock}>
+              {branding.logo && <Image src={branding.logo.dataUrl} style={styles.logo} />}
+              {!!branding.companyName && (
+                <Text style={styles.brandName}>{branding.companyName}</Text>
+              )}
+              {!!branding.companySubtitle && (
+                <Text style={styles.brandSubtitle}>{branding.companySubtitle}</Text>
+              )}
+            </View>
+
             <Text style={styles.informeNumero}>INFORME N° {ordenData.id}</Text>
+
+            {!!ordenData.nombreProyecto && (
+              <Text style={styles.projectName}>{ordenData.nombreProyecto}</Text>
+            )}
 
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
@@ -389,14 +426,14 @@ const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto 
 
       {/* PÁGINAS DE FOTOS ANTES */}
       {reportes.map((reporte, repIndex) => (
-        reporte.fotosAntes && reporte.fotosAntes.length > 0 && (
+        fotosDisponibles(reporte.fotosAntes).length > 0 && (
           <Page key={`antes-${repIndex}`} size="A4" style={styles.contentPage}>
             <Text style={styles.dateLabel}>{formatDate(reporte.fecha)}</Text>
             <View style={styles.photoSection}>
               <Text style={styles.photoTitle}>7. IMÁGENES DEL ANTES:</Text>
-              {reporte.fotosAntes.map((foto, fotoIndex) => (
+              {fotosDisponibles(reporte.fotosAntes).map((foto, fotoIndex) => (
                 <View key={fotoIndex} style={styles.photoContainer}>
-                  <Image src={getFileUrl(foto.url)} style={styles.photo} />
+                  <Image src={fotoLista(foto)} style={styles.photo} />
                 </View>
               ))}
             </View>
@@ -406,14 +443,14 @@ const InformeFinalPDF = ({ ordenData, reportes, formularioData, clienteContacto 
 
       {/* PÁGINAS DE FOTOS DURANTE/PROCESO */}
       {reportes.map((reporte, repIndex) => (
-        reporte.fotosDespues && reporte.fotosDespues.length > 0 && (
+        fotosDisponibles(reporte.fotosDespues).length > 0 && (
           <Page key={`proceso-${repIndex}`} size="A4" style={styles.contentPage}>
             <Text style={styles.dateLabel}>{formatDate(reporte.fecha)}</Text>
             <View style={styles.photoSection}>
               <Text style={styles.photoTitle}>IMÁGENES DEL PROCESO:</Text>
-              {reporte.fotosDespues.map((foto, fotoIndex) => (
+              {fotosDisponibles(reporte.fotosDespues).map((foto, fotoIndex) => (
                 <View key={fotoIndex} style={styles.photoContainer}>
-                  <Image src={getFileUrl(foto.url)} style={styles.photo} />
+                  <Image src={fotoLista(foto)} style={styles.photo} />
                 </View>
               ))}
             </View>

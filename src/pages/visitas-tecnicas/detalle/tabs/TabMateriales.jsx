@@ -1,6 +1,7 @@
 import React, { memo, useMemo } from 'react'
 import { MATERIALES_COMUNES } from '../hooks/useVisitaDetalle'
 import { canViewPrices } from '../../../../utils/permissionsUtils'
+import { parseEnteroInput, parseDecimalInput, aNumero } from '../../../../utils/numberInputUtils'
 
 const TabMateriales = memo(({
   user,
@@ -49,7 +50,7 @@ const TabMateriales = memo(({
   const totales = useMemo(() => {
     const items = visitaActual.materialesEstimados || []
     const totalItems = items.length
-    const totalCosto = items.reduce((sum, m) => sum + (m.cantidad * (m.precioUnitario || 0)), 0)
+    const totalCosto = items.reduce((sum, m) => sum + (aNumero(m.cantidad) * aNumero(m.precioUnitario)), 0)
     return { totalItems, totalCosto }
   }, [visitaActual.materialesEstimados])
 
@@ -109,8 +110,9 @@ const TabMateriales = memo(({
                   type="number"
                   className="input-field"
                   min="1"
+                  placeholder="Ej: 10"
                   value={nuevoMaterial.cantidad}
-                  onChange={(e) => setNuevoMaterial({ ...nuevoMaterial, cantidad: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => setNuevoMaterial({ ...nuevoMaterial, cantidad: parseEnteroInput(e.target.value) })}
                 />
               </div>
 
@@ -143,8 +145,9 @@ const TabMateriales = memo(({
                     className="input-field"
                     min="0"
                     step="0.01"
+                    placeholder="0.00"
                     value={nuevoMaterial.precioUnitario}
-                    onChange={(e) => setNuevoMaterial({ ...nuevoMaterial, precioUnitario: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setNuevoMaterial({ ...nuevoMaterial, precioUnitario: parseDecimalInput(e.target.value) })}
                   />
                 </div>
               )}
@@ -210,7 +213,7 @@ const TabMateriales = memo(({
                           S/. {(material.precioUnitario || 0).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
-                          S/. {(material.cantidad * (material.precioUnitario || 0)).toFixed(2)}
+                          S/. {(aNumero(material.cantidad) * aNumero(material.precioUnitario)).toFixed(2)}
                         </td>
                       </>
                     )}

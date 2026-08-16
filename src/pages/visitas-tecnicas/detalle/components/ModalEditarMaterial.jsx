@@ -1,4 +1,5 @@
 import React, { memo } from 'react'
+import { parseEnteroInput, parseDecimalInput, aNumero } from '../../../../utils/numberInputUtils'
 
 const ModalEditarMaterial = memo(({
   materialEditando,
@@ -33,8 +34,9 @@ const ModalEditarMaterial = memo(({
               type="number"
               className="input-field"
               min="1"
+              placeholder="Ej: 10"
               value={materialEditando.cantidad}
-              onChange={(e) => setMaterialEditando({ ...materialEditando, cantidad: parseInt(e.target.value) || 1 })}
+              onChange={(e) => setMaterialEditando({ ...materialEditando, cantidad: parseEnteroInput(e.target.value) })}
             />
           </div>
 
@@ -64,8 +66,9 @@ const ModalEditarMaterial = memo(({
               className="input-field"
               min="0"
               step="0.01"
+              placeholder="0.00"
               value={materialEditando.precioUnitario}
-              onChange={(e) => setMaterialEditando({ ...materialEditando, precioUnitario: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => setMaterialEditando({ ...materialEditando, precioUnitario: parseDecimalInput(e.target.value) })}
             />
           </div>
 
@@ -73,7 +76,7 @@ const ModalEditarMaterial = memo(({
           <div className="bg-gray-50 p-3 rounded-lg">
             <p className="text-sm text-gray-600">Subtotal:</p>
             <p className="text-lg font-bold text-gray-900">
-              S/. {(materialEditando.cantidad * materialEditando.precioUnitario).toFixed(2)}
+              S/. {(aNumero(materialEditando.cantidad) * aNumero(materialEditando.precioUnitario)).toFixed(2)}
             </p>
           </div>
         </div>

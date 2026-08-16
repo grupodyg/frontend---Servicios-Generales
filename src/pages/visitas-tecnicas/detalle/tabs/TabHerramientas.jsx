@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from 'react'
 import { canViewPrices } from '../../../../utils/permissionsUtils'
+import { parseEnteroInput } from '../../../../utils/numberInputUtils'
 
 const TabHerramientas = memo(({
   user,
@@ -100,8 +101,9 @@ const TabHerramientas = memo(({
                     type="number"
                     className="input-field flex-1"
                     min="1"
+                    placeholder="Ej: 2"
                     value={nuevaHerramienta.cantidad}
-                    onChange={(e) => setNuevaHerramienta({ ...nuevaHerramienta, cantidad: parseInt(e.target.value) || 1 })}
+                    onChange={(e) => setNuevaHerramienta({ ...nuevaHerramienta, cantidad: parseEnteroInput(e.target.value) })}
                   />
                   <button
                     onClick={handleAgregarHerramienta}

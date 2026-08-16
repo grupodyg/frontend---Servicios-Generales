@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useMaterialesStore from '../../stores/materialesStore'
 import useAuthStore from '../../stores/authStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
+import { parseEnteroInput, aNumero, esValorVacio } from '../../utils/numberInputUtils'
 
 const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }) => {
   const { materiales, fetchMateriales, categorias, fetchCategorias, isLoading } = useMaterialesStore()
@@ -113,6 +114,17 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
   }
 
   const handleActualizarCantidad = (id, cantidad) => {
+    // Campo vacío: el usuario está reescribiendo la cifra, no quiere quitar el
+    // material de la lista. Se restaura a 1 al salir del campo (onBlur)
+    if (esValorVacio(cantidad)) {
+      const nuevosMaterieles = materialesLocal.map(m =>
+        m.id === id ? { ...m, cantidad: '' } : m
+      )
+      setMaterialesLocal(nuevosMaterieles)
+      onMaterialesChange(nuevosMaterieles)
+      return
+    }
+
     if (cantidad <= 0) {
       handleEliminarMaterial(id)
       return
@@ -137,12 +149,17 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
   const handleAgregarMaterialManual = () => {
     const nombre = materialManual.nombre.trim()
     if (!nombre) return
-    if (materialManual.cantidad <= 0) return
+    // El campo de cantidad puede quedar vacío mientras se edita: se exige aquí
+    const cantidad = aNumero(materialManual.cantidad)
+    if (cantidad <= 0) {
+      alert('Ingrese la cantidad del material')
+      return
+    }
 
     const nuevoMaterial = {
       id: `manual-${Date.now()}`,
       nombre,
-      cantidad: materialManual.cantidad,
+      cantidad,
       unidad: materialManual.unidad || 'unidad',
       precioUnitario: 0,
       esManual: true
@@ -161,7 +178,7 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
 
   const calcularTotal = () => {
     return materialesLocal.reduce((total, material) => {
-      return total + ((material.precioUnitario || 0) * material.cantidad)
+      return total + (aNumero(material.precioUnitario) * aNumero(material.cantidad))
     }, 0)
   }
 
@@ -192,9 +209,10 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
               <input
                 type="number"
                 min="1"
+                placeholder="Ej: 10"
                 className="input-field text-center"
                 value={materialManual.cantidad}
-                onChange={(e) => setMaterialManual(prev => ({ ...prev, cantidad: parseInt(e.target.value) || 1 }))}
+                onChange={(e) => setMaterialManual(prev => ({ ...prev, cantidad: parseEnteroInput(e.target.value) }))}
               />
             </div>
             <div className="sm:col-span-3">
@@ -348,7 +366,7 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
                       <p className="text-sm text-gray-600">
                         S/ {material.precioUnitario.toFixed(2)} x {material.cantidad} =
                         <span className="font-semibold ml-1">
-                          S/ {(material.precioUnitario * material.cantidad).toFixed(2)}
+                          S/ {(material.precioUnitario * aNumero(material.cantidad)).toFixed(2)}
                         </span>
                       </p>
                     )}
@@ -360,7 +378,8 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
                       min="1"
                       max={material.esManual ? undefined : Math.max(1, material.stockActual || 1)}
                       value={material.cantidad}
-                      onChange={(e) => handleActualizarCantidad(material.id, parseInt(e.target.value) || 0)}
+                      onChange={(e) => handleActualizarCantidad(material.id, parseEnteroInput(e.target.value))}
+                      onBlur={() => { if (esValorVacio(material.cantidad)) handleActualizarCantidad(material.id, 1) }}
                       className="w-20 px-2 py-1 border border-gray-300 rounded-md text-center"
                     />
                     <span className="text-sm text-gray-500">{material.unidad}</span>

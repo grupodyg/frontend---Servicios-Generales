@@ -6,6 +6,7 @@ import useAuthStore from '../../stores/authStore'
 import PhotoUpload from '../../components/ui/PhotoUpload'
 import SelectorMateriales from '../../components/materiales/SelectorMateriales'
 import { getCurrentTimestamp, getToday } from '../../utils/dateUtils'
+import { aNumero } from '../../utils/numberInputUtils'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -227,7 +228,8 @@ const ReporteNuevo = () => {
         // OPCIÓN A: Incluir materiales utilizados
         materials: materialesUtilizados.map(m => ({
           nombre: m.nombre,
-          cantidad: m.cantidad,
+          // El campo de cantidad admite quedar vacío mientras se edita
+          cantidad: aNumero(m.cantidad, 1),
           unidad: m.unidad || 'unidad'
         }))
       }

@@ -4,6 +4,7 @@ import useMaterialesStore from '../../stores/materialesStore'
 import useAuthStore from '../../stores/authStore'
 import useOrdenesStore from '../../stores/ordenesStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
+import { parseEnteroInput, aNumero, esValorVacio } from '../../utils/numberInputUtils'
 import { getFileUrl } from '../../config/api'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -414,8 +415,10 @@ const Materiales = () => {
   }
 
   const handleUpdateMaterialQuantity = (materialId, quantity) => {
+    // Se admite el campo vacío mientras se reescribe la cifra (se repone al salir)
+    const cantidad = esValorVacio(quantity) ? '' : Math.max(1, quantity)
     const updated = selectedMaterials.map(material =>
-      material.id === materialId ? { ...material, cantidadSolicitada: Math.max(1, quantity) } : material
+      material.id === materialId ? { ...material, cantidadSolicitada: cantidad } : material
     )
     setSelectedMaterials(updated)
   }
@@ -449,7 +452,8 @@ const Materiales = () => {
         materiales: selectedMaterials.map(material => ({
           materialId: material.id,
           nombre: material.nombre,
-          cantidadSolicitada: material.cantidadSolicitada,
+          // El campo admite quedar vacío mientras se edita: nunca viaja como ''
+          cantidadSolicitada: aNumero(material.cantidadSolicitada, 1),
           unidadMedida: material.unidadMedida || 'unidad',
           observaciones: material.observaciones || ''
         })),
@@ -1578,7 +1582,8 @@ const Materiales = () => {
                               min="1"
                               max={material.stockActual}
                               value={material.cantidadSolicitada}
-                              onChange={(e) => handleUpdateMaterialQuantity(material.id, parseInt(e.target.value))}
+                              onChange={(e) => handleUpdateMaterialQuantity(material.id, parseEnteroInput(e.target.value))}
+                              onBlur={() => { if (esValorVacio(material.cantidadSolicitada)) handleUpdateMaterialQuantity(material.id, 1) }}
                               className="w-16 px-2 py-1 border border-gray-300 rounded text-xs"
                             />
                             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{material.unidadMedida || 'unidad'}</span>

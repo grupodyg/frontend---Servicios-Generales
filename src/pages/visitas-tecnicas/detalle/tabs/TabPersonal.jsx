@@ -2,6 +2,7 @@ import React, { memo, useMemo, useState } from 'react'
 import { ESPECIALIDADES_PERSONAL } from '../hooks/useVisitaDetalle'
 import { isAdmin } from '../../../../utils/roleUtils'
 import { VISITA_ESTADOS } from '../../../../constants/visitasTecnicasConstants'
+import { parseEnteroInput, acotarRango } from '../../../../utils/numberInputUtils'
 
 const TabPersonal = memo(({
   listaPersonal,
@@ -184,8 +185,9 @@ const TabPersonal = memo(({
                   type="number"
                   className="input-field"
                   min="1"
+                  placeholder="Ej: 3"
                   value={nuevaPersona.diasEstimados}
-                  onChange={(e) => setNuevaPersona({ ...nuevaPersona, diasEstimados: e.target.value === '' ? '' : parseInt(e.target.value) || '' })}
+                  onChange={(e) => setNuevaPersona({ ...nuevaPersona, diasEstimados: parseEnteroInput(e.target.value) })}
                 />
               </div>
 
@@ -324,15 +326,8 @@ const TabPersonal = memo(({
                           value={totalDias}
                           min={minDias}
                           max={sumaDias}
-                          onChange={(e) => {
-                            const val = e.target.value === '' ? '' : parseInt(e.target.value)
-                            if (val === '') {
-                              setTotalDiasEstimados(minDias)
-                            } else {
-                              const clamped = Math.min(Math.max(val, minDias), sumaDias)
-                              setTotalDiasEstimados(clamped)
-                            }
-                          }}
+                          onChange={(e) => setTotalDiasEstimados(parseEnteroInput(e.target.value))}
+                          onBlur={() => setTotalDiasEstimados(acotarRango(totalDias, minDias, sumaDias))}
                         />
                         <span className="text-[10px] text-gray-400">min {minDias} / max {sumaDias}</span>
                       </div>

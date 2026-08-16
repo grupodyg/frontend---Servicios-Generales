@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import useAuthStore from '../../stores/authStore'
 import useHerramientasStore from '../../stores/herramientasStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
+import { parseEnteroInput, parseDecimalInput, aNumero, esValorVacio } from '../../utils/numberInputUtils'
 import { getToday, formatDateTime, formatDate } from '../../utils/dateUtils'
 import { getFileUrl } from '../../config/api'
 import Swal from 'sweetalert2'
@@ -624,13 +625,19 @@ const Herramientas = () => {
   }
 
   const handleGuardarEdicion = async () => {
+    // Los campos numéricos pueden quedar vacíos mientras se edita: se exige aquí
+    if (esValorVacio(herramientaSeleccionada.cantidad) || aNumero(herramientaSeleccionada.cantidad) < 1) {
+      MySwal.fire({ title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0', icon: 'warning' })
+      return
+    }
+
     try {
       const datosActualizados = {
         nombre: herramientaSeleccionada.nombre,
         modelo: herramientaSeleccionada.modelo,
         marca: herramientaSeleccionada.marca,
-        cantidad: herramientaSeleccionada.cantidad,
-        valor: herramientaSeleccionada.valor,
+        cantidad: aNumero(herramientaSeleccionada.cantidad, 1),
+        valor: aNumero(herramientaSeleccionada.valor),
         descripcion: herramientaSeleccionada.descripcion,
         estado: herramientaSeleccionada.estado,
         categoriaId: herramientaSeleccionada.categoriaId
@@ -1695,10 +1702,11 @@ const Herramientas = () => {
                       <input
                         type="number"
                         min="1"
-                        value={herramientaSeleccionada.cantidad || 1}
+                        placeholder="Ej: 2"
+                        value={herramientaSeleccionada.cantidad ?? ''}
                         onChange={(e) => setHerramientaSeleccionada({
                           ...herramientaSeleccionada,
-                          cantidad: parseInt(e.target.value)
+                          cantidad: parseEnteroInput(e.target.value)
                         })}
                         className="input-field"
                       />
@@ -1708,10 +1716,11 @@ const Herramientas = () => {
                       <input
                         type="number"
                         step="0.01"
-                        value={herramientaSeleccionada.valor || 0}
+                        placeholder="0.00"
+                        value={herramientaSeleccionada.valor ?? ''}
                         onChange={(e) => setHerramientaSeleccionada({
                           ...herramientaSeleccionada,
-                          valor: parseFloat(e.target.value)
+                          valor: parseDecimalInput(e.target.value)
                         })}
                         className="input-field"
                       />

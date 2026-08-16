@@ -7,11 +7,11 @@ import useAuthStore from '../../stores/authStore'
 import useOrdenesStore from '../../stores/ordenesStore'
 import useVisitasTecnicasStore from '../../stores/visitasTecnicasStore'
 import notificationService from '../../services/notificationService'
-import useComunicacionesStore from '../../stores/comunicacionesStore'
 import FormularioInformeFinal from '../reportes/FormularioInformeFinal'
 import InformeFinalPDF from '../../utils/informeFinalPDF'
 import { getCurrentDate, getToday, formatDate, formatDateTime } from '../../utils/dateUtils'
-import ReporteFotograficoEstandar from '../../utils/reporteFotograficoEstandar'
+import { descargarInformeReportes } from '../../utils/informeReportesPDF'
+import { loadPdfBranding, rasterizePhotos } from '../../utils/pdfBranding'
 import SignatureCanvas from '../common/SignatureCanvas'
 import { getFileUrl } from '../../config/api'
 
@@ -21,13 +21,10 @@ const InformeFinal = ({ ordenId, onClose }) => {
     getInformeFinalByOrden,
     generarInformeFinal,
     firmarInforme,
-    fetchReportesByOrden,
-    reportes,
-    isLoading
+    reportes
   } = useReportesStore()
   const { getOrdenById, fetchOrdenes } = useOrdenesStore()
-  const { visitas, fetchVisitas } = useVisitasTecnicasStore()
-  const { crearCorreoSalida } = useComunicacionesStore()
+  const { visitas } = useVisitasTecnicasStore()
 
   const [informeFinal, setInformeFinal] = useState(null)
   const [visitaTecnica, setVisitaTecnica] = useState(null)
@@ -38,7 +35,6 @@ const InformeFinal = ({ ordenId, onClose }) => {
   const [expandedReporte, setExpandedReporte] = useState(null)
   const [showCorreoModal, setShowCorreoModal] = useState(false)
   const [correoData, setCorreoData] = useState({
-    destinatario: '',
     asunto: '',
     mensaje: '',
     adjuntarPDF: true
@@ -46,8 +42,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
   const [showFormularioInformeFinal, setShowFormularioInformeFinal] = useState(false)
   const [generandoPDF, setGenerandoPDF] = useState(false)
   const [generandoInforme, setGenerandoInforme] = useState(false)
-  const [generandoPDFSimple, setGenerandoPDFSimple] = useState(false)
-  const [generandoPDFDG, setGenerandoPDFDG] = useState(false)
+  const [generandoReporteFotografico, setGenerandoReporteFotografico] = useState(false)
 
   const orden = getOrdenById(ordenId)
 
@@ -461,12 +456,12 @@ const InformeFinal = ({ ordenId, onClose }) => {
     }
   }
 
-  const handleGenerarInformeDG = async () => {
+  const handleGenerarInformeFinal = async () => {
     // Verificar que el informe esté completado
     if (!informeFinal || informeFinal.estado !== 'completado') {
       notificationService.warning(
         'Informe no completado',
-        'El informe debe estar completamente firmado antes de poder generar el informe D&G'
+        'El informe debe estar completamente firmado antes de poder generar el informe final'
       )
       return
     }
@@ -483,53 +478,8 @@ const InformeFinal = ({ ordenId, onClose }) => {
       // Usuario eligió SÍ - Abrir el formulario
       setShowFormularioInformeFinal(true)
     } else if (result.isDismissed) {
-      // Usuario eligió NO - Generar PDF estándar directamente
-      await handleGenerarPDFEstandar()
-    }
-  }
-
-  const handleGenerarPDFEstandar = async () => {
-    try {
-      setGenerandoPDF(true)
-
-      // Obtener reportes de la orden
-      const reportesOrden = reportes[ordenId] || []
-
-      // Generar el PDF de Reporte Fotográfico Estándar
-      const pdfDocument = <ReporteFotograficoEstandar
-        ordenData={orden}
-        reportes={reportesOrden}
-      />
-
-      const asPdf = pdf(pdfDocument)
-      const blob = await asPdf.toBlob()
-
-      // Descargar el PDF con formato de nombre similar al ejemplo
-      const ahora = getCurrentDate()
-      const nombreArchivo = `Reporte_${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, '0')}${String(ahora.getDate()).padStart(2, '0')}_${String(ahora.getHours()).padStart(2, '0')}${String(ahora.getMinutes()).padStart(2, '0')}${String(ahora.getSeconds()).padStart(2, '0')}.pdf`
-
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = nombreArchivo
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      await notificationService.success(
-        'Reporte Generado',
-        'El reporte fotográfico estándar ha sido descargado exitosamente',
-        3000
-      )
-    } catch (error) {
-      console.error('Error generando reporte estándar:', error)
-      await notificationService.error(
-        'Error',
-        'No se pudo generar el reporte fotográfico'
-      )
-    } finally {
-      setGenerandoPDF(false)
+      // Usuario eligió NO - Generar el reporte fotográfico con los datos actuales
+      await handleDescargarReporteFotografico()
     }
   }
 
@@ -540,18 +490,20 @@ const InformeFinal = ({ ordenId, onClose }) => {
       // Obtener reportes de la orden
       const reportesOrden = reportes[ordenId] || []
 
-      // Obtener materiales utilizados de todos los reportes
-      const todosLosMateriales = reportesOrden.reduce((acc, rep) => {
-        if (rep.materialesUtilizados && Array.isArray(rep.materialesUtilizados)) {
-          return [...acc, ...rep.materialesUtilizados]
-        }
-        return acc
-      }, [])
-
       // Obtener información del contacto del cliente (esto debería venir de clientesStore)
       const clienteContacto = {
         nombre: orden?.contactoPrincipal?.nombre || 'Cliente'
       }
+
+      // Identidad de la empresa y fotografías listas para incrustar en el PDF
+      const [branding, fotosPreparadas] = await Promise.all([
+        loadPdfBranding(),
+        rasterizePhotos(
+          reportesOrden.flatMap(rep =>
+            [...(rep.fotosAntes || []), ...(rep.fotosDespues || [])].map(foto => getFileUrl(foto?.url || foto))
+          )
+        )
+      ])
 
       // Generar el PDF
       const pdfDocument = <InformeFinalPDF
@@ -559,6 +511,8 @@ const InformeFinal = ({ ordenId, onClose }) => {
         reportes={reportesOrden}
         formularioData={formularioData}
         clienteContacto={clienteContacto}
+        branding={branding}
+        fotosPreparadas={fotosPreparadas}
       />
 
       const asPdf = pdf(pdfDocument)
@@ -576,7 +530,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
 
       await notificationService.success(
         'PDF Generado',
-        'El informe final D&G ha sido descargado exitosamente',
+        'El informe final ha sido descargado exitosamente',
         3000
       )
 
@@ -592,38 +546,6 @@ const InformeFinal = ({ ordenId, onClose }) => {
     }
   }
 
-  // Función para generar PDF Simple bajo demanda
-  const handleDescargarPDFSimple = async () => {
-    try {
-      setGenerandoPDFSimple(true)
-      const reportesOrden = reportes[ordenId] || []
-
-      const pdfDocument = <ReporteFotograficoEstandar
-        ordenData={orden}
-        reportes={reportesOrden}
-      />
-
-      const asPdf = pdf(pdfDocument)
-      const blob = await asPdf.toBlob()
-
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `informe-simple-${ordenId}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      await notificationService.success('PDF Descargado', 'El PDF simple se descargó correctamente', 2000)
-    } catch (error) {
-      console.error('Error generando PDF simple:', error)
-      await notificationService.error('Error', 'No se pudo generar el PDF simple')
-    } finally {
-      setGenerandoPDFSimple(false)
-    }
-  }
-
   // Función para abrir formulario y generar PDF Completo
   const handleDescargarPDFCompleto = () => {
     // El PDF completo requiere datos adicionales del formulario
@@ -631,38 +553,24 @@ const InformeFinal = ({ ordenId, onClose }) => {
     setShowFormularioInformeFinal(true)
   }
 
-  // Función para generar PDF Fotográfico D&G bajo demanda
-  const handleDescargarPDFDG = async () => {
+  // Reporte fotográfico: misma plantilla que la pestaña "Reportes y Fotografías"
+  const handleDescargarReporteFotografico = async () => {
     try {
-      setGenerandoPDFDG(true)
-      const reportesOrden = reportes[ordenId] || []
-
-      // Importar dinámicamente el componente
-      const ReporteFotograficoDG = (await import('../../utils/reporteFotograficoDG')).default
-
-      const pdfDocument = <ReporteFotograficoDG
-        orden={orden}
-        reportes={reportesOrden}
-      />
-
-      const asPdf = pdf(pdfDocument)
-      const blob = await asPdf.toBlob()
-
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `Reporte_Fotografico_DG_${ordenId}_${getToday()}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      await notificationService.success('PDF Descargado', 'El reporte fotográfico D&G se descargó correctamente', 2000)
+      setGenerandoReporteFotografico(true)
+      await descargarInformeReportes({ orden, reportes: reportes[ordenId] || [] })
+      await notificationService.success(
+        'PDF Descargado',
+        'El reporte fotográfico se descargó correctamente',
+        2000
+      )
     } catch (error) {
-      console.error('Error generando PDF D&G:', error)
-      await notificationService.error('Error', 'No se pudo generar el PDF D&G')
+      console.error('Error generando el reporte fotográfico:', error)
+      await notificationService.error(
+        'Error',
+        error.message || 'No se pudo generar el reporte fotográfico'
+      )
     } finally {
-      setGenerandoPDFDG(false)
+      setGenerandoReporteFotografico(false)
     }
   }
 
@@ -678,59 +586,11 @@ const InformeFinal = ({ ordenId, onClose }) => {
 
     // Inicializar datos del correo con información de la orden
     setCorreoData({
-      destinatario: '',
-      asunto: `Informe Final Completado - Orden ${ordenId}`,
+        asunto: `Informe Final Completado - Orden ${ordenId}`,
       mensaje: '',
       adjuntarPDF: true
     })
     setShowCorreoModal(true)
-  }
-
-  const handleEnviarCorreo = async () => {
-    try {
-      // Validaciones
-      if (!correoData.destinatario) {
-        await notificationService.warning('Campo requerido', 'Debe ingresar el destinatario')
-        return
-      }
-      if (!correoData.asunto) {
-        await notificationService.warning('Campo requerido', 'Debe ingresar el asunto')
-        return
-      }
-      if (!correoData.mensaje) {
-        await notificationService.warning('Campo requerido', 'Debe ingresar el mensaje')
-        return
-      }
-
-      // Crear el correo en el historial de comunicaciones
-      const datosCorreo = {
-        ordenId,
-        cliente: orden?.cliente || 'Cliente',
-        asunto: correoData.asunto,
-        mensaje: correoData.mensaje + (correoData.adjuntarPDF ? '\n\n📎 Adjunto: Informe Final (PDF)' : ''),
-        remitente: user.name,
-        destinatario: correoData.destinatario,
-        tipo: 'correo_salida'
-      }
-
-      crearCorreoSalida(datosCorreo)
-
-      await notificationService.success(
-        'Correo registrado',
-        'El correo con el informe final ha sido registrado en el historial de comunicaciones',
-        3000
-      )
-
-      setShowCorreoModal(false)
-      setCorreoData({
-        destinatario: '',
-        asunto: '',
-        mensaje: '',
-        adjuntarPDF: true
-      })
-    } catch (error) {
-      await notificationService.error('Error', 'No se pudo registrar el correo')
-    }
   }
 
   const puedeGenerar = useMemo(() => {
@@ -1285,24 +1145,31 @@ const InformeFinal = ({ ordenId, onClose }) => {
 
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-3">Opciones de Descarga</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* PDF Simple */}
-                  <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Reporte fotográfico */}
+                  <div className="border border-green-200 rounded-lg p-3 bg-green-50">
                     <div className="mb-2">
-                      <p className="font-medium text-gray-900">📄 PDF Solo Servicio</p>
+                      <p className="font-medium text-gray-900">📸 Reporte Fotográfico</p>
                       <p className="text-sm text-gray-600 mt-1">
-                        Incluye panel fotográfico y reportes diarios
+                        Reportes diarios con sus fotografías, materiales y documentación
                       </p>
                     </div>
                     <button
-                      onClick={handleDescargarPDFSimple}
-                      disabled={generandoPDFSimple}
-                      className="btn-primary w-full inline-flex items-center justify-center"
+                      onClick={handleDescargarReporteFotografico}
+                      disabled={generandoReporteFotografico}
+                      className="btn-primary w-full inline-flex items-center justify-center gap-2"
                     >
-                      {generandoPDFSimple ? '⏳ Generando PDF...' : '📥 Descargar PDF Simple'}
+                      {generandoReporteFotografico ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Generando PDF...</span>
+                        </>
+                      ) : (
+                        '📥 Descargar Reporte Fotográfico'
+                      )}
                     </button>
                   </div>
-                  
+
                   {/* PDF Completo */}
                   <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
                     <div className="mb-2">
@@ -1318,45 +1185,20 @@ const InformeFinal = ({ ordenId, onClose }) => {
                       📝 Completar Formulario
                     </button>
                   </div>
-
-                  {/* Reporte Fotográfico D&G */}
-                  <div className="border border-green-200 rounded-lg p-3 bg-green-50">
-                    <div className="mb-2">
-                      <p className="font-medium text-gray-900">📸 Reporte Fotográfico D&G</p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Formato profesional D&G con datos actuales
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleDescargarPDFDG}
-                      disabled={generandoPDFDG}
-                      className="btn-primary w-full inline-flex items-center justify-center gap-2"
-                    >
-                      {generandoPDFDG ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Generando PDF...</span>
-                        </>
-                      ) : (
-                        '📥 Descargar Reporte Fotográfico'
-                      )}
-                    </button>
-                  </div>
                 </div>
 
-                {/* Informe Final D&G - Nueva opción */}
+                {/* Informe final con formulario */}
                 <div className="mt-4 border border-purple-200 rounded-lg p-4 bg-purple-50">
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-gray-900 text-lg">📋 Informe Final D&G</p>
-                      <span className="px-2 py-1 bg-purple-200 text-purple-800 text-xs font-semibold rounded">NUEVO</span>
+                      <p className="font-medium text-gray-900 text-lg">📋 Informe Final</p>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Informe final completo con formato profesional D&G Group. Incluye esquema de trabajo, metodología, materiales, equipos, proceso de intervención y fotografías con aprobaciones.
+                      Informe final completo. Incluye esquema de trabajo, metodología, materiales, equipos, proceso de intervención y fotografías con aprobaciones.
                     </p>
                   </div>
                   <button
-                    onClick={handleGenerarInformeDG}
+                    onClick={handleGenerarInformeFinal}
                     disabled={generandoPDF}
                     className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
@@ -1368,7 +1210,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                     ) : (
                       <>
                         <span>📝</span>
-                        <span>Generar Informe Final D&G</span>
+                        <span>Generar Informe Final</span>
                       </>
                     )}
                   </button>
@@ -1617,8 +1459,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                 onClick={() => {
                   setShowCorreoModal(false)
                   setCorreoData({
-                    destinatario: '',
-                    asunto: '',
+                                    asunto: '',
                     mensaje: '',
                     adjuntarPDF: true
                   })
@@ -1632,7 +1473,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
         </div>
       )}
 
-      {/* Modal del Formulario de Informe Final D&G */}
+      {/* Modal del Formulario de Informe Final */}
       {showFormularioInformeFinal && (
         <FormularioInformeFinal
           ordenData={orden}

@@ -11,6 +11,7 @@ import useVisitasTecnicasStore from '../../stores/visitasTecnicasStore'
 import useMaterialesStore from '../../stores/materialesStore'
 import useHerramientasStore from '../../stores/herramientasStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
+import { parseEnteroInput, parseDecimalInput, aNumero, esValorVacio, acotarRango } from '../../utils/numberInputUtils'
 import PhotoUpload from '../../components/ui/PhotoUpload'
 import { openInBestMapApp } from '../../utils/mapUtils'
 import notificationService from '../../services/notificationService'
@@ -268,7 +269,6 @@ const OrdenNueva = () => {
     setValue('ubicacion', '')
     setValue('tecnicoAsignado', '')
     setValue('costoEstimado', '')
-    setOrdenCompraFile(null)
     setPhotos([])
 
     // Limpiar listas editables de visita técnica
@@ -375,9 +375,22 @@ const OrdenNueva = () => {
       
       // Crear orden de trabajo
       const clienteObj = getClienteSeleccionado()
-      
-      // Convertir archivo a base64 si existe
-      
+
+      // Los campos de cantidad admiten quedar vacíos mientras se editan:
+      // nunca deben viajar al backend como '' ni como NaN
+      const normalizarCantidad = (lista, campo) =>
+        lista.map(item => ({ ...item, [campo]: aNumero(item[campo], 1) }))
+
+      const materialesSinVisita = normalizarCantidad(materialesSeleccionados, 'cantidad')
+      const herramientasSinVisita = normalizarCantidad(herramientasSeleccionadas, 'cantidadSolicitada')
+      const materialesVisita = normalizarCantidad(materialesVisitaEditables, 'cantidad')
+      const herramientasVisita = herramientasVisitaEditables.map(h =>
+        typeof h === 'string' ? h : { ...h, cantidad: aNumero(h.cantidad, 1) }
+      )
+      const personalVisita = personalVisitaEditable.map(p => ({
+        ...p, diasEstimados: aNumero(p.diasEstimados)
+      }))
+
       const ordenData = {
         ...data,
         cliente: clienteSeleccionado || data.cliente,
@@ -389,17 +402,17 @@ const OrdenNueva = () => {
         // Incluir archivo de orden de compra si existe
         // Incluir inventario solo si es sin_visita y se seleccionaron elementos
         ...(tipoVisita === 'sin_visita' && (materialesSeleccionados.length > 0 || herramientasSeleccionadas.length > 0) && {
-          materialesSeleccionados: materialesSeleccionados,
-          herramientasSeleccionadas: herramientasSeleccionadas
+          materialesSeleccionados: materialesSinVisita,
+          herramientasSeleccionadas: herramientasSinVisita
         }),
         // Vincular con visita técnica si corresponde
         ...(tipoVisita === 'con_visita' && visitaTecnicaOrigen !== 'nueva' && visitaSeleccionada && {
           visitaTecnicaId: visitaTecnicaOrigen,
           basadoEnVisitaTecnica: true,
           // Usar las listas editables (modificadas por el usuario)
-          materialesEstimados: materialesVisitaEditables,
-          herramientasRequeridas: herramientasVisitaEditables,
-          listaPersonal: personalVisitaEditable,
+          materialesEstimados: materialesVisita,
+          herramientasRequeridas: herramientasVisita,
+          listaPersonal: personalVisita,
           coordenadasGPS: visitaSeleccionada.coordenadasGPS || null,
           nombreProyecto: visitaSeleccionada.nombreProyecto || null
         })
@@ -1106,12 +1119,19 @@ const OrdenNueva = () => {
                         className="w-20 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={material.cantidad}
                         onChange={(e) => {
-                          const nuevaCantidad = parseInt(e.target.value) || 1
+                          // Se admite el campo vacío mientras se reescribe la cifra
+                          const nuevaCantidad = parseEnteroInput(e.target.value)
+                          const newMateriales = [...materialesVisitaEditables]
+                          newMateriales[index].cantidad = nuevaCantidad
+                          newMateriales[index].subtotal = aNumero(nuevaCantidad) * aNumero(material.precioUnitario)
+                          setMaterialesVisitaEditables(newMateriales)
+                        }}
+                        onBlur={() => {
                           const maxStock = material.stockActual || 999
-                          const cantidadFinal = Math.min(Math.max(1, nuevaCantidad), maxStock)
+                          const cantidadFinal = acotarRango(material.cantidad, 1, maxStock)
                           const newMateriales = [...materialesVisitaEditables]
                           newMateriales[index].cantidad = cantidadFinal
-                          newMateriales[index].subtotal = cantidadFinal * (material.precioUnitario || 0)
+                          newMateriales[index].subtotal = cantidadFinal * aNumero(material.precioUnitario)
                           setMaterialesVisitaEditables(newMateriales)
                         }}
                       />
@@ -1191,11 +1211,15 @@ const OrdenNueva = () => {
                   placeholder="Cant."
                   className="input-field text-sm w-20"
                   value={nuevoMaterial.cantidad}
-                  onChange={(e) => {
-                    const cant = Math.min(parseInt(e.target.value) || 1, nuevoMaterial.stockActual || 999)
+                  onChange={(e) => setNuevoMaterial({
+                    ...nuevoMaterial,
+                    cantidad: parseEnteroInput(e.target.value)
+                  })}
+                  onBlur={() => {
+                    if (esValorVacio(nuevoMaterial.cantidad)) return
                     setNuevoMaterial({
                       ...nuevoMaterial,
-                      cantidad: cant
+                      cantidad: acotarRango(nuevoMaterial.cantidad, 1, nuevoMaterial.stockActual || 999)
                     })
                   }}
                 />
@@ -1204,7 +1228,7 @@ const OrdenNueva = () => {
                 </span>
                 {canViewPrices(user) && nuevoMaterial.precioUnitario > 0 && (
                   <span className="text-sm font-medium text-gray-700">
-                    S/ {((nuevoMaterial.cantidad || 0) * (nuevoMaterial.precioUnitario || 0)).toFixed(2)}
+                    S/ {(aNumero(nuevoMaterial.cantidad) * aNumero(nuevoMaterial.precioUnitario)).toFixed(2)}
                   </span>
                 )}
                 <button
@@ -1214,9 +1238,9 @@ const OrdenNueva = () => {
                       const nuevoMaterialCompleto = {
                         id: Date.now(),
                         nombre: nuevoMaterial.nombre,
-                        cantidad: nuevoMaterial.cantidad || 1,
+                        cantidad: aNumero(nuevoMaterial.cantidad, 1),
                         unidad: nuevoMaterial.unidad || 'unidad',
-                        precioUnitario: nuevoMaterial.precioUnitario || 0,
+                        precioUnitario: aNumero(nuevoMaterial.precioUnitario),
                         stockActual: nuevoMaterial.stockActual || 999,
                         materialId: nuevoMaterial.materialId || null
                       }
@@ -1288,7 +1312,7 @@ const OrdenNueva = () => {
             {materialesVisitaEditables.length > 0 && canViewPrices(user) && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">
-                  <strong>Total estimado de materiales:</strong> S/ {materialesVisitaEditables.reduce((total, m) => total + ((m.cantidad || 0) * (m.precioUnitario || 0)), 0).toFixed(2)}
+                  <strong>Total estimado de materiales:</strong> S/ {materialesVisitaEditables.reduce((total, m) => total + (aNumero(m.cantidad) * aNumero(m.precioUnitario)), 0).toFixed(2)}
                 </p>
               </div>
             )}
@@ -1460,12 +1484,19 @@ const OrdenNueva = () => {
                                 max={material.stockActual}
                                 value={material.cantidad}
                                 onChange={(e) => {
-                                  const nuevaCantidad = parseInt(e.target.value) || 1
-                                  if (nuevaCantidad <= material.stockActual) {
+                                  // Se admite el campo vacío mientras se reescribe la cifra
+                                  const nuevaCantidad = parseEnteroInput(e.target.value)
+                                  if (esValorVacio(nuevaCantidad) || nuevaCantidad <= material.stockActual) {
                                     const nuevosMateriales = [...materialesSeleccionados]
                                     nuevosMateriales[index].cantidad = nuevaCantidad
                                     setMaterialesSeleccionados(nuevosMateriales)
                                   }
+                                }}
+                                onBlur={() => {
+                                  if (!esValorVacio(material.cantidad)) return
+                                  const nuevosMateriales = [...materialesSeleccionados]
+                                  nuevosMateriales[index].cantidad = 1
+                                  setMaterialesSeleccionados(nuevosMateriales)
                                 }}
                                 className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
                               />
@@ -1626,8 +1657,15 @@ const OrdenNueva = () => {
                               max={herramienta.cantidadDisponible}
                               value={herramienta.cantidadSolicitada}
                               onChange={(e) => {
+                                // Se admite el campo vacío mientras se reescribe la cifra
                                 const nuevasCantidades = [...herramientasSeleccionadas]
-                                nuevasCantidades[index].cantidadSolicitada = parseInt(e.target.value) || 1
+                                nuevasCantidades[index].cantidadSolicitada = parseEnteroInput(e.target.value)
+                                setHerramientasSeleccionadas(nuevasCantidades)
+                              }}
+                              onBlur={() => {
+                                if (!esValorVacio(herramienta.cantidadSolicitada)) return
+                                const nuevasCantidades = [...herramientasSeleccionadas]
+                                nuevasCantidades[index].cantidadSolicitada = 1
                                 setHerramientasSeleccionadas(nuevasCantidades)
                               }}
                               className="input-field text-sm w-20"
@@ -1699,15 +1737,22 @@ const OrdenNueva = () => {
                         type="number"
                         min="1"
                         className="w-16 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={typeof herramienta === 'string' ? 1 : (herramienta.cantidad || 1)}
+                        value={typeof herramienta === 'string' ? 1 : (herramienta.cantidad ?? 1)}
                         onChange={(e) => {
-                          const nuevaCantidad = Math.max(1, parseInt(e.target.value) || 1)
+                          // Se admite el campo vacío mientras se reescribe la cifra
+                          const nuevaCantidad = parseEnteroInput(e.target.value)
                           const newHerramientas = [...herramientasVisitaEditables]
                           if (typeof herramienta === 'string') {
                             newHerramientas[index] = { id: Date.now(), nombre: herramienta, cantidad: nuevaCantidad }
                           } else {
                             newHerramientas[index] = { ...herramienta, cantidad: nuevaCantidad }
                           }
+                          setHerramientasVisitaEditables(newHerramientas)
+                        }}
+                        onBlur={() => {
+                          if (typeof herramienta === 'string' || !esValorVacio(herramienta.cantidad)) return
+                          const newHerramientas = [...herramientasVisitaEditables]
+                          newHerramientas[index] = { ...herramienta, cantidad: 1 }
                           setHerramientasVisitaEditables(newHerramientas)
                         }}
                       />
@@ -1902,8 +1947,15 @@ const OrdenNueva = () => {
                           className="w-16 text-sm border-0 bg-transparent font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white rounded px-2 py-1 text-center"
                           value={personal.diasEstimados}
                           onChange={(e) => {
+                            // Se admite el campo vacío mientras se reescribe la cifra
                             const newPersonal = [...personalVisitaEditable]
-                            newPersonal[index].diasEstimados = parseFloat(e.target.value) || 0
+                            newPersonal[index].diasEstimados = parseDecimalInput(e.target.value)
+                            setPersonalVisitaEditable(newPersonal)
+                          }}
+                          onBlur={() => {
+                            if (!esValorVacio(personal.diasEstimados)) return
+                            const newPersonal = [...personalVisitaEditable]
+                            newPersonal[index].diasEstimados = 0
                             setPersonalVisitaEditable(newPersonal)
                           }}
                           placeholder="0"
