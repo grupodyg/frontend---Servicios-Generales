@@ -10,7 +10,6 @@ const SmartPhotoUpload = ({
   orden, 
   photos = [], 
   onPhotosChange, 
-  maxPhotos = 10, 
   label = "Subir fotos",
   ...props 
 }) => {
@@ -101,7 +100,6 @@ const SmartPhotoUpload = ({
             <PhotoUpload
               photos={photos}
               onPhotosChange={() => {}}
-              maxPhotos={maxPhotos}
               label={label}
               {...props}
             />
@@ -184,7 +182,6 @@ const SmartPhotoUpload = ({
       <PhotoUpload
         photos={photos}
         onPhotosChange={handlePhotoUpload}
-        maxPhotos={maxPhotos}
         label={label}
         {...props}
       />

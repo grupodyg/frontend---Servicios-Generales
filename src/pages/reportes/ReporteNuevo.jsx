@@ -121,31 +121,21 @@ const ReporteNuevo = () => {
   // Calcular el cambio en el porcentaje
   const cambioPorcentaje = porcentajeAvance - porcentajeAnterior
 
-  const ALLOWED_DOC_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
-  const MAX_DOC_SIZE = 5 * 1024 * 1024 // 5MB
+  // Un documento es un PDF o una imagen: en obra se adjunta tanto el escaneo
+  // como la fotografía del papel tomada con el móvil. Sin tope de peso ni de
+  // cantidad: una foto de móvil supera con facilidad cualquier límite fijo.
+  const esDocumentoValido = (file) => file.type === 'application/pdf' || file.type.startsWith('image/')
 
   // Función para manejar la carga de múltiples documentos
   const handleDocumentUpload = (e, setDocuments, docType) => {
     const files = Array.from(e.target.files)
     if (files.length === 0) return
 
-    const invalidType = files.find(f => !ALLOWED_DOC_TYPES.includes(f.type))
+    const invalidType = files.find(f => !esDocumentoValido(f))
     if (invalidType) {
       MySwal.fire({
         title: 'Archivo no válido',
-        text: `"${invalidType.name}" no es un formato permitido. Solo PDF o imágenes (JPG, PNG)`,
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
-      e.target.value = ''
-      return
-    }
-
-    const oversized = files.find(f => f.size > MAX_DOC_SIZE)
-    if (oversized) {
-      MySwal.fire({
-        title: 'Archivo muy grande',
-        text: `"${oversized.name}" excede 5MB`,
+        text: `"${invalidType.name}" no es un formato permitido. Solo PDF o imágenes`,
         icon: 'error',
         confirmButtonColor: '#1e40af'
       })
@@ -717,7 +707,6 @@ const ReporteNuevo = () => {
               photos={fotosAntes}
               onPhotosChange={setFotosAntes}
               label="Agregar fotos del estado inicial"
-              maxPhotos={8}
             />
           </div>
 
@@ -730,7 +719,6 @@ const ReporteNuevo = () => {
               photos={fotosDespues}
               onPhotosChange={setFotosDespues}
               label="Agregar fotos del trabajo terminado"
-              maxPhotos={8}
             />
           </div>
         </div>

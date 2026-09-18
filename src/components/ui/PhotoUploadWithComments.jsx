@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import Compressor from 'compressorjs'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getCurrentTimestamp } from '../../utils/dateUtils'
 import { getFileUrl } from '../../config/api'
@@ -7,68 +6,34 @@ import { getFileUrl } from '../../config/api'
 const PhotoUploadWithComments = ({ 
   photos = [], 
   onPhotosChange, 
-  maxPhotos = 10, 
   label = "Subir fotos",
   accept = "image/*",
   multiple = true,
   showComments = true 
 }) => {
-  const [isUploading, setIsUploading] = useState(false)
   const [previewPhoto, setPreviewPhoto] = useState(null)
   const [editingComment, setEditingComment] = useState(null)
   const fileInputRef = useRef(null)
 
-  const compressImage = (file) => {
-    return new Promise((resolve, reject) => {
-      new Compressor(file, {
-        quality: 0.8,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        mimeType: 'image/jpeg', // Forzar JPEG: formato soportado por @react-pdf/renderer
-        success: resolve,
-        error: reject,
-      })
-    })
-  }
-
-  const handleFileSelect = async (event) => {
+  // El archivo original se adjunta tal cual: sin recodificar y sin tope.
+  const handleFileSelect = (event) => {
     const files = Array.from(event.target.files)
     if (files.length === 0) return
 
-    if (photos.length + files.length > maxPhotos) {
-      alert(`Máximo ${maxPhotos} fotos permitidas`)
-      return
-    }
+    const nuevasFotos = files.map(file => ({
+      id: `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+      uploadedAt: getCurrentTimestamp(),
+      comentario: '' // Campo para comentario
+    }))
 
-    setIsUploading(true)
+    onPhotosChange([...photos, ...nuevasFotos])
 
-    try {
-      const compressedPhotos = []
-      
-      for (const file of files) {
-        const compressedFile = await compressImage(file)
-        const photoData = {
-          id: `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          file: compressedFile,
-          url: URL.createObjectURL(compressedFile),
-          name: file.name,
-          size: compressedFile.size,
-          originalSize: file.size,
-          uploadedAt: getCurrentTimestamp(),
-          comentario: '' // Campo para comentario
-        }
-        compressedPhotos.push(photoData)
-      }
-
-      onPhotosChange([...photos, ...compressedPhotos])
-    } catch (error) {
-      console.error('Error compressing images:', error)
-      alert('Error al procesar las imágenes')
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -78,7 +43,7 @@ const PhotoUploadWithComments = ({
     
     // Clean up URL object
     const photoToRemove = photos.find(photo => photo.id === photoId)
-    if (photoToRemove?.url) {
+    if (photoToRemove?.url?.startsWith('blob:')) {
       URL.revokeObjectURL(photoToRemove.url)
     }
   }
@@ -122,7 +87,6 @@ const PhotoUploadWithComments = ({
           multiple={multiple}
           onChange={handleFileSelect}
           className="hidden"
-          disabled={isUploading || photos.length >= maxPhotos}
         />
         
         <div className="space-y-4">
@@ -133,21 +97,16 @@ const PhotoUploadWithComments = ({
               Arrastra las fotos aquí o haz clic para seleccionar
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              {photos.length}/{maxPhotos} fotos • PNG, JPG hasta 10MB
+              {photos.length} {photos.length === 1 ? 'foto adjunta' : 'fotos adjuntas'} • sin límite de cantidad ni de peso
             </p>
           </div>
           
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || photos.length >= maxPhotos}
-            className={`btn-primary ${
-              isUploading || photos.length >= maxPhotos 
-                ? 'opacity-50 cursor-not-allowed' 
-                : ''
-            }`}
+            className="btn-primary"
           >
-            {isUploading ? 'Procesando...' : 'Seleccionar Fotos'}
+            Seleccionar Fotos
           </button>
         </div>
       </div>
@@ -189,11 +148,6 @@ const PhotoUploadWithComments = ({
                         {formatFileSize(photo.size) && (
                           <p className="text-xs text-gray-500">
                             {formatFileSize(photo.size)}
-                          </p>
-                        )}
-                        {photo.originalSize && photo.size && photo.originalSize > photo.size && (
-                          <p className="text-xs text-green-600">
-                            ↓ {Math.round((1 - photo.size / photo.originalSize) * 100)}% comprimida
                           </p>
                         )}
                       </div>

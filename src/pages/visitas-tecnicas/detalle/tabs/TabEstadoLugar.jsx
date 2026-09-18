@@ -56,7 +56,6 @@ const TabEstadoLugar = memo(({
               <PhotoUpload
                 photos={estadoLugar.fotos || []}
                 onPhotosChange={(fotos) => setEstadoLugar({ ...estadoLugar, fotos })}
-                maxPhotos={20}
                 label="Agregar fotografias del estado actual"
               />
 

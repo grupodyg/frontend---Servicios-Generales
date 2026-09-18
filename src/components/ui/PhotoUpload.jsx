@@ -1,81 +1,55 @@
 import { useState, useRef } from 'react'
-import Compressor from 'compressorjs'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getCurrentTimestamp } from '../../utils/dateUtils'
 import { getFileUrl } from '../../config/api'
 
-const PhotoUpload = ({ 
-  photos = [], 
-  onPhotosChange, 
-  maxPhotos = 10, 
+/**
+ * Adjunta fotografias sin alterarlas.
+ *
+ * El archivo original se conserva tal cual lo entrega el dispositivo: no se
+ * recodifica ni se reescala. Recomprimir en un canvas devolvia imagenes que el
+ * navegador no lograba dibujar (fotos grandes de movil, formatos que el canvas
+ * no decodifica), asi que la miniatura salia vacia y la foto se perdia al
+ * guardar. Tampoco hay tope de cantidad ni de peso.
+ */
+const PhotoUpload = ({
+  photos = [],
+  onPhotosChange,
   label = "Subir fotos",
   accept = "image/*",
-  multiple = true 
+  multiple = true
 }) => {
-  const [isUploading, setIsUploading] = useState(false)
   const [previewPhoto, setPreviewPhoto] = useState(null)
   const fileInputRef = useRef(null)
 
-  const compressImage = (file) => {
-    return new Promise((resolve, reject) => {
-      new Compressor(file, {
-        quality: 0.8,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        mimeType: 'image/jpeg', // Forzar JPEG: formato soportado por @react-pdf/renderer
-        success: resolve,
-        error: reject,
-      })
-    })
-  }
-
-  const handleFileSelect = async (event) => {
+  const handleFileSelect = (event) => {
     const files = Array.from(event.target.files)
     if (files.length === 0) return
 
-    if (photos.length + files.length > maxPhotos) {
-      alert(`Máximo ${maxPhotos} fotos permitidas`)
-      return
-    }
+    const nuevasFotos = files.map(file => ({
+      id: `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+      uploadedAt: getCurrentTimestamp()
+    }))
 
-    setIsUploading(true)
+    onPhotosChange([...photos, ...nuevasFotos])
 
-    try {
-      const compressedPhotos = []
-      
-      for (const file of files) {
-        const compressedFile = await compressImage(file)
-        const photoData = {
-          id: `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          file: compressedFile,
-          url: URL.createObjectURL(compressedFile),
-          name: file.name,
-          size: compressedFile.size,
-          originalSize: file.size,
-          uploadedAt: getCurrentTimestamp()
-        }
-        compressedPhotos.push(photoData)
-      }
-
-      onPhotosChange([...photos, ...compressedPhotos])
-    } catch (error) {
-      console.error('Error compressing images:', error)
-      alert('Error al procesar las imágenes')
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+    // Reset del input para poder volver a elegir los mismos archivos
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
   const handleRemovePhoto = (photoId) => {
     const updatedPhotos = photos.filter(photo => photo.id !== photoId)
     onPhotosChange(updatedPhotos)
-    
+
     // Clean up URL object
     const photoToRemove = photos.find(photo => photo.id === photoId)
-    if (photoToRemove?.url) {
+    if (photoToRemove?.url?.startsWith('blob:')) {
       URL.revokeObjectURL(photoToRemove.url)
     }
   }
@@ -109,9 +83,8 @@ const PhotoUpload = ({
           multiple={multiple}
           onChange={handleFileSelect}
           className="hidden"
-          disabled={isUploading || photos.length >= maxPhotos}
         />
-        
+
         <div className="space-y-4">
           <div className="text-3xl sm:text-4xl text-gray-400">📷</div>
           <div>
@@ -120,21 +93,16 @@ const PhotoUpload = ({
               Arrastra las fotos aquí o haz clic para seleccionar
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              {photos.length}/{maxPhotos} fotos • PNG, JPG hasta 10MB
+              {photos.length} {photos.length === 1 ? 'foto adjunta' : 'fotos adjuntas'} • sin límite de cantidad ni de peso
             </p>
           </div>
-          
+
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || photos.length >= maxPhotos}
-            className={`btn-primary ${
-              isUploading || photos.length >= maxPhotos 
-                ? 'opacity-50 cursor-not-allowed' 
-                : ''
-            }`}
+            className="btn-primary"
           >
-            {isUploading ? 'Procesando...' : 'Seleccionar Fotos'}
+            Seleccionar Fotos
           </button>
         </div>
       </div>
@@ -164,11 +132,6 @@ const PhotoUpload = ({
                 <div className="mt-2 text-xs text-gray-500">
                   {getPhotoName(photo) && <p className="truncate">{getPhotoName(photo)}</p>}
                   {formatFileSize(photo.size) && <p>{formatFileSize(photo.size)}</p>}
-                  {photo.originalSize && photo.size && photo.originalSize > photo.size && (
-                    <p className="text-green-600">
-                      ↓ {Math.round((1 - photo.size / photo.originalSize) * 100)}% comprimida
-                    </p>
-                  )}
                 </div>
 
                 {/* Remove Button */}
@@ -228,7 +191,7 @@ const PhotoUpload = ({
                 )}
               </div>
             </motion.div>
-            
+
             <button
               type="button"
               onClick={() => setPreviewPhoto(null)}

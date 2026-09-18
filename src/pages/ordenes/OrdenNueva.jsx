@@ -2087,7 +2087,6 @@ const OrdenNueva = () => {
             photos={photos}
             onPhotosChange={setPhotos}
             label="Agregar fotos del área de trabajo"
-            maxPhotos={5}
           />
         </div>
 

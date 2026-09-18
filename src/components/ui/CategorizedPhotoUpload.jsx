@@ -8,8 +8,7 @@ const MySwal = withReactContent(Swal)
 
 const CategorizedPhotoUpload = ({ 
   fotosPorCategoria = {}, 
-  onFotosChange, 
-  maxFotosPerCategoria = 5 
+  onFotosChange 
 }) => {
   const [categoriaEscrita, setCategoriaEscrita] = useState('')
   const [archivosSeleccionados, setArchivosSeleccionados] = useState([])
@@ -19,24 +18,13 @@ const CategorizedPhotoUpload = ({
     
     if (archivos.length === 0) return
 
-    if (archivos.length > maxFotosPerCategoria) {
-      MySwal.fire({
-        title: 'Demasiadas fotos',
-        text: `Solo se pueden subir máximo ${maxFotosPerCategoria} fotos por categoría`,
-        icon: 'warning',
-        confirmButtonColor: '#1e40af'
-      })
-      return
-    }
+    // Se acepta cualquier imagen, sin tope de cantidad ni de peso
+    const archivosValidos = archivos.filter(archivo => archivo.type.startsWith('image/'))
 
-    // Validar tipos de archivo
-    const tiposValidos = ['image/jpeg', 'image/png', 'image/jpg']
-    const archivosValidos = archivos.filter(archivo => tiposValidos.includes(archivo.type))
-    
     if (archivosValidos.length !== archivos.length) {
       MySwal.fire({
         title: 'Formato no válido',
-        text: 'Solo se permiten imágenes en formato JPG, PNG o JPEG',
+        text: 'Solo se permiten archivos de imagen',
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -63,18 +51,6 @@ const CategorizedPhotoUpload = ({
       MySwal.fire({
         title: 'No hay fotos seleccionadas',
         text: 'Debe seleccionar al menos una foto para subir',
-        icon: 'warning',
-        confirmButtonColor: '#1e40af'
-      })
-      return
-    }
-
-    // Verificar límite por categoría
-    const fotosExistentes = fotosPorCategoria[categoriaTrimmed] || []
-    if (fotosExistentes.length + archivosSeleccionados.length > maxFotosPerCategoria) {
-      MySwal.fire({
-        title: 'Límite excedido',
-        text: `Esta categoría ya tiene ${fotosExistentes.length} fotos. Solo puede agregar ${maxFotosPerCategoria - fotosExistentes.length} más.`,
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })

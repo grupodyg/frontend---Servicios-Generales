@@ -206,10 +206,6 @@ const HerramientaNueva = () => {
         MySwal.fire({ title: 'Error', text: 'Solo se permiten archivos de imagen', icon: 'error', confirmButtonColor: '#1e40af' })
         return
       }
-      if (file.size > 10 * 1024 * 1024) {
-        MySwal.fire({ title: 'Error', text: 'La imagen no debe superar los 10MB', icon: 'error', confirmButtonColor: '#1e40af' })
-        return
-      }
       setImagenFile(file)
       const reader = new FileReader()
       reader.onloadend = () => setImagenPreview(reader.result)
@@ -443,7 +439,7 @@ const HerramientaNueva = () => {
                   <div className="text-center">
                     <span className="text-2xl block mb-1">📷</span>
                     <span className="text-sm text-gray-500">Click para seleccionar imagen</span>
-                    <span className="text-xs text-gray-400 block">JPG, PNG (máx. 10MB)</span>
+                    <span className="text-xs text-gray-400 block">Cualquier imagen, sin límite de peso</span>
                   </div>
                   <input
                     type="file"
