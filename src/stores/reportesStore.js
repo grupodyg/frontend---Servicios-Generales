@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { api, API_ENDPOINTS, getAuthToken } from '../config/api'
 import { getCurrentTimestamp, getToday } from '../utils/dateUtils'
+import { calcularEstadoFirmas, ESTADO_COMPLETADO, TIPOS_FIRMA } from '../utils/firmasUtils'
+import useOrdenesStore from './ordenesStore'
+
+// Configuración de firmas obligatorias/opcionales de la orden (undefined = las tres obligatorias)
+const getConfigFirmasDeOrden = (ordenId) => useOrdenesStore.getState().getOrdenById(ordenId)?.configFirmas
 
 const useReportesStore = create((set, get) => ({
   reportes: {}, // { ordenId: [reportes] }
@@ -611,6 +616,10 @@ const useReportesStore = create((set, get) => ({
         }))
       }
 
+      // El estado inicial depende de qué firmas son obligatorias para esta orden:
+      // si la del técnico es opcional, el informe nace esperando la siguiente obligatoria.
+      const estadoInicial = calcularEstadoFirmas(getConfigFirmasDeOrden(ordenId), {})
+
       // Datos en formato backend (snake_case)
       const informeDataBackend = {
         order_id: ordenId,
@@ -621,8 +630,8 @@ const useReportesStore = create((set, get) => ({
           supervisor: null,
           administrador: null
         },
-        status: 'pendiente_firma_tecnico',
-        blocked: false
+        status: estadoInicial,
+        blocked: estadoInicial === ESTADO_COMPLETADO
       }
 
       const response = await api.post(API_ENDPOINTS.FINAL_REPORTS, informeDataBackend)
@@ -651,7 +660,7 @@ const useReportesStore = create((set, get) => ({
   firmarInforme: async (informeId, tipoFirma, firmaData) => {
     set({ isLoading: true })
     try {
-      if (!['tecnico', 'supervisor', 'administrador'].includes(tipoFirma)) {
+      if (!TIPOS_FIRMA.includes(tipoFirma)) {
         throw new Error('Tipo de firma inválido')
       }
 
@@ -682,21 +691,15 @@ const useReportesStore = create((set, get) => ({
         }
       }
 
-      // Determinar el nuevo estado según las firmas
-      let nuevoEstado = 'pendiente_firma_tecnico'
-      if (nuevasFirmas.tecnico && !nuevasFirmas.supervisor) {
-        nuevoEstado = 'pendiente_firma_supervisor'
-      } else if (nuevasFirmas.tecnico && nuevasFirmas.supervisor && !nuevasFirmas.administrador) {
-        nuevoEstado = 'pendiente_firma_administrador'
-      } else if (nuevasFirmas.tecnico && nuevasFirmas.supervisor && nuevasFirmas.administrador) {
-        nuevoEstado = 'completado'
-      }
+      // Determinar el nuevo estado según las firmas registradas y cuáles son obligatorias
+      // para esta orden (las opcionales se omiten en el flujo)
+      const nuevoEstado = calcularEstadoFirmas(getConfigFirmasDeOrden(informeActual.ordenId), nuevasFirmas)
 
       // Datos en formato backend
       const updateData = {
         signatures: nuevasFirmas,
         status: nuevoEstado,
-        blocked: nuevoEstado === 'completado'
+        blocked: nuevoEstado === ESTADO_COMPLETADO
       }
 
       const response = await api.put(API_ENDPOINTS.FINAL_REPORT_BY_ID(informeId), updateData)
@@ -722,12 +725,14 @@ const useReportesStore = create((set, get) => ({
   },
 
   // Obtener informe final por orden
-  getInformeFinalByOrden: async (ordenId) => {
+  // `forzar` ignora la copia local y vuelve a consultar al backend (p. ej. tras cambiar
+  // las firmas obligatorias, cuando el backend recalcula el estado del informe)
+  getInformeFinalByOrden: async (ordenId, forzar = false) => {
     const state = get()
     const localInforme = state.reportes[`informe-final-${ordenId}`]
 
     // Si existe localmente y ya está normalizado (tiene fechaGeneracion), retornar
-    if (localInforme && localInforme.fechaGeneracion !== undefined) return localInforme
+    if (!forzar && localInforme && localInforme.fechaGeneracion !== undefined) return localInforme
 
     // Si no existe o necesita normalización, fetch del backend
     try {

@@ -13,6 +13,8 @@ import useHerramientasStore from '../../stores/herramientasStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { parseEnteroInput, parseDecimalInput, aNumero, esValorVacio, acotarRango } from '../../utils/numberInputUtils'
 import PhotoUpload from '../../components/ui/PhotoUpload'
+import ConfigFirmasSelector from '../../components/ordenes/ConfigFirmasSelector'
+import { CONFIG_FIRMAS_DEFAULT } from '../../utils/firmasUtils'
 import { openInBestMapApp } from '../../utils/mapUtils'
 import notificationService from '../../services/notificationService'
 import { getToday } from '../../utils/dateUtils'
@@ -34,6 +36,8 @@ const OrdenNueva = () => {
   const { herramientas, fetchHerramientas } = useHerramientasStore()
   const [photos, setPhotos] = useState([])
   const [isEmergency, setIsEmergency] = useState(false)
+  // Firmas obligatorias/opcionales del informe final (solo el admin puede cambiarlas)
+  const [configFirmas, setConfigFirmas] = useState({ ...CONFIG_FIRMAS_DEFAULT })
   const [clienteSeleccionado, setClienteSeleccionado] = useState('')
   const [materialesSeleccionados, setMaterialesSeleccionados] = useState([])
   const [herramientasSeleccionadas, setHerramientasSeleccionadas] = useState([])
@@ -399,6 +403,7 @@ const OrdenNueva = () => {
         numeroOrdenCompra: data.ordenCompraNumero || null,
         estado: isEmergency ? 'urgente' : 'pendiente',
         esEmergencia: isEmergency,
+        configFirmas,
         // Incluir archivo de orden de compra si existe
         // Incluir inventario solo si es sin_visita y se seleccionaron elementos
         ...(tipoVisita === 'sin_visita' && (materialesSeleccionados.length > 0 || herramientasSeleccionadas.length > 0) && {
@@ -2053,6 +2058,19 @@ const OrdenNueva = () => {
                 <p className="text-sm">Seleccione una visita técnica o agregue especialistas manualmente</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Firmas del informe final (solo admin) */}
+        {user?.role === 'admin' && (
+          <div className="card">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              Firmas del Informe Final
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Define qué firmas serán obligatorias para cerrar el informe final de este trabajo.
+            </p>
+            <ConfigFirmasSelector value={configFirmas} onChange={setConfigFirmas} />
           </div>
         )}
 

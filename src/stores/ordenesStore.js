@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { api, API_ENDPOINTS } from '../config/api'
 import { getCurrentTimestamp } from '../utils/dateUtils'
+import { normalizarConfigFirmas } from '../utils/firmasUtils'
 
 // 🔄 FUNCIONES DE TRANSFORMACIÓN DE DATOS (Backend ↔ Frontend)
 const transformBackendToFrontend = (backendOrder) => {
@@ -50,6 +51,8 @@ const transformBackendToFrontend = (backendOrder) => {
     fechaActualizacionRecursos: backendOrder.resources_update_date,
     estado: backendOrder.status,
     esEmergencia: backendOrder.is_emergency || false,
+    // Firmas obligatorias/opcionales del informe final (NULL en BD = las tres obligatorias)
+    configFirmas: normalizarConfigFirmas(backendOrder.signature_config),
     fechaCreacion: backendOrder.date_time_registration,
     fechaModificacion: backendOrder.date_time_modification
   }
@@ -98,7 +101,9 @@ const transformFrontendToBackend = (frontendOrder) => {
     solpe: frontendOrder.solpe || null,
     resources_update_date: frontendOrder.fechaActualizacionRecursos || null,
     status: frontendOrder.estado, // No usar valor por defecto - mantener undefined para que COALESCE preserve el valor actual
-    is_emergency: frontendOrder.esEmergencia || false
+    is_emergency: frontendOrder.esEmergencia || false,
+    // null cuando no se envía: updateOrden lo elimina y el backend conserva la configuración actual
+    signature_config: frontendOrder.configFirmas || null
   }
 }
 
@@ -199,6 +204,24 @@ const useOrdenesStore = create(
           console.error('Error updating orden:', error)
           throw error
         }
+      },
+
+      // Actualizar solo las firmas obligatorias/opcionales del informe final (solo admin).
+      // Envía únicamente signature_config: así funciona también en órdenes completadas,
+      // donde el backend rechaza cualquier otro campo.
+      actualizarConfigFirmas: async (id, configFirmas) => {
+        const signature_config = normalizarConfigFirmas(configFirmas)
+        const response = await api.put(API_ENDPOINTS.WORK_ORDER_BY_ID(id), { signature_config })
+        const updatedOrden = transformBackendToFrontend(response.data)
+
+        set(state => ({
+          ordenes: state.ordenes.map(o => (o.id === id ? { ...o, configFirmas: updatedOrden.configFirmas } : o)),
+          ordenActual: state.ordenActual?.id === id
+            ? { ...state.ordenActual, configFirmas: updatedOrden.configFirmas }
+            : state.ordenActual
+        }))
+
+        return updatedOrden
       },
 
       // Verificar si se puede eliminar una orden (dependencias)

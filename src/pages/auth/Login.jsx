@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import useAuthStore from '../../stores/authStore'
 import useNotificacionesStore from '../../stores/notificacionesStore'
+import { getDevQuickAccessUsers } from '../../config/devQuickAccess'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -14,9 +15,14 @@ const Login = () => {
   const { fetchNotificaciones } = useNotificacionesStore()
   const [showPassword, setShowPassword] = useState(false)
 
+  // Accesos rápidos SOLO en desarrollo local (lista vacía en producción)
+  const accesosRapidos = useMemo(() => getDevQuickAccessUsers(), [])
+
   const {
     register,
     handleSubmit,
+    setValue,
+    setFocus,
     formState: { errors }
   } = useForm()
 
@@ -87,6 +93,18 @@ const Login = () => {
         confirmButtonColor: '#1e40af'
       })
     }
+  }
+
+  // Rellena el formulario con la cuenta elegida; si el .env local trae contraseña, envía directamente
+  const handleAccesoRapido = (acceso) => {
+    setValue('email', acceso.email, { shouldValidate: true })
+    if (acceso.password) {
+      setValue('password', acceso.password, { shouldValidate: true })
+      handleSubmit(onSubmit)()
+      return
+    }
+    setValue('password', '')
+    setFocus('password')
   }
 
   return (
@@ -175,6 +193,35 @@ const Login = () => {
           {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
         </button>
       </form>
+
+      {/* Accesos rápidos: solo existen en desarrollo local. La comprobación inline de
+          import.meta.env.DEV hace que Vite elimine este bloque del bundle de producción. */}
+      {import.meta.env.DEV && accesosRapidos.length > 0 && (
+        <div className="mt-6 border-t border-dashed border-amber-300 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">
+            🛠️ Acceso rápido · solo entorno local
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {accesosRapidos.map((acceso) => (
+              <button
+                key={acceso.email}
+                type="button"
+                onClick={() => handleAccesoRapido(acceso)}
+                disabled={isLoading}
+                className="px-3 py-1.5 text-sm rounded-lg border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+              >
+                {acceso.label || acceso.email}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {accesosRapidos.some(a => a.password)
+              ? 'Entra con un clic usando la contraseña de VITE_DEV_QUICK_PASSWORD del .env local.'
+              : 'Define VITE_DEV_QUICK_PASSWORD en el .env local para entrar con un clic; ahora solo rellena el correo.'}
+            {' '}No se incluye en compilaciones de producción.
+          </p>
+        </div>
+      )}
     </div>
   )
 }

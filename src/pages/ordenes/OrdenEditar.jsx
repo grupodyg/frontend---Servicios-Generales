@@ -7,6 +7,8 @@ import useConfigStore from '../../stores/configStore'
 import useTecnicosStore from '../../stores/tecnicosStore'
 import notificationService from '../../services/notificationService'
 import { getCurrentTimestamp } from '../../utils/dateUtils'
+import ConfigFirmasSelector from '../../components/ordenes/ConfigFirmasSelector'
+import { normalizarConfigFirmas } from '../../utils/firmasUtils'
 
 const OrdenEditar = () => {
   const { id } = useParams()
@@ -16,6 +18,8 @@ const OrdenEditar = () => {
   const { getTiposServicioActivos, fetchTiposServicio } = useConfigStore()
   const { tecnicos, fetchTecnicos } = useTecnicosStore()
   const [orden, setOrden] = useState(null)
+  // Firmas obligatorias/opcionales del informe final (solo el admin puede cambiarlas)
+  const [configFirmas, setConfigFirmas] = useState(normalizarConfigFirmas(null))
 
   const tiposServicioActivos = getTiposServicioActivos()
 
@@ -51,6 +55,7 @@ const OrdenEditar = () => {
     setValue('prioridad', ordenEncontrada.prioridad)
     setValue('fechaVencimiento', ordenEncontrada.fechaVencimiento)
     setValue('observaciones', ordenEncontrada.observaciones || '')
+    setConfigFirmas(normalizarConfigFirmas(ordenEncontrada.configFirmas))
   }, [id, ordenes, setValue, navigate, fetchTecnicos, fetchTiposServicio])
 
   const onSubmit = async (data) => {
@@ -75,6 +80,8 @@ const OrdenEditar = () => {
         prioridad: data.prioridad,
         fechaVencimiento: data.fechaVencimiento,
         observaciones: data.observaciones,
+        // El backend ignora este campo si quien edita no es administrador
+        configFirmas,
         fechaUltimaModificacion: getCurrentTimestamp(),
         modificadoPor: user.name
       }
@@ -294,6 +301,19 @@ const OrdenEditar = () => {
             />
           </div>
         </div>
+
+        {/* Firmas del informe final (solo admin) */}
+        {user?.role === 'admin' && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 pb-2 border-b">
+              Firmas del Informe Final
+            </h2>
+            <p className="text-sm text-gray-600">
+              Define qué firmas serán obligatorias para cerrar el informe final de este trabajo.
+            </p>
+            <ConfigFirmasSelector value={configFirmas} onChange={setConfigFirmas} />
+          </div>
+        )}
 
         {/* Botones */}
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:space-x-3 pt-4 border-t">

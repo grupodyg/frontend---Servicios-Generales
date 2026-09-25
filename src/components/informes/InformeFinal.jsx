@@ -13,6 +13,16 @@ import { getCurrentDate, getToday, formatDate, formatDateTime } from '../../util
 import { descargarInformeReportes } from '../../utils/informeReportesPDF'
 import { loadPdfBranding, rasterizePhotos } from '../../utils/pdfBranding'
 import SignatureCanvas from '../common/SignatureCanvas'
+import { ToggleFirmaObligatoria } from '../ordenes/ConfigFirmasSelector'
+import {
+  TIPOS_FIRMA,
+  ETIQUETAS_FIRMA,
+  TIPO_FIRMA_POR_ROL,
+  ESTADO_COMPLETADO,
+  normalizarConfigFirmas,
+  getFirmaPendiente,
+  getFirmaObligatoriaPreviaPendiente
+} from '../../utils/firmasUtils'
 import { getFileUrl } from '../../config/api'
 
 const InformeFinal = ({ ordenId, onClose }) => {
@@ -23,7 +33,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
     firmarInforme,
     reportes
   } = useReportesStore()
-  const { getOrdenById, fetchOrdenes } = useOrdenesStore()
+  const { getOrdenById, fetchOrdenes, actualizarConfigFirmas } = useOrdenesStore()
   const { visitas } = useVisitasTecnicasStore()
 
   const [informeFinal, setInformeFinal] = useState(null)
@@ -43,8 +53,12 @@ const InformeFinal = ({ ordenId, onClose }) => {
   const [generandoPDF, setGenerandoPDF] = useState(false)
   const [generandoInforme, setGenerandoInforme] = useState(false)
   const [generandoReporteFotografico, setGenerandoReporteFotografico] = useState(false)
+  const [guardandoConfigFirmas, setGuardandoConfigFirmas] = useState(false)
 
   const orden = getOrdenById(ordenId)
+
+  // Firmas obligatorias/opcionales configuradas por el admin para esta orden
+  const configFirmas = useMemo(() => normalizarConfigFirmas(orden?.configFirmas), [orden?.configFirmas])
 
   useEffect(() => {
     const loadInforme = async () => {
@@ -407,10 +421,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
 
       setFirmando(true)
 
-      const tipoFirma =
-        user.role === 'tecnico' ? 'tecnico' :
-        user.role === 'supervisor' ? 'supervisor' :
-        user.role === 'admin' ? 'administrador' : null
+      const tipoFirma = TIPO_FIRMA_POR_ROL[user.role] || null
 
       if (!tipoFirma) {
         throw new Error('No tienes permisos para firmar este informe')
@@ -597,25 +608,50 @@ const InformeFinal = ({ ordenId, onClose }) => {
     return !informeFinal && reportes && reportes[ordenId]?.length > 0
   }, [informeFinal, reportes, ordenId])
 
+  // Primera firma obligatoria que falta según la configuración de la orden (null si no falta ninguna)
+  const firmaPendiente = useMemo(
+    () => (informeFinal ? getFirmaPendiente(configFirmas, informeFinal.firmas) : null),
+    [informeFinal, configFirmas]
+  )
+
   const puedeFirmar = useMemo(() => {
     if (!informeFinal || !user) return false
+    if (informeFinal.estado === ESTADO_COMPLETADO) return false
 
-    // Cada rol SOLO puede firmar en su turno específico
+    // Cada rol SOLO puede firmar en su turno específico (las firmas opcionales se omiten)
     // Admin NO puede firmar por el técnico o supervisor
-    if (user.role === 'tecnico') {
-      return informeFinal.estado === 'pendiente_firma_tecnico' && !informeFinal.firmas?.tecnico
-    }
+    const tipoFirmaRol = TIPO_FIRMA_POR_ROL[user.role] || null
+    return Boolean(tipoFirmaRol) && firmaPendiente === tipoFirmaRol
+  }, [informeFinal, user, firmaPendiente])
 
-    if (user.role === 'supervisor') {
-      return informeFinal.estado === 'pendiente_firma_supervisor' && !informeFinal.firmas?.supervisor
-    }
+  // Solo el admin decide qué firmas son obligatorias, y solo mientras el informe siga pendiente
+  const puedeConfigurarFirmas = Boolean(
+    informeFinal && user?.role === 'admin' && informeFinal.estado !== ESTADO_COMPLETADO
+  )
 
-    if (user.role === 'admin') {
-      return informeFinal.estado === 'pendiente_firma_administrador' && !informeFinal.firmas?.administrador
-    }
+  const handleToggleFirmaObligatoria = async (tipo, obligatoria) => {
+    try {
+      setGuardandoConfigFirmas(true)
+      await actualizarConfigFirmas(ordenId, { ...configFirmas, [tipo]: obligatoria })
 
-    return false
-  }, [informeFinal, user])
+      // El backend recalcula el estado del informe al cambiar la configuración
+      const informeActualizado = await getInformeFinalByOrden(ordenId, true)
+      setInformeFinal(informeActualizado)
+
+      await notificationService.success(
+        'Firmas actualizadas',
+        `Firma del ${ETIQUETAS_FIRMA[tipo].toLowerCase()} marcada como ${obligatoria ? 'obligatoria' : 'opcional'}`,
+        2000
+      )
+    } catch (error) {
+      await notificationService.error(
+        'Error',
+        error.message || 'No se pudo actualizar la configuración de firmas'
+      )
+    } finally {
+      setGuardandoConfigFirmas(false)
+    }
+  }
 
   const getEstadoBadge = (estado) => {
     const badgeClasses = {
@@ -1021,98 +1057,77 @@ const InformeFinal = ({ ordenId, onClose }) => {
 
           {/* Firmas */}
           <div className="card">
-            <h3 className="font-semibold text-gray-900 mb-4">Firmas del Informe Final</h3>
+            <h3 className="font-semibold text-gray-900 mb-1">Firmas del Informe Final</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {puedeConfigurarFirmas
+                ? 'Como administrador puedes marcar cada firma como obligatoria u opcional para este trabajo. Las opcionales se omiten en el flujo.'
+                : 'Las firmas marcadas como opcionales no se requieren para completar el informe.'}
+            </p>
             <div className="space-y-4">
-              {/* Firma Técnico */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">Firma del Técnico</p>
-                    {informeFinal.firmas?.tecnico ? (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-600">
-                          ✓ Firmado por: {informeFinal.firmas.tecnico.nombre}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {informeFinal.firmas.tecnico.fecha ? formatDateTime(new Date(informeFinal.firmas.tecnico.fecha)) : '-'}
-                        </p>
-                        {informeFinal.firmas.tecnico.comentarios && (
-                          <p className="text-sm text-gray-600 mt-1 italic">
-                            "{informeFinal.firmas.tecnico.comentarios}"
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 mt-1">Pendiente</p>
-                    )}
-                  </div>
-                  <span className={`text-2xl ${informeFinal.firmas?.tecnico ? 'text-green-600' : 'text-gray-300'}`}>
-                    ✍️
-                  </span>
-                </div>
-              </div>
+              {TIPOS_FIRMA.map(tipo => {
+                const firma = informeFinal.firmas?.[tipo]
+                const obligatoria = configFirmas[tipo]
+                const previaPendiente = getFirmaObligatoriaPreviaPendiente(configFirmas, informeFinal.firmas, tipo)
 
-              {/* Firma Supervisor */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">Firma del Supervisor</p>
-                    {informeFinal.firmas?.supervisor ? (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-600">
-                          ✓ Firmado por: {informeFinal.firmas.supervisor.nombre}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {informeFinal.firmas.supervisor.fecha ? formatDateTime(new Date(informeFinal.firmas.supervisor.fecha)) : '-'}
-                        </p>
-                        {informeFinal.firmas.supervisor.comentarios && (
-                          <p className="text-sm text-gray-600 mt-1 italic">
-                            "{informeFinal.firmas.supervisor.comentarios}"
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 mt-1">
-                        {informeFinal.firmas?.tecnico ? 'Esperando firma' : 'Requiere firma del técnico primero'}
-                      </p>
-                    )}
-                  </div>
-                  <span className={`text-2xl ${informeFinal.firmas?.supervisor ? 'text-green-600' : 'text-gray-300'}`}>
-                    ✍️
-                  </span>
-                </div>
-              </div>
+                let mensajePendiente = 'Pendiente'
+                if (!obligatoria) {
+                  mensajePendiente = 'Opcional · no se requiere para completar el informe'
+                } else if (previaPendiente) {
+                  mensajePendiente = `Requiere firma del ${ETIQUETAS_FIRMA[previaPendiente].toLowerCase()} primero`
+                } else if (firmaPendiente === tipo) {
+                  mensajePendiente = 'Esperando firma'
+                }
 
-              {/* Firma Administrador */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">Firma del Administrador</p>
-                    {informeFinal.firmas?.administrador ? (
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-600">
-                          ✓ Firmado por: {informeFinal.firmas.administrador.nombre}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {informeFinal.firmas.administrador.fecha ? formatDateTime(new Date(informeFinal.firmas.administrador.fecha)) : '-'}
-                        </p>
-                        {informeFinal.firmas.administrador.comentarios && (
-                          <p className="text-sm text-gray-600 mt-1 italic">
-                            "{informeFinal.firmas.administrador.comentarios}"
-                          </p>
+                return (
+                  <div
+                    key={tipo}
+                    className={`border rounded-lg p-4 ${obligatoria ? 'border-gray-200' : 'border-dashed border-gray-300 bg-gray-50'}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-gray-900">Firma del {ETIQUETAS_FIRMA[tipo]}</p>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            obligatoria ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-700'
+                          }`}>
+                            {obligatoria ? 'Obligatoria' : 'Opcional'}
+                          </span>
+                        </div>
+                        {firma ? (
+                          <div className="mt-2">
+                            <p className="text-sm text-gray-600">
+                              ✓ Firmado por: {firma.nombre}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {firma.fecha ? formatDateTime(new Date(firma.fecha)) : '-'}
+                            </p>
+                            {firma.comentarios && (
+                              <p className="text-sm text-gray-600 mt-1 italic">
+                                &ldquo;{firma.comentarios}&rdquo;
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 mt-1">{mensajePendiente}</p>
                         )}
                       </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 mt-1">
-                        {informeFinal.firmas?.supervisor ? 'Esperando firma' : 'Requiere firma del supervisor primero'}
-                      </p>
-                    )}
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`text-2xl ${firma ? 'text-green-600' : 'text-gray-300'}`}>
+                          ✍️
+                        </span>
+                        {puedeConfigurarFirmas && (
+                          <ToggleFirmaObligatoria
+                            obligatoria={obligatoria}
+                            onChange={(valor) => handleToggleFirmaObligatoria(tipo, valor)}
+                            disabled={guardandoConfigFirmas || Boolean(firma)}
+                            label={`Firma del ${ETIQUETAS_FIRMA[tipo]} obligatoria`}
+                          />
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <span className={`text-2xl ${informeFinal.firmas?.administrador ? 'text-green-600' : 'text-gray-300'}`}>
-                    ✍️
-                  </span>
-                </div>
-              </div>
+                )
+              })}
             </div>
 
             {informeFinal.bloqueado && (
