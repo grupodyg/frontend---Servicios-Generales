@@ -53,6 +53,7 @@ const transformBackendToFrontend = (backendOrder) => {
     esEmergencia: backendOrder.is_emergency || false,
     // Firmas obligatorias/opcionales del informe final (NULL en BD = las tres obligatorias)
     configFirmas: normalizarConfigFirmas(backendOrder.signature_config),
+    observaciones: backendOrder.observations,
     fechaCreacion: backendOrder.date_time_registration,
     fechaModificacion: backendOrder.date_time_modification
   }
@@ -103,7 +104,9 @@ const transformFrontendToBackend = (frontendOrder) => {
     status: frontendOrder.estado, // No usar valor por defecto - mantener undefined para que COALESCE preserve el valor actual
     is_emergency: frontendOrder.esEmergencia || false,
     // null cuando no se envía: updateOrden lo elimina y el backend conserva la configuración actual
-    signature_config: frontendOrder.configFirmas || null
+    signature_config: frontendOrder.configFirmas || null,
+    // '' se envía tal cual para poder borrar las observaciones; undefined las conserva
+    observations: frontendOrder.observaciones
   }
 }
 

@@ -6,7 +6,7 @@ import useAuthStore from '../../stores/authStore'
 import useConfigStore from '../../stores/configStore'
 import useTecnicosStore from '../../stores/tecnicosStore'
 import notificationService from '../../services/notificationService'
-import { getCurrentTimestamp } from '../../utils/dateUtils'
+import { getCurrentTimestamp, toDateOnly } from '../../utils/dateUtils'
 import ConfigFirmasSelector from '../../components/ordenes/ConfigFirmasSelector'
 import { normalizarConfigFirmas } from '../../utils/firmasUtils'
 
@@ -16,7 +16,7 @@ const OrdenEditar = () => {
   const { ordenes, updateOrden, isLoading } = useOrdenesStore()
   const { user } = useAuthStore()
   const { getTiposServicioActivos, fetchTiposServicio } = useConfigStore()
-  const { tecnicos, fetchTecnicos } = useTecnicosStore()
+  const { fetchTecnicos, getNombresTecnicos } = useTecnicosStore()
   const [orden, setOrden] = useState(null)
   // Firmas obligatorias/opcionales del informe final (solo el admin puede cambiarlas)
   const [configFirmas, setConfigFirmas] = useState(normalizarConfigFirmas(null))
@@ -51,9 +51,10 @@ const OrdenEditar = () => {
     setValue('descripcion', ordenEncontrada.descripcion)
     setValue('tipoServicio', ordenEncontrada.tipoServicio)
     setValue('ubicacion', ordenEncontrada.ubicacion)
-    setValue('tecnicoAsignadoId', ordenEncontrada.tecnicoAsignadoId)
+    setValue('tecnicoAsignado', ordenEncontrada.tecnicoAsignado || '')
     setValue('prioridad', ordenEncontrada.prioridad)
-    setValue('fechaVencimiento', ordenEncontrada.fechaVencimiento)
+    // El backend envía la fecha como ISO ("2026-03-20T05:00:00.000Z") y el input type="date" solo acepta YYYY-MM-DD
+    setValue('fechaVencimiento', toDateOnly(ordenEncontrada.fechaVencimiento))
     setValue('observaciones', ordenEncontrada.observaciones || '')
     setConfigFirmas(normalizarConfigFirmas(ordenEncontrada.configFirmas))
   }, [id, ordenes, setValue, navigate, fetchTecnicos, fetchTiposServicio])
@@ -66,17 +67,13 @@ const OrdenEditar = () => {
         return
       }
 
-      // Encontrar el técnico seleccionado
-      const tecnicoSeleccionado = tecnicos.find(t => t.id === parseInt(data.tecnicoAsignadoId))
-
       const ordenActualizada = {
         ...orden,
         nombreProyecto: data.nombreProyecto,
         descripcion: data.descripcion,
         tipoServicio: data.tipoServicio,
         ubicacion: data.ubicacion,
-        tecnicoAsignadoId: parseInt(data.tecnicoAsignadoId),
-        tecnicoAsignado: tecnicoSeleccionado ? tecnicoSeleccionado.nombre : orden.tecnicoAsignado,
+        tecnicoAsignado: data.tecnicoAsignado || orden.tecnicoAsignado,
         prioridad: data.prioridad,
         fechaVencimiento: data.fechaVencimiento,
         observaciones: data.observaciones,
@@ -113,6 +110,13 @@ const OrdenEditar = () => {
       </div>
     )
   }
+
+  // La orden guarda el técnico por nombre ("Nombre - Especialidad"), igual que Nueva Orden y Reasignar.
+  // Si el técnico actual ya no está activo se mantiene como opción para que se vea y no se pierda.
+  const nombresTecnicos = getNombresTecnicos()
+  const opcionesTecnico = orden.tecnicoAsignado && !nombresTecnicos.includes(orden.tecnicoAsignado)
+    ? [orden.tecnicoAsignado, ...nombresTecnicos]
+    : nombresTecnicos
 
   return (
     <div className="space-y-6">
@@ -232,19 +236,17 @@ const OrdenEditar = () => {
               Técnico Asignado
             </label>
             <select
-              {...register('tecnicoAsignadoId')}
+              {...register('tecnicoAsignado')}
               className="input-field"
             >
-              <option value="">Asignar después...</option>
-              {tecnicos.filter(t => t.activo).map((tecnico) => (
-                <option key={tecnico.id} value={tecnico.id}>
-                  {tecnico.nombre}
+              {/* Una orden con técnico puede cambiarlo, pero no quedarse sin él (igual que Reasignar) */}
+              {!orden.tecnicoAsignado && <option value="">Asignar después...</option>}
+              {opcionesTecnico.map((nombre) => (
+                <option key={nombre} value={nombre}>
+                  {nombre}
                 </option>
               ))}
             </select>
-            {errors.tecnicoAsignadoId && (
-              <p className="text-red-500 text-sm mt-1">{errors.tecnicoAsignadoId.message}</p>
-            )}
           </div>
         </div>
 

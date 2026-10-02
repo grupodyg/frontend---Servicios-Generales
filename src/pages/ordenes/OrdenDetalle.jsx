@@ -762,6 +762,12 @@ const OrdenDetalle = () => {
                     <dt className="text-sm font-medium text-gray-500">Fecha de Creación</dt>
                     <dd className="text-sm text-gray-900">{orden.fechaCreacion}</dd>
                   </div>
+                  {orden.observaciones && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Observaciones</dt>
+                      <dd className="text-sm text-gray-900 whitespace-pre-line">{orden.observaciones}</dd>
+                    </div>
+                  )}
                 </dl>
               </div>
 
