@@ -3,6 +3,7 @@ import useMaterialesStore from '../../stores/materialesStore'
 import useAuthStore from '../../stores/authStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { parseEnteroInput, aNumero, esValorVacio } from '../../utils/numberInputUtils'
+import notificationService from '../../services/notificationService'
 
 const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }) => {
   const { materiales, fetchMateriales, categorias, fetchCategorias, isLoading } = useMaterialesStore()
@@ -18,8 +19,13 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
   // Cargar categorías y materiales iniciales
   useEffect(() => {
     const loadInitialData = async () => {
-      await fetchCategorias()
-      await fetchMateriales({ status: 'available' })
+      try {
+        await fetchCategorias()
+        await fetchMateriales({ status: 'available' })
+      } catch (error) {
+        console.error('Error cargando materiales del inventario:', error)
+        notificationService.mostrarError(error, 'No se pudieron cargar los materiales del inventario')
+      }
     }
     loadInitialData()
   }, [fetchCategorias, fetchMateriales])
@@ -85,7 +91,10 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
     if (materialExistente) {
       // Verificar que no se exceda el stock disponible
       if (materialExistente.cantidad >= material.stockActual) {
-        alert(`Stock máximo disponible: ${material.stockActual} ${material.unidad || 'unidades'}`)
+        notificationService.warning(
+          'Stock insuficiente',
+          `No puedes agregar más «${material.nombre}»: ya tienes ${materialExistente.cantidad} en «Materiales Seleccionados» y el stock disponible es ${material.stockActual} ${material.unidad || 'unidades'}.`
+        )
         return
       }
       // Si ya existe, incrementar cantidad
@@ -99,7 +108,10 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
     } else {
       // Verificar que haya stock disponible
       if (material.stockActual < 1) {
-        alert('Este material no tiene stock disponible')
+        notificationService.warning(
+          'Material sin stock',
+          `«${material.nombre}» no tiene stock disponible en el inventario. Elige otro material o regístralo en «Agregar Material Manualmente».`
+        )
         return
       }
       // Si no existe, agregar nuevo
@@ -134,7 +146,10 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
     if (materialLocal && !materialLocal.esManual) {
       const material = (materiales || []).find(m => m.id === id)
       if (material && cantidad > material.stockActual) {
-        alert(`Stock máximo disponible: ${material.stockActual} ${material.unidad}`)
+        notificationService.warning(
+          'Cantidad mayor que el stock',
+          `La cantidad indicada (${cantidad}) supera el stock disponible de «${material.nombre}» (${material.stockActual} ${material.unidad || 'unidades'}). Reduce la cantidad en «Materiales Seleccionados».`
+        )
         return
       }
     }
@@ -152,7 +167,10 @@ const SelectorMateriales = ({ materialesSeleccionados = [], onMaterialesChange }
     // El campo de cantidad puede quedar vacío mientras se edita: se exige aquí
     const cantidad = aNumero(materialManual.cantidad)
     if (cantidad <= 0) {
-      alert('Ingrese la cantidad del material')
+      notificationService.warning(
+        'Falta la cantidad',
+        `Escribe en «Cantidad» (sección «Agregar Material Manualmente») cuántas unidades de «${nombre}» necesitas. Debe ser mayor que 0.`
+      )
       return
     }
 

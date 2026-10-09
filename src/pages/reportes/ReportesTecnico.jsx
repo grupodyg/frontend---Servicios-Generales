@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import useReportesStore from '../../stores/reportesStore'
 import useAuthStore from '../../stores/authStore'
+import notificationService from '../../services/notificationService'
 
 const ReportesTecnico = () => {
   const { user } = useAuthStore()
@@ -15,6 +16,7 @@ const ReportesTecnico = () => {
   useEffect(() => {
     if (user?.name) {
       fetchTodosReportesTecnico(user.name)
+        .catch(error => notificationService.mostrarError(error, 'No se pudieron cargar tus reportes diarios'))
     }
   }, [user?.name, fetchTodosReportesTecnico])
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts'
@@ -16,6 +16,7 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { getCurrentDate, formatDateTime } from '../../utils/dateUtils'
 import DateRangePicker from '../../components/ui/DateRangePicker'
+import notificationService from '../../services/notificationService'
 
 const Reportes = () => {
   const navigate = useNavigate()
@@ -49,6 +50,14 @@ const Reportes = () => {
   const [dailyProductivityData, setDailyProductivityData] = useState([])
   const [kpisData, setKpisData] = useState(null)
 
+  // Un solo aviso mientras las cargas de estadísticas sigan fallando (se reinicia al cargar bien)
+  const avisoErrorCargaRef = useRef(false)
+  const avisarErrorCarga = (error, contexto) => {
+    if (avisoErrorCargaRef.current) return
+    avisoErrorCargaRef.current = true
+    notificationService.mostrarError(error, contexto)
+  }
+
   // Convertir periodo a días
   const getPeriodDays = (period) => {
     switch (period) {
@@ -81,8 +90,10 @@ const Reportes = () => {
           setDailyProductivityData(statistics.dailyProductivity || [])
           setKpisData(statistics.kpis || null)
         }
+        avisoErrorCargaRef.current = false
       } catch (error) {
         console.error('❌ Error cargando reportes:', error)
+        avisarErrorCarga(error, 'No se pudieron cargar los datos de reportes y estadísticas')
       } finally {
         setLoading(false)
         setInitialLoadDone(true)
@@ -104,8 +115,10 @@ const Reportes = () => {
           setDailyProductivityData(statistics.dailyProductivity || [])
           setKpisData(statistics.kpis || null)
         }
+        avisoErrorCargaRef.current = false
       } catch (error) {
         console.error('Error recargando estadísticas:', error)
+        avisarErrorCarga(error, 'No se pudieron actualizar las estadísticas para el periodo o cliente seleccionado')
       }
     }
     reloadStats()
@@ -126,8 +139,10 @@ const Reportes = () => {
         if (statistics) {
           setDailyProductivityData(statistics.dailyProductivity || [])
         }
+        avisoErrorCargaRef.current = false
       } catch (error) {
         console.error('Error recargando productividad:', error)
+        avisarErrorCarga(error, 'No se pudieron cargar los datos de productividad del periodo seleccionado')
       }
     }
     reloadProductivityStats()
@@ -548,28 +563,7 @@ const Reportes = () => {
 
     } catch (error) {
       console.error('Error exportando reporte:', error)
-      const Swal = (await import('sweetalert2')).default
-
-      // Mostrar el error completo en el modal
-      const errorMessage = error?.message || error?.toString() || 'Error desconocido'
-      const errorStack = error?.stack || 'No hay stack trace disponible'
-
-      Swal.fire({
-        title: '❌ Error al Exportar',
-        html: `
-          <div style="text-align: left;">
-            <p><strong>Mensaje:</strong></p>
-            <p style="color: red; font-family: monospace; font-size: 12px;">${errorMessage}</p>
-            <br>
-            <details>
-              <summary style="cursor: pointer; color: blue;">Ver detalles técnicos</summary>
-              <pre style="text-align: left; font-size: 10px; overflow-x: auto; background: #f5f5f5; padding: 10px; margin-top: 10px;">${errorStack}</pre>
-            </details>
-          </div>
-        `,
-        icon: 'error',
-        width: 600
-      })
+      notificationService.mostrarError(error, 'No se pudo exportar el reporte completo en PDF')
     } finally {
       setExporting(false)
     }

@@ -397,7 +397,7 @@ const FormularioInformeFinal = ({ ordenData, reportes, materialesUtilizados, onG
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Nombre completo"
-                  {...register('planificador.nombre', { required: 'Requerido' })}
+                  {...register('planificador.nombre', { required: 'Ingresa el nombre completo de quien da el V.B. como planificador' })}
                 />
                 {errors.planificador?.nombre && (
                   <p className="mt-1 text-sm text-red-600">{errors.planificador.nombre.message}</p>
@@ -412,7 +412,7 @@ const FormularioInformeFinal = ({ ordenData, reportes, materialesUtilizados, onG
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Nombre completo"
-                  {...register('ejecutor.nombre', { required: 'Requerido' })}
+                  {...register('ejecutor.nombre', { required: 'Ingresa el nombre completo de quien da el V.B. como ejecutor' })}
                 />
                 {errors.ejecutor?.nombre && (
                   <p className="mt-1 text-sm text-red-600">{errors.ejecutor.nombre.message}</p>
@@ -427,7 +427,7 @@ const FormularioInformeFinal = ({ ordenData, reportes, materialesUtilizados, onG
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Nombre completo"
-                  {...register('solicitante.nombre', { required: 'Requerido' })}
+                  {...register('solicitante.nombre', { required: 'Ingresa el nombre completo de quien da el V.B. como solicitante' })}
                 />
                 {errors.solicitante?.nombre && (
                   <p className="mt-1 text-sm text-red-600">{errors.solicitante.nombre.message}</p>

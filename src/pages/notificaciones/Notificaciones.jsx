@@ -42,6 +42,7 @@ const Notificaciones = () => {
   const handleNotificationClick = (notificacion) => {
     if (!notificacion.leida) {
       marcarComoLeida(notificacion.id)
+        .catch(error => notificationService.mostrarError(error, 'No se pudo marcar la notificación como leída'))
     }
     
     // Navegar según el tipo de notificación
@@ -60,16 +61,24 @@ const Notificaciones = () => {
     )
     
     if (result.isConfirmed) {
-      eliminarNotificacion(id)
-      await notificationService.success('Notificación eliminada', '', 1000)
+      try {
+        await eliminarNotificacion(id)
+        await notificationService.success('Notificación eliminada', '', 1000)
+      } catch (error) {
+        notificationService.mostrarError(error, 'No se pudo eliminar la notificación')
+      }
     }
   }
 
   const handleMarkAllAsRead = async () => {
     const userId = user.role === 'admin' ? 'admin' : user.id
     const userNotifications = obtenerNotificacionesPorUsuario(userId)
-    userNotifications.forEach(notif => marcarComoLeida(notif.id))
-    await notificationService.success('Todas las notificaciones marcadas como leídas', '', 1000)
+    try {
+      await Promise.all(userNotifications.map(notif => marcarComoLeida(notif.id)))
+      await notificationService.success('Todas las notificaciones marcadas como leídas', '', 1000)
+    } catch (error) {
+      notificationService.mostrarError(error, 'No se pudieron marcar todas las notificaciones como leídas')
+    }
   }
 
   const getNotificationIcon = (tipo) => {

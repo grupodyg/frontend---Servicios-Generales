@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import notificationService from '../services/notificationService'
 
 const MySwal = withReactContent(Swal)
 
@@ -29,6 +30,9 @@ const useDoubleConfirmDelete = () => {
     deleteFn,
     onSuccess
   }) => {
+    // Qué paso estaba en curso, para explicar exactamente qué no se pudo hacer
+    let contextoError = `No se pudo eliminar la ${entityName} ${entityId}`
+
     try {
       // PASO 1: Primera confirmación
       const firstConfirm = await MySwal.fire({
@@ -69,12 +73,10 @@ const useDoubleConfirmDelete = () => {
         console.error('Error al verificar dependencias:', error)
         setIsDeleting(false)
 
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo verificar las dependencias. Por favor, intente nuevamente.',
-          icon: 'error',
-          confirmButtonColor: '#dc2626'
-        })
+        notificationService.mostrarError(
+          error,
+          `No se pudo comprobar si la ${entityName} ${entityId} tiene registros relacionados, así que no se eliminó nada`
+        )
         return
       }
 
@@ -132,11 +134,11 @@ const useDoubleConfirmDelete = () => {
         preConfirm: () => {
           const reason = document.getElementById('deletion-reason').value.trim()
           if (!reason) {
-            Swal.showValidationMessage('Debe especificar un motivo para la eliminación')
+            Swal.showValidationMessage('Escribe en «Motivo de la eliminación» por qué eliminas este registro: es obligatorio y queda guardado en el historial.')
             return false
           }
           if (reason.length < 10) {
-            Swal.showValidationMessage('El motivo debe tener al menos 10 caracteres')
+            Swal.showValidationMessage(`El motivo debe tener al menos 10 caracteres y ahora tiene ${reason.length}. Explica con más detalle por qué eliminas esta ${entityName}.`)
             return false
           }
           return { reason }
@@ -162,25 +164,21 @@ const useDoubleConfirmDelete = () => {
 
       // Ejecutar callback de éxito
       if (onSuccess) {
+        contextoError = `No se pudo actualizar la lista después de eliminar la ${entityName} ${entityId} (la eliminación sí se realizó)`
         await onSuccess()
       }
     } catch (error) {
       console.error('Error en el proceso de eliminación:', error)
 
-      let errorMessage = 'Ocurrió un error al intentar eliminar'
-
-      if (error.response?.status === 403) {
-        errorMessage = 'No tiene permisos para realizar esta acción. Solo administradores pueden eliminar.'
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error
+      if (error?.status === 403 && !error.tieneExplicacion) {
+        // 403 sin explicación del servidor: eliminar está reservado a administradores
+        notificationService.warning(
+          contextoError,
+          'No tienes permisos para eliminar este registro: solo los usuarios con rol Administrador pueden hacerlo. Si necesitas eliminarlo, pídeselo a un administrador del sistema.'
+        )
+      } else {
+        notificationService.mostrarError(error, contextoError)
       }
-
-      MySwal.fire({
-        title: 'Error',
-        text: errorMessage,
-        icon: 'error',
-        confirmButtonColor: '#dc2626'
-      })
     } finally {
       setIsDeleting(false)
     }

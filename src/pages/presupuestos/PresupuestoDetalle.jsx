@@ -7,6 +7,7 @@ import useClientesStore from '../../stores/clientesStore'
 import useAuthStore from '../../stores/authStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { usePDFGenerator } from '../../utils/pdfGenerator'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -388,6 +389,9 @@ const PresupuestoDetalle = () => {
             setPresupuesto(found)
           }
         }
+      } catch (error) {
+        console.error('Error al cargar presupuesto:', error)
+        notificationService.mostrarError(error, `No se pudo cargar el presupuesto ${id}`)
       } finally {
         setLoading(false)
       }
@@ -418,12 +422,8 @@ const PresupuestoDetalle = () => {
         })
         navigate('/presupuestos')
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo aprobar el presupuesto',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al aprobar presupuesto:', error)
+        notificationService.mostrarError(error, `No se pudo aprobar el presupuesto ${presupuesto?.numero || id}`)
       }
     }
   }
@@ -441,7 +441,7 @@ const PresupuestoDetalle = () => {
       cancelButtonText: 'Cancelar',
       inputValidator: (value) => {
         if (!value) {
-          return 'Debe ingresar un motivo'
+          return 'El motivo del rechazo está vacío. Escríbelo para poder rechazar el presupuesto.'
         }
       }
     })
@@ -457,12 +457,8 @@ const PresupuestoDetalle = () => {
         })
         navigate('/presupuestos')
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo rechazar el presupuesto',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al rechazar presupuesto:', error)
+        notificationService.mostrarError(error, `No se pudo rechazar el presupuesto ${presupuesto?.numero || id}`)
       }
     }
   }
@@ -509,12 +505,8 @@ const PresupuestoDetalle = () => {
           navigate(`/ordenes/${newOrden.id}`)
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo generar la orden',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al generar orden desde presupuesto:', error)
+        notificationService.mostrarError(error, `No se pudo generar la orden de trabajo del presupuesto ${presupuesto?.numero || id}`)
       }
     }
   }
@@ -539,7 +531,9 @@ const PresupuestoDetalle = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <p className="text-gray-500 mb-4">Presupuesto no encontrado</p>
+        <p className="text-gray-500 mb-4">
+          No se encontró el presupuesto {id}. Puede que haya sido eliminado, que el enlace sea incorrecto o que no se haya podido cargar. Vuelve al listado y búscalo de nuevo.
+        </p>
         <Link to="/presupuestos" className="text-emerald-600 hover:text-emerald-700 font-medium">
           ← Volver a presupuestos
         </Link>

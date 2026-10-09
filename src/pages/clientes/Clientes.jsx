@@ -7,6 +7,17 @@ import useOrdenesStore from '../../stores/ordenesStore'
 import notificationService from '../../services/notificationService'
 import { canViewPrices } from '../../utils/permissionsUtils'
 
+// Describe el valor ingresado en un RUC/DNI para explicar por qué no tiene el formato esperado
+const describirValorDocumento = (valor) => {
+  const texto = String(valor ?? '')
+  const digitos = texto.replace(/\D/g, '').length
+  const otros = texto.length - digitos
+  const detalle = `tiene ${digitos} ${digitos === 1 ? 'dígito' : 'dígitos'}`
+  return otros > 0
+    ? `${detalle} y ${otros} ${otros === 1 ? 'carácter que no es número' : 'caracteres que no son números'} (espacios, guiones o letras)`
+    : detalle
+}
+
 const Clientes = () => {
   const { user } = useAuthStore()
   const {
@@ -36,7 +47,10 @@ const Clientes = () => {
 
   useEffect(() => {
     inicializarDatos()
-    fetchClientes()
+    fetchClientes().catch((error) => {
+      console.error('Error al cargar clientes:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar los clientes')
+    })
   }, [inicializarDatos, fetchClientes])
 
   // Cerrar modal con tecla Escape
@@ -80,8 +94,13 @@ const Clientes = () => {
     )
     
     if (result.isConfirmed) {
-      await cambiarEstadoCliente(cliente.id, nuevoEstado)
-      await notificationService.success('Estado actualizado', '', 2000)
+      try {
+        await cambiarEstadoCliente(cliente.id, nuevoEstado)
+        await notificationService.success('Estado actualizado', '', 2000)
+      } catch (error) {
+        console.error('Error al cambiar estado del cliente:', error)
+        await notificationService.mostrarError(error, `No se pudo cambiar el estado del cliente «${cliente.nombre}» a ${nuevoEstado}`)
+      }
     }
   }
 
@@ -101,7 +120,8 @@ const Clientes = () => {
           resetModal()
         }
       } catch (error) {
-        await notificationService.error('Error', 'No se pudo eliminar el cliente')
+        console.error('Error al eliminar cliente:', error)
+        await notificationService.mostrarError(error, `No se pudo eliminar el cliente «${cliente.nombre}»`)
       }
     }
   }
@@ -144,30 +164,51 @@ const Clientes = () => {
 
     // Validación de campos requeridos
     if (!formDataCliente.nombre || !formDataCliente.email || !formDataCliente.telefono || !formDataCliente.direccion) {
-      await notificationService.error('Error de validación', 'Por favor complete todos los campos obligatorios')
+      const camposFaltantes = [
+        !formDataCliente.nombre && `${formDataCliente.tipo === 'empresa' ? 'Razón Social' : 'Nombre Completo'} (sección Información Básica)`,
+        !formDataCliente.email && 'Email (sección Información de Contacto)',
+        !formDataCliente.telefono && 'Teléfono (sección Información de Contacto)',
+        !formDataCliente.direccion && 'Dirección (sección Información de Contacto)'
+      ].filter(Boolean)
+      await notificationService.warning(
+        'Faltan campos obligatorios',
+        `Completa estos campos del formulario de edición del cliente: ${camposFaltantes.join(', ')}. Luego pulsa "Guardar Cambios".`
+      )
       return
     }
 
     // Validación específica por tipo
     if (formDataCliente.tipo === 'empresa' && !formDataCliente.ruc) {
-      await notificationService.error('Error de validación', 'El RUC es obligatorio para empresas')
+      await notificationService.warning(
+        'Falta el RUC',
+        'El cliente está marcado como "Empresa" en la sección Tipo de Cliente, por eso el campo RUC (sección Información Básica) es obligatorio. Ingresa el RUC de 11 dígitos o cambia el tipo a "Persona Natural".'
+      )
       return
     }
 
     if (formDataCliente.tipo === 'persona' && !formDataCliente.dni) {
-      await notificationService.error('Error de validación', 'El DNI es obligatorio para personas naturales')
+      await notificationService.warning(
+        'Falta el DNI',
+        'El cliente está marcado como "Persona Natural" en la sección Tipo de Cliente, por eso el campo DNI (sección Información Básica) es obligatorio. Ingresa el DNI de 8 dígitos o cambia el tipo a "Empresa".'
+      )
       return
     }
 
     // Validación de formato RUC (11 dígitos)
     if (formDataCliente.tipo === 'empresa' && formDataCliente.ruc && !/^\d{11}$/.test(formDataCliente.ruc)) {
-      await notificationService.error('Error de validación', 'El RUC debe tener 11 dígitos')
+      await notificationService.warning(
+        'RUC con formato incorrecto',
+        `El RUC debe tener exactamente 11 dígitos, solo números. El valor ingresado (${formDataCliente.ruc}) ${describirValorDocumento(formDataCliente.ruc)}. Corrígelo en el campo RUC de la sección Información Básica.`
+      )
       return
     }
 
     // Validación de formato DNI (8 dígitos)
     if (formDataCliente.tipo === 'persona' && formDataCliente.dni && !/^\d{8}$/.test(formDataCliente.dni)) {
-      await notificationService.error('Error de validación', 'El DNI debe tener 8 dígitos')
+      await notificationService.warning(
+        'DNI con formato incorrecto',
+        `El DNI debe tener exactamente 8 dígitos, solo números. El valor ingresado (${formDataCliente.dni}) ${describirValorDocumento(formDataCliente.dni)}. Corrígelo en el campo DNI de la sección Información Básica.`
+      )
       return
     }
 
@@ -176,12 +217,15 @@ const Clientes = () => {
       datosEnviados: formDataCliente
     })
 
+    let contextoError = `No se pudo actualizar el cliente «${clienteSeleccionado.nombre}»`
+
     try {
       const resultado = await actualizarCliente(clienteSeleccionado.id, formDataCliente)
       console.log('✅ Cliente actualizado exitosamente:', resultado)
       await notificationService.success('Cliente actualizado', '', 2000)
       setModalView('detalles')
       setClienteSeleccionado(resultado) // Usar resultado del backend en lugar de formData
+      contextoError = 'No se pudo recargar la lista de clientes (los cambios del cliente sí se guardaron)'
       await fetchClientes() // Refrescar lista de clientes
     } catch (error) {
       console.error('❌ Error al actualizar cliente:', {
@@ -190,7 +234,7 @@ const Clientes = () => {
         clienteId: clienteSeleccionado.id,
         datosEnviados: formDataCliente
       })
-      await notificationService.error('Error', `No se pudo actualizar el cliente: ${error.message}`)
+      await notificationService.mostrarError(error, contextoError)
     }
   }
 

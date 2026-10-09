@@ -7,6 +7,7 @@ import useTecnicosStore from '../../stores/tecnicosStore'
 import useAuthStore from '../../stores/authStore'
 import { getEspecialidadColor } from '../../constants/visitasTecnicasConstants'
 import { getToday } from '../../utils/dateUtils'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -33,8 +34,10 @@ const VisitaTecnicaNueva = () => {
   })
 
   useEffect(() => {
-    fetchClientes()
-    fetchTecnicos()
+    Promise.all([fetchClientes(), fetchTecnicos()]).catch(error => {
+      console.error('Error cargando clientes o técnicos:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar los clientes y técnicos del formulario')
+    })
 
     // Verificar si hay datos de orden pendiente
     const datosOrdenPendiente = localStorage.getItem('datosOrdenPendiente')
@@ -102,9 +105,11 @@ const VisitaTecnicaNueva = () => {
       // Validar que al menos un técnico esté seleccionado
       if (tecnicosSeleccionados.length === 0) {
         MySwal.fire({
-          title: 'Error',
-          text: 'Debe asignar al menos un técnico o supervisor',
-          icon: 'error',
+          title: 'Falta asignar técnicos',
+          text: tecnicosDisponibles.length === 0
+            ? 'No hay técnicos ni supervisores activos para asignar, así que la visita no se puede crear. Pide a un administrador que registre o active usuarios con rol Técnico o Supervisor en Usuarios.'
+            : 'En «Detalles de la Visita», marca al menos una casilla en «Técnicos y/o Supervisor asignado» y vuelve a pulsar «Crear Visita Técnica».',
+          icon: 'warning',
           confirmButtonColor: '#1e40af'
         })
         return
@@ -149,12 +154,11 @@ const VisitaTecnicaNueva = () => {
 
       navigate(`/visitas-tecnicas/${nuevaVisita.id}`)
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo crear la visita técnica',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al crear visita técnica:', error)
+      notificationService.mostrarError(
+        error,
+        data.cliente ? `No se pudo crear la visita técnica para «${data.cliente}»` : 'No se pudo crear la visita técnica'
+      )
     }
   }
 
@@ -200,7 +204,7 @@ const VisitaTecnicaNueva = () => {
                 <input
                   type="hidden"
                   {...register('cliente', {
-                    required: 'Debe seleccionar un cliente'
+                    required: 'Selecciona un cliente de la lista. Si no existe, créalo con «+ Crear nuevo cliente».'
                   })}
                 />
 
@@ -226,7 +230,7 @@ const VisitaTecnicaNueva = () => {
                   type="text"
                   className={`input-field ${errors.direccion ? 'border-red-500' : ''}`}
                   placeholder="Dirección donde se realizará la visita"
-                  {...register('direccion', { required: 'La dirección es requerida' })}
+                  {...register('direccion', { required: 'Escribe la dirección donde se hará la visita.' })}
                 />
                 {errors.direccion && (
                   <p className="mt-1 text-sm text-red-600">{errors.direccion.message}</p>
@@ -242,7 +246,7 @@ const VisitaTecnicaNueva = () => {
                     type="text"
                     className={`input-field ${errors.contacto ? 'border-red-500' : ''}`}
                     placeholder="Nombre del contacto"
-                    {...register('contacto', { required: 'El contacto es requerido' })}
+                    {...register('contacto', { required: 'Escribe el nombre de la persona de contacto en el lugar.' })}
                   />
                   {errors.contacto && (
                     <p className="mt-1 text-sm text-red-600">{errors.contacto.message}</p>
@@ -257,7 +261,7 @@ const VisitaTecnicaNueva = () => {
                     type="tel"
                     className={`input-field ${errors.telefono ? 'border-red-500' : ''}`}
                     placeholder="Teléfono"
-                    {...register('telefono', { required: 'El teléfono es requerido' })}
+                    {...register('telefono', { required: 'Escribe un teléfono para coordinar la visita con el contacto.' })}
                   />
                   {errors.telefono && (
                     <p className="mt-1 text-sm text-red-600">{errors.telefono.message}</p>
@@ -302,9 +306,9 @@ const VisitaTecnicaNueva = () => {
                     {...register('solpe', {
                       validate: (value) => {
                         if (!value) return true;
-                        if (!/^[\d-]+$/.test(value)) return 'SOLPE solo puede contener números y guiones';
+                        if (!/^[\d-]+$/.test(value)) return 'La SOLPE solo admite números y guiones: quita letras, espacios u otros signos.';
                         const sinGuiones = value.replace(/-/g, '');
-                        if (sinGuiones.length > 15) return 'SOLPE debe contener máximo 15 dígitos (los guiones no cuentan)';
+                        if (sinGuiones.length > 15) return `La SOLPE tiene ${sinGuiones.length} dígitos y el máximo es 15 (los guiones no cuentan). Quita los dígitos sobrantes.`;
                         return true;
                       }
                     })}
@@ -354,7 +358,7 @@ const VisitaTecnicaNueva = () => {
                     type="date"
                     className={`input-field ${errors.fechaVisita ? 'border-red-500' : ''}`}
                     min={getToday()}
-                    {...register('fechaVisita', { required: 'La fecha es requerida' })}
+                    {...register('fechaVisita', { required: 'Elige la fecha en que se hará la visita.' })}
                   />
                   {errors.fechaVisita && (
                     <p className="mt-1 text-sm text-red-600">{errors.fechaVisita.message}</p>
@@ -368,7 +372,7 @@ const VisitaTecnicaNueva = () => {
                   <input
                     type="time"
                     className={`input-field ${errors.horaVisita ? 'border-red-500' : ''}`}
-                    {...register('horaVisita', { required: 'La hora es requerida' })}
+                    {...register('horaVisita', { required: 'Elige la hora en que se hará la visita.' })}
                   />
                   {errors.horaVisita && (
                     <p className="mt-1 text-sm text-red-600">{errors.horaVisita.message}</p>
@@ -382,7 +386,7 @@ const VisitaTecnicaNueva = () => {
                 </label>
                 <select
                   className={`input-field ${errors.tipoServicio ? 'border-red-500' : ''}`}
-                  {...register('tipoServicio', { required: 'Debe seleccionar un tipo de servicio' })}
+                  {...register('tipoServicio', { required: 'Elige en la lista el tipo de servicio que necesita el cliente.' })}
                 >
                   <option value="">Seleccione el tipo de servicio</option>
                   <option value="Mantenimiento Preventivo">Mantenimiento Preventivo</option>
@@ -431,7 +435,7 @@ const VisitaTecnicaNueva = () => {
                   ))}
                 </div>
                 {tecnicosSeleccionados.length === 0 && (
-                  <p className="mt-1 text-sm text-red-600">Debe seleccionar al menos un técnico o supervisor</p>
+                  <p className="mt-1 text-sm text-red-600">Marca al menos un técnico o supervisor para la visita.</p>
                 )}
                 {tecnicosSeleccionados.length > 0 && (
                   <div className="mt-2 p-2 bg-blue-50 rounded-lg">
@@ -475,8 +479,8 @@ const VisitaTecnicaNueva = () => {
                 rows="4"
                 placeholder="Describa el servicio que el cliente requiere..."
                 {...register('descripcionServicio', { 
-                  required: 'La descripción es requerida',
-                  minLength: { value: 20, message: 'La descripción debe tener al menos 20 caracteres' }
+                  required: 'Describe el servicio que requiere el cliente (mínimo 20 caracteres).',
+                  minLength: { value: 20, message: 'La descripción es muy corta: escribe al menos 20 caracteres para que el técnico sepa qué revisar.' }
                 })}
               />
               {errors.descripcionServicio && (

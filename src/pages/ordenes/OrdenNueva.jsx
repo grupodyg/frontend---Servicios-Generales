@@ -81,6 +81,7 @@ const OrdenNueva = () => {
         ])
       } catch (error) {
         console.error('Error cargando datos:', error)
+        notificationService.mostrarError(error, 'No se pudieron cargar los datos del formulario de nueva orden (clientes, visitas técnicas, inventario, técnicos y tipos de servicio)')
       }
     }
 
@@ -344,14 +345,16 @@ const OrdenNueva = () => {
   }
 
   const onSubmit = async (data) => {
+    // Permite saber si el fallo ocurrió antes o después de crear la orden
+    let ordenCreada = null
     try {
       // Validación para órdenes con visita técnica
       if (data.tipoVisita === 'con_visita') {
         if (!data.visitaTecnicaOrigen) {
           MySwal.fire({
-            title: 'Error',
-            text: 'Para órdenes con visita técnica debe seleccionar una visita técnica de origen',
-            icon: 'error',
+            title: 'Falta la visita técnica de origen',
+            text: 'En "Información General" elegiste "Con Visita Técnica" como Tipo de Visita, pero no seleccionaste ninguna en "Visita Técnica de Origen". Selecciona una visita aprobada o cambia el tipo a "Sin Visita Técnica".',
+            icon: 'warning',
             confirmButtonColor: '#1e40af'
           })
           return
@@ -424,6 +427,7 @@ const OrdenNueva = () => {
       }
 
       const newOrden = await createOrden(ordenData)
+      ordenCreada = newOrden
 
       // Si la orden se basó en una visita técnica, marcar la visita como usada
       if (data.tipoVisita === 'con_visita' && visitaTecnicaOrigen && visitaTecnicaOrigen !== 'nueva') {
@@ -464,12 +468,12 @@ const OrdenNueva = () => {
       navigate('/ordenes')
     } catch (error) {
       console.error('❌ Error al crear orden:', error)
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo crear la orden',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(
+        error,
+        ordenCreada
+          ? `No se pudo completar el registro de la orden ${ordenCreada.id} (la orden sí se creó; revísala en la lista de órdenes)`
+          : 'No se pudo crear la orden de trabajo'
+      )
     }
   }
 

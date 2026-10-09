@@ -2,10 +2,19 @@ import React, { memo } from 'react'
 import { getCurrentLocation, formatCoordinates, openInBestMapApp } from '../../../../utils/mapUtils'
 import { isTecnico, isAdminOrSupervisor } from '../../../../utils/roleUtils'
 import { ESTADOS_COMPLETABLES, VISITA_ESTADOS } from '../../../../constants/visitasTecnicasConstants'
+import notificationService from '../../../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
 const MySwal = withReactContent(Swal)
+
+// Cómo resolver cada fallo de getCurrentLocation (mapUtils), que depende del dispositivo o del navegador
+const SOLUCION_ERROR_GPS = {
+  'Permisos de ubicación denegados': 'El navegador bloqueó el acceso a tu ubicación. Permítelo desde el icono del candado junto a la dirección de la página y vuelve a pulsar «Obtener ubicación actual».',
+  'Ubicación no disponible': 'El dispositivo no pudo determinar su posición. Activa el GPS o los servicios de ubicación del dispositivo y vuelve a intentarlo.',
+  'Tiempo de espera agotado': 'El dispositivo tardó demasiado en obtener la posición. Muévete a una zona con mejor señal (o al aire libre) y vuelve a intentarlo.',
+  'Geolocalización no soportada por este navegador': 'Este navegador no permite obtener la ubicación. Usa un navegador actualizado (Chrome, Edge o Safari) para registrarla.'
+}
 
 const TabCompletado = memo(({
   visitaActual,
@@ -58,11 +67,12 @@ const TabCompletado = memo(({
       })
     } catch (error) {
       console.error('Error obteniendo ubicacion:', error)
-      MySwal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error.message || 'No se pudo obtener la ubicacion GPS'
-      })
+      const solucion = SOLUCION_ERROR_GPS[error?.message]
+      if (solucion) {
+        notificationService.warning('No se pudo obtener la ubicación GPS', solucion)
+      } else {
+        notificationService.mostrarError(error, 'No se pudo obtener la ubicación GPS')
+      }
     }
   }
 

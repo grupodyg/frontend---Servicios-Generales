@@ -262,8 +262,8 @@ const InformeFinal = ({ ordenId, onClose }) => {
 
     if (documentos.length === 0) {
       await notificationService.warning(
-        'Sin documentos',
-        `No hay documentos ${tipoLabel} disponibles para exportar`,
+        `Sin documentos ${tipoLabel}`,
+        `Ningún reporte diario de esta orden tiene documentos ${tipoLabel} adjuntos, así que no hay nada que exportar. Adjúntalos en los reportes diarios de la orden y vuelve a intentarlo.`,
         3000
       )
       return
@@ -289,7 +289,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
 
         try {
           const response = await fetch(fileUrl)
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          if (!response.ok) throw new Error(`El servidor no devolvió el archivo (HTTP ${response.status}). Vuelve a adjuntarlo en su reporte diario.`)
           const arrayBuffer = await response.arrayBuffer()
           const contentType = response.headers.get('content-type') || ''
 
@@ -309,7 +309,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
               try {
                 await embedImageAsPage(pdfDoc, font, arrayBuffer, 'image/jpeg', docItem, i, documentos.length, tipoLabel)
               } catch {
-                throw new Error(`Formato no soportado: ${contentType}`)
+                throw new Error(`Formato no admitido (${contentType || 'desconocido'}). Adjúntalo de nuevo como PDF, JPG o PNG.`)
               }
             }
           }
@@ -352,9 +352,9 @@ const InformeFinal = ({ ordenId, onClose }) => {
       await notificationService.success('PDF generado', mensaje, 3000)
     } catch (error) {
       console.error('Error generando PDF de documentos:', error)
-      await notificationService.error(
-        'Error',
-        'No se pudo generar el PDF consolidado'
+      await notificationService.mostrarError(
+        error,
+        `No se pudo generar el PDF consolidado de documentos ${tipoLabel} de la orden ${ordenId}`
       )
     } finally {
       setGenerandoDocSeguridad(null)
@@ -368,9 +368,10 @@ const InformeFinal = ({ ordenId, onClose }) => {
       const reporteCompleto = reportesOrden.find(r => r.porcentajeAvance >= 100)
 
       if (!reporteCompleto) {
+        const mayorAvance = Math.max(0, ...reportesOrden.map(r => Number(r.porcentajeAvance) || 0))
         await notificationService.warning(
           'Reporte incompleto',
-          'Para generar el informe final, debe existir al menos un reporte con 100% de avance.',
+          `Para generar el informe final, al menos un reporte diario de esta orden debe tener 100% en "Porcentaje de Avance". El mayor avance registrado es ${mayorAvance}%. Registra un nuevo reporte diario con el avance en 100% y vuelve a intentarlo.`,
           4000
         )
         return
@@ -401,10 +402,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
       }
     } catch (error) {
       setGenerandoInforme(false)
-      await notificationService.error(
-        'Error',
-        error.message || 'No se pudo generar el informe final'
-      )
+      await notificationService.mostrarError(error, `No se pudo generar el informe final de la orden ${ordenId}`)
     }
   }
 
@@ -414,7 +412,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
       if (!firmaGrafica) {
         await notificationService.warning(
           'Firma requerida',
-          'Por favor dibuja tu firma en el recuadro antes de continuar'
+          'El recuadro "Firma Digital" de esta ventana está vacío. Dibuja tu firma en él (con el mouse o con el dedo en pantallas táctiles) y vuelve a pulsar "Firmar Informe".'
         )
         return
       }
@@ -424,7 +422,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
       const tipoFirma = TIPO_FIRMA_POR_ROL[user.role] || null
 
       if (!tipoFirma) {
-        throw new Error('No tienes permisos para firmar este informe')
+        throw new Error(`Tu rol (${user.role}) no firma informes finales: solo firman el técnico, el supervisor y el administrador. Pide a uno de ellos que firme.`)
       }
 
       const informeActualizado = await firmarInforme(informeFinal.id, tipoFirma, {
@@ -458,10 +456,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
         firmaGraficaCapturada: !!firmaGrafica
       })
     } catch (error) {
-      await notificationService.error(
-        'Error',
-        error.message || 'No se pudo firmar el informe'
-      )
+      await notificationService.mostrarError(error, `No se pudo firmar el informe final de la orden ${ordenId}`)
     } finally {
       setFirmando(false)
     }
@@ -472,7 +467,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
     if (!informeFinal || informeFinal.estado !== 'completado') {
       notificationService.warning(
         'Informe no completado',
-        'El informe debe estar completamente firmado antes de poder generar el informe final'
+        `El informe final todavía no tiene todas las firmas obligatorias${firmaPendiente ? ` (falta la firma del ${ETIQUETAS_FIRMA[firmaPendiente].toLowerCase()})` : ''}. Revisa la sección "Firmas del Informe Final": cuando estén todas, podrás generar el informe final.`
       )
       return
     }
@@ -548,10 +543,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
       setShowFormularioInformeFinal(false)
     } catch (error) {
       console.error('Error generando PDF:', error)
-      await notificationService.error(
-        'Error',
-        'No se pudo generar el PDF del informe final'
-      )
+      await notificationService.mostrarError(error, `No se pudo generar el PDF del informe final de la orden ${ordenId}`)
     } finally {
       setGenerandoPDF(false)
     }
@@ -576,10 +568,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
       )
     } catch (error) {
       console.error('Error generando el reporte fotográfico:', error)
-      await notificationService.error(
-        'Error',
-        error.message || 'No se pudo generar el reporte fotográfico'
-      )
+      await notificationService.mostrarError(error, `No se pudo generar el reporte fotográfico de la orden ${ordenId}`)
     } finally {
       setGenerandoReporteFotografico(false)
     }
@@ -590,7 +579,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
     if (!informeFinal || informeFinal.estado !== 'completado') {
       notificationService.warning(
         'Informe no completado',
-        'El informe debe estar completamente firmado antes de poder enviarlo por correo'
+        `El informe final todavía no tiene todas las firmas obligatorias${firmaPendiente ? ` (falta la firma del ${ETIQUETAS_FIRMA[firmaPendiente].toLowerCase()})` : ''}. Revisa la sección "Firmas del Informe Final": cuando estén todas, podrás enviarlo por correo.`
       )
       return
     }
@@ -602,6 +591,20 @@ const InformeFinal = ({ ordenId, onClose }) => {
       adjuntarPDF: true
     })
     setShowCorreoModal(true)
+  }
+
+  // Copia un campo del modal de correo; si el navegador lo impide, explica cómo hacerlo a mano
+  const copiarAlPortapapeles = async (texto, campo, mensajeExito) => {
+    try {
+      await navigator.clipboard.writeText(texto)
+      notificationService.success('Copiado', mensajeExito, 1500)
+    } catch (error) {
+      console.error(`Error copiando el campo ${campo}:`, error)
+      notificationService.warning(
+        'No se pudo copiar',
+        `El navegador no permitió copiar al portapapeles. Selecciona el texto del campo "${campo}" y cópialo con Ctrl+C.`
+      )
+    }
   }
 
   const puedeGenerar = useMemo(() => {
@@ -644,9 +647,9 @@ const InformeFinal = ({ ordenId, onClose }) => {
         2000
       )
     } catch (error) {
-      await notificationService.error(
-        'Error',
-        error.message || 'No se pudo actualizar la configuración de firmas'
+      await notificationService.mostrarError(
+        error,
+        `No se pudo marcar la firma del ${ETIQUETAS_FIRMA[tipo].toLowerCase()} como ${obligatoria ? 'obligatoria' : 'opcional'} en la orden ${ordenId}`
       )
     } finally {
       setGuardandoConfigFirmas(false)
@@ -1396,10 +1399,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                     required
                   />
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(correoData.asunto)
-                      notificationService.success('Copiado', 'Asunto copiado al portapapeles', 1500)
-                    }}
+                    onClick={() => copiarAlPortapapeles(correoData.asunto, 'Asunto', 'Asunto copiado al portapapeles')}
                     className="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md text-sm font-medium transition-colors"
                     disabled={!correoData.asunto}
                   >
@@ -1414,10 +1414,7 @@ const InformeFinal = ({ ordenId, onClose }) => {
                     Mensaje *
                   </label>
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(correoData.mensaje)
-                      notificationService.success('Copiado', 'Mensaje copiado al portapapeles', 1500)
-                    }}
+                    onClick={() => copiarAlPortapapeles(correoData.mensaje, 'Mensaje', 'Mensaje copiado al portapapeles')}
                     className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md text-sm font-medium transition-colors"
                     disabled={!correoData.mensaje}
                   >

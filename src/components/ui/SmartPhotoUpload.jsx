@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import PhotoUpload from './PhotoUpload'
 import useOrdenesStore from '../../stores/ordenesStore'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -20,17 +21,20 @@ const SmartPhotoUpload = ({
 
   const handlePhotoUpload = async (newPhotos) => {
     if (!validacion.permitido) {
+      let ayuda = 'No se encontraron los datos de la orden. Recarga la página e inténtalo de nuevo.'
+      if (orden?.tipoVisita === 'con_visita' && !orden?.primeraVisitaCompletada) {
+        ayuda = 'Esta orden es con visita técnica: pulsa "Marcar Primera Visita Técnica" para registrar la primera visita y después podrás subir fotografías.'
+      } else if (orden?.estado === 'completed') {
+        ayuda = 'La orden ya está completada y cerrada, por eso no admite nuevas fotografías. Si falta alguna, coordínalo con el supervisor o el administrador.'
+      }
       MySwal.fire({
-        title: 'No permitido',
+        title: 'No se pueden subir fotos',
         html: `
           <div class="text-left">
             <p class="mb-3">${validacion.motivo}</p>
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <h4 class="font-medium text-blue-800 mb-2">¿Qué debo hacer?</h4>
-              ${orden.tipoVisita === 'con_visita' 
-                ? '<p class="text-sm text-blue-700">Para proyectos con visita técnica, primero debe marcar la primera visita como realizada.</p>'
-                : '<p class="text-sm text-blue-700">Para proyectos sin visita técnica, primero debe cambiar el estado del proyecto a "En Proceso".</p>'
-              }
+              <p class="text-sm text-blue-700">${ayuda}</p>
             </div>
           </div>
         `,
@@ -80,11 +84,7 @@ const SmartPhotoUpload = ({
           showConfirmButton: false
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo marcar la primera visita',
-          icon: 'error'
-        })
+        notificationService.mostrarError(error, `No se pudo marcar como realizada la primera visita técnica de la orden ${orden.id}`)
       } finally {
         setIsProcessing(false)
       }

@@ -24,6 +24,8 @@ const Aprobaciones = () => {
       setLoading(true)
       try {
         await fetchOrdenes()
+      } catch (error) {
+        notificationService.mostrarError(error, 'No se pudieron cargar las órdenes para aprobación')
       } finally {
         setLoading(false)
       }
@@ -80,9 +82,11 @@ const Aprobaciones = () => {
     })
 
     if (result.isConfirmed) {
+      let aprobada = false
       try {
         await aprobarOrden(orden.id, user.name)
-        
+        aprobada = true
+
         // Notificar al técnico
         const tecnicoNombre = orden.tecnicoAsignado.split(' - ')[0]
         const tecnico = ordenes.find(o => o.tecnicoAsignado?.includes(tecnicoNombre))
@@ -93,7 +97,12 @@ const Aprobaciones = () => {
         await notificationService.ordenAprobada(orden.id)
         await fetchOrdenes()
       } catch (error) {
-        await notificationService.error('Error', 'No se pudo aprobar la orden')
+        await notificationService.mostrarError(
+          error,
+          aprobada
+            ? `No se pudo recargar la lista de órdenes (la orden ${orden.id} sí se aprobó)`
+            : `No se pudo aprobar la orden ${orden.id}`
+        )
       }
     }
   }
@@ -121,16 +130,18 @@ const Aprobaciones = () => {
       preConfirm: () => {
         const motivoInput = document.getElementById('motivo-rechazo').value
         if (!motivoInput) {
-          Swal.showValidationMessage('Debes proporcionar un motivo')
+          Swal.showValidationMessage('Escribe en el recuadro el motivo del rechazo: el técnico lo recibirá para corregir la orden.')
         }
         return motivoInput
       }
     })
 
     if (motivo) {
+      let rechazada = false
       try {
         await rechazarOrden(orden.id, user.name, motivo)
-        
+        rechazada = true
+
         // Notificar al técnico
         const tecnicoNombre = orden.tecnicoAsignado.split(' - ')[0]
         const tecnico = ordenes.find(o => o.tecnicoAsignado?.includes(tecnicoNombre))
@@ -141,7 +152,12 @@ const Aprobaciones = () => {
         await notificationService.ordenRechazada(orden.id, motivo)
         await fetchOrdenes()
       } catch (error) {
-        await notificationService.error('Error', 'No se pudo rechazar la orden')
+        await notificationService.mostrarError(
+          error,
+          rechazada
+            ? `No se pudo recargar la lista de órdenes (la orden ${orden.id} sí se rechazó)`
+            : `No se pudo rechazar la orden ${orden.id}`
+        )
       }
     }
   }

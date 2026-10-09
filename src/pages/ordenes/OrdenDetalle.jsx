@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import useOrdenesStore from '../../stores/ordenesStore'
@@ -46,6 +46,9 @@ const OrdenDetalle = () => {
   const [selectedMaterials, setSelectedMaterials] = useState([])
   // Identificador del informe que se está exportando: 'consolidado' o el id del reporte
   const [exportandoInforme, setExportandoInforme] = useState(null)
+  // Evitan repetir el mismo aviso de error en cada recarga o guardado automático fallido
+  const avisoCargaMostradoRef = useRef(false)
+  const avisoRecursosMostradoRef = useRef(false)
 
   // Exporta a PDF el informe de reportes y fotografías (consolidado o de un solo reporte)
   const handleExportarInforme = async (reporte = null) => {
@@ -64,9 +67,11 @@ const OrdenDetalle = () => {
       )
     } catch (error) {
       console.error('Error exportando el informe de reportes:', error)
-      await notificationService.error(
-        'Error',
-        error.message || 'No se pudo generar el PDF del informe'
+      await notificationService.mostrarError(
+        error,
+        reporte
+          ? `No se pudo exportar el PDF del reporte seleccionado de la orden ${orden.id}`
+          : `No se pudo exportar el PDF con todos los reportes de la orden ${orden.id}`
       )
     } finally {
       setExportandoInforme(null)
@@ -139,6 +144,11 @@ const OrdenDetalle = () => {
           setRecursosServicio(foundOrden.recursos || {})
           await fetchReportesByOrden(id)
         }
+      } catch (error) {
+        if (!avisoCargaMostradoRef.current) {
+          avisoCargaMostradoRef.current = true
+          notificationService.mostrarError(error, `No se pudieron cargar los datos de la orden ${id}`)
+        }
       } finally {
         setLoading(false)
       }
@@ -157,6 +167,7 @@ const OrdenDetalle = () => {
         } catch (error) {
           console.error('Error al cargar historial:', error)
           setHistorialOrden([])
+          notificationService.mostrarError(error, `No se pudo cargar el historial de la orden ${id}`)
         } finally {
           setLoadingHistorial(false)
         }
@@ -190,8 +201,13 @@ const OrdenDetalle = () => {
     if (orden?.id) {
       try {
         await actualizarRecursos(orden.id, nuevosRecursos)
+        avisoRecursosMostradoRef.current = false
       } catch (error) {
-        // Error al actualizar recursos
+        // El guardado es automático: avisar una sola vez mientras sigan fallando los guardados
+        if (!avisoRecursosMostradoRef.current) {
+          avisoRecursosMostradoRef.current = true
+          notificationService.mostrarError(error, `No se pudieron guardar los cambios de recursos de la orden ${orden.id}`)
+        }
       }
     }
   }, [orden?.id, actualizarRecursos])
@@ -208,9 +224,9 @@ const OrdenDetalle = () => {
   const handleSubmitMaterialRequest = async () => {
     if (selectedMaterials.length === 0) {
       MySwal.fire({
-        title: 'Error',
-        text: 'Debe seleccionar al menos un material',
-        icon: 'error',
+        title: 'Sin materiales seleccionados',
+        text: 'La lista "Materiales Seleccionados" está vacía. Pulsa "+ Agregar" en al menos un material de "Materiales Disponibles" y vuelve a enviar la solicitud.',
+        icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
       return
@@ -246,12 +262,7 @@ const OrdenDetalle = () => {
       setShowMaterialModal(false)
       
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo enviar la solicitud de materiales',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo enviar la solicitud de materiales de la orden ${orden.id}`)
     }
   }
 
@@ -295,14 +306,20 @@ const OrdenDetalle = () => {
     // Verificar si puede solicitar materiales
     const validacion = puedesolicitarMateriales(orden)
     if (!validacion.permitido) {
+      let ayuda = 'Revisa con un administrador los datos de la orden: el "Tipo de Visita" debe ser "Con Visita Técnica" o "Sin Visita Técnica".'
+      if (orden.estado === 'completed') {
+        ayuda = 'La orden ya está completada y cerrada, por eso no admite nuevas solicitudes de materiales. Si aún falta material para este trabajo, coordínalo con el supervisor o el administrador.'
+      } else if (orden.tipoVisita === 'con_visita' && !orden.primeraVisitaCompletada) {
+        ayuda = 'Esta orden es "Con Visita Técnica" y su primera visita técnica todavía no figura como completada. Complétala primero; después podrás solicitar materiales.'
+      }
       MySwal.fire({
-        title: 'No permitido',
+        title: 'No se pueden solicitar materiales',
         html: `
           <div class="text-left">
             <p class="mb-3">${validacion.motivo}</p>
             <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <h4 class="font-medium text-amber-800 mb-2">¿Qué debo hacer?</h4>
-              <p class="text-sm text-amber-700">Para proyectos sin visita técnica, primero debe cambiar el estado de la orden a "En Proceso" para poder solicitar materiales.</p>
+              <p class="text-sm text-amber-700">${ayuda}</p>
             </div>
           </div>
         `,
@@ -314,7 +331,12 @@ const OrdenDetalle = () => {
 
     // Cargar materiales si no están cargados
     if (materiales.length === 0) {
-      await fetchMateriales()
+      try {
+        await fetchMateriales()
+      } catch (error) {
+        notificationService.mostrarError(error, 'No se pudo cargar el catálogo de materiales para la solicitud')
+        return
+      }
     }
 
     setShowMaterialModal(true)

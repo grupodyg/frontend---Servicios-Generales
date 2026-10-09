@@ -7,10 +7,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { openInBestMapApp } from '../../utils/mapUtils'
 import { VISITA_ESTADOS, getEstadoLabel, getEstadoColor, getEspecialidadColor } from '../../constants/visitasTecnicasConstants'
-import Swal from 'sweetalert2'
-import withReactContent from 'sweetalert2-react-content'
-
-const MySwal = withReactContent(Swal)
+import notificationService from '../../services/notificationService'
 
 const VisitasTecnicas = () => {
   const navigate = useNavigate()
@@ -47,7 +44,10 @@ const VisitasTecnicas = () => {
   }
 
   useEffect(() => {
-    fetchVisitas({}, user?.role, user?.name)
+    fetchVisitas({}, user?.role, user?.name).catch(error => {
+      console.error('Error al cargar visitas técnicas:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar las visitas técnicas')
+    })
   }, [fetchVisitas, user])
 
   const getEstadoBadge = (estado) => {

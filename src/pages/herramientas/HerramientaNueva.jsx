@@ -5,6 +5,7 @@ import useAuthStore from '../../stores/authStore'
 import useHerramientasStore from '../../stores/herramientasStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { getToday } from '../../utils/dateUtils'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -43,6 +44,7 @@ const HerramientaNueva = () => {
         await fetchCategorias()
       } catch (error) {
         console.error('Error cargando categorías:', error)
+        notificationService.mostrarError(error, 'No se pudieron cargar las categorías de herramientas')
       } finally {
         setCategoriasLoading(false)
       }
@@ -61,12 +63,10 @@ const HerramientaNueva = () => {
 
   const handleAddMarca = async () => {
     if (!nuevaMarca.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El nombre de la marca no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el nombre de la marca',
+        'Escribe el nombre de la marca en el campo de la sección «Agregar Nueva Marca» (ventana «Gestión de Marcas»).'
+      )
       return
     }
 
@@ -75,12 +75,10 @@ const HerramientaNueva = () => {
       .includes(nuevaMarca.trim().toLowerCase())
 
     if (marcaExists) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'Esta marca ya existe',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'La marca ya existe',
+        `«${nuevaMarca.trim()}» ya está en «Marcas Disponibles». Selecciónala directamente en el campo «Marca» del formulario o escribe un nombre diferente.`
+      )
       return
     }
 
@@ -97,23 +95,16 @@ const HerramientaNueva = () => {
       })
       setNuevaMarca('')
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo agregar la marca',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo agregar la marca «${nuevaMarca.trim()}»`)
     }
   }
 
   const handleEditMarca = async () => {
     if (!marcaEditandoNombre.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El nombre de la marca no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el nombre de la marca',
+        `El nombre de la marca «${marcaEditando}» quedó vacío. Escribe un nombre en «Marcas Personalizadas» o cancela la edición.`
+      )
       return
     }
 
@@ -122,12 +113,10 @@ const HerramientaNueva = () => {
       .includes(marcaEditandoNombre.trim().toLowerCase())
 
     if (marcaExists) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'Esta marca ya existe',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'La marca ya existe',
+        `Ya hay una marca llamada «${marcaEditandoNombre.trim()}» en «Marcas Disponibles». Escribe un nombre diferente para «${marcaEditando}» o cancela la edición.`
+      )
       return
     }
 
@@ -147,12 +136,7 @@ const HerramientaNueva = () => {
       setMarcaEditando(null)
       setMarcaEditandoNombre('')
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo actualizar la marca',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo actualizar la marca «${marcaEditando}»`)
     }
   }
 
@@ -179,12 +163,7 @@ const HerramientaNueva = () => {
           showConfirmButton: false
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo eliminar la marca',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        notificationService.mostrarError(error, `No se pudo eliminar la marca «${marca}»`)
       }
     }
   }
@@ -203,7 +182,10 @@ const HerramientaNueva = () => {
     const file = e.target.files[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        MySwal.fire({ title: 'Error', text: 'Solo se permiten archivos de imagen', icon: 'error', confirmButtonColor: '#1e40af' })
+        notificationService.warning(
+          'El archivo no es una imagen',
+          `«${file.name}» no es una imagen. En «Imagen de la Herramienta» solo se admiten archivos de imagen (por ejemplo JPG, PNG o WEBP). Selecciona otro archivo.`
+        )
         return
       }
       setImagenFile(file)
@@ -256,12 +238,7 @@ const HerramientaNueva = () => {
 
     } catch (error) {
       console.error('Error creando herramienta:', error)
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo crear la herramienta. Inténtalo de nuevo.',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo crear la herramienta «${data.nombre}»`)
     } finally {
       setIsLoading(false)
     }
@@ -302,8 +279,8 @@ const HerramientaNueva = () => {
                 className={`input-field ${errors.nombre ? 'border-red-500' : ''}`}
                 placeholder="ej: Taladro eléctrico, Destornillador Phillips, Llave inglesa..."
                 {...register('nombre', { 
-                  required: 'El nombre de la herramienta es requerido',
-                  minLength: { value: 3, message: 'Mínimo 3 caracteres' }
+                  required: 'Escribe el nombre de la herramienta.',
+                  minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres.' }
                 })}
               />
               {errors.nombre && (
@@ -327,7 +304,7 @@ const HerramientaNueva = () => {
               </div>
               <select
                 className={`input-field ${errors.marca ? 'border-red-500' : ''}`}
-                {...register('marca', { required: 'La marca es requerida' })}
+                {...register('marca', { required: 'Selecciona una marca. Si no aparece en la lista, agrégala con «Gestionar Marcas».' })}
               >
                 <option value="">Seleccionar marca...</option>
                 {marcas.map(marca => (
@@ -345,7 +322,7 @@ const HerramientaNueva = () => {
               </label>
               <select
                 className={`input-field ${errors.categoriaId ? 'border-red-500' : ''}`}
-                {...register('categoriaId', { required: 'La categoría es requerida' })}
+                {...register('categoriaId', { required: 'Selecciona la categoría de la herramienta.' })}
                 disabled={categoriasLoading}
               >
                 <option value="">Seleccionar categoría...</option>
@@ -383,9 +360,9 @@ const HerramientaNueva = () => {
                 className={`input-field ${errors.cantidad ? 'border-red-500' : ''}`}
                 placeholder="1"
                 {...register('cantidad', {
-                  required: 'La cantidad es requerida',
+                  required: 'Escribe cuántas unidades vas a registrar (mínimo 1).',
                   valueAsNumber: true,
-                  min: { value: 1, message: 'La cantidad debe ser al menos 1' }
+                  min: { value: 1, message: 'La cantidad debe ser al menos 1.' }
                 })}
               />
               {errors.cantidad && (
@@ -406,7 +383,7 @@ const HerramientaNueva = () => {
                   placeholder="0.00"
                   {...register('valor', {
                     valueAsNumber: true,
-                    min: { value: 0, message: 'El valor no puede ser negativo' }
+                    min: { value: 0, message: 'El valor no puede ser negativo: escribe 0 o un importe mayor.' }
                   })}
                 />
                 {errors.valor && (

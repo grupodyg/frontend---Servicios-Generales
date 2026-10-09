@@ -13,13 +13,14 @@ import { normalizarConfigFirmas } from '../../utils/firmasUtils'
 const OrdenEditar = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { ordenes, updateOrden, isLoading } = useOrdenesStore()
+  const { ordenes, updateOrden, actualizarConfigFirmas, isLoading } = useOrdenesStore()
   const { user } = useAuthStore()
   const { getTiposServicioActivos, fetchTiposServicio } = useConfigStore()
   const { fetchTecnicos, getNombresTecnicos } = useTecnicosStore()
   const [orden, setOrden] = useState(null)
   // Firmas obligatorias/opcionales del informe final (solo el admin puede cambiarlas)
   const [configFirmas, setConfigFirmas] = useState(normalizarConfigFirmas(null))
+  const [guardandoFirmas, setGuardandoFirmas] = useState(false)
 
   const tiposServicioActivos = getTiposServicioActivos()
 
@@ -39,7 +40,10 @@ const OrdenEditar = () => {
     const ordenEncontrada = ordenes.find(o => o.id === id)
 
     if (!ordenEncontrada) {
-      notificationService.error('Orden no encontrada', 'No se pudo encontrar la orden solicitada')
+      notificationService.error(
+        'Orden no encontrada',
+        `La orden ${id} no está en el listado cargado: puede que haya sido eliminada o que no tengas acceso a ella. Vuelve al listado de órdenes y búscala de nuevo.`
+      )
       navigate('/ordenes')
       return
     }
@@ -59,11 +63,43 @@ const OrdenEditar = () => {
     setConfigFirmas(normalizarConfigFirmas(ordenEncontrada.configFirmas))
   }, [id, ordenes, setValue, navigate, fetchTecnicos, fetchTiposServicio])
 
+  // Una orden completada ya no admite cambios en sus datos: el backend solo permite
+  // ajustar las firmas obligatorias del informe final (y solo al administrador).
+  const esCompletada = orden?.estado === 'completed'
+  const esAdmin = user?.role === 'admin'
+
+  const guardarSoloFirmas = async () => {
+    try {
+      setGuardandoFirmas(true)
+      await actualizarConfigFirmas(id, configFirmas)
+      notificationService.success(
+        'Firmas actualizadas',
+        `Se actualizaron las firmas obligatorias del informe final de la orden ${id}`,
+        1500
+      )
+      setTimeout(() => navigate(`/ordenes/${id}`), 1500)
+    } catch (error) {
+      console.error('Error al actualizar firmas de la orden:', error)
+      notificationService.mostrarError(error, 'No se pudieron actualizar las firmas de la orden')
+    } finally {
+      setGuardandoFirmas(false)
+    }
+  }
+
   const onSubmit = async (data) => {
     try {
       // Validar permisos
       if (user?.role !== 'admin' && user?.role !== 'supervisor') {
-        notificationService.error('Sin permisos', 'No tienes permisos para editar órdenes')
+        notificationService.warning(
+          'Sin permisos para editar',
+          'Solo los usuarios con rol Administrador o Supervisor pueden editar órdenes. Si necesitas cambiar algo, pídeselo a uno de ellos.'
+        )
+        return
+      }
+
+      if (esCompletada) {
+        // Nunca reenviar los datos generales de una orden cerrada: el backend los rechaza
+        await guardarSoloFirmas()
         return
       }
 
@@ -96,7 +132,7 @@ const OrdenEditar = () => {
       }, 1500)
     } catch (error) {
       console.error('Error al actualizar orden:', error)
-      notificationService.error('Error', 'No se pudo actualizar la orden')
+      notificationService.mostrarError(error, `No se pudo actualizar la orden ${id}`)
     }
   }
 
@@ -136,6 +172,18 @@ const OrdenEditar = () => {
         </button>
       </div>
 
+      {esCompletada && (
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+          <h3 className="text-sm font-semibold text-blue-900">Orden completada</h3>
+          <p className="mt-1 text-sm text-blue-800">
+            El trabajo de esta orden ya fue cerrado, por eso sus datos generales no se pueden modificar.
+            {esAdmin
+              ? ' Lo único que puedes ajustar es qué firmas del informe final son obligatorias, en la sección «Firmas del Informe Final» al final del formulario.'
+              : ' Solo un administrador puede ajustar qué firmas del informe final son obligatorias.'}
+          </p>
+        </div>
+      )}
+
       {/* Warning sobre campos no editables */}
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
         <div className="flex">
@@ -160,6 +208,7 @@ const OrdenEditar = () => {
 
       {/* Formulario */}
       <form onSubmit={handleSubmit(onSubmit)} className="card space-y-6">
+        <fieldset disabled={esCompletada} className={`space-y-6 ${esCompletada ? 'opacity-60' : ''}`}>
         {/* Información General */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 pb-2 border-b">
@@ -304,6 +353,8 @@ const OrdenEditar = () => {
           </div>
         </div>
 
+        </fieldset>
+
         {/* Firmas del informe final (solo admin) */}
         {user?.role === 'admin' && (
           <div className="space-y-4">
@@ -327,13 +378,27 @@ const OrdenEditar = () => {
           >
             Cancelar
           </button>
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Guardando...' : '💾 Guardar Cambios'}
-          </button>
+          {esCompletada ? (
+            // En una orden completada solo se guardan las firmas (sin validar los campos bloqueados)
+            esAdmin && (
+              <button
+                type="button"
+                onClick={guardarSoloFirmas}
+                className="btn-primary"
+                disabled={guardandoFirmas}
+              >
+                {guardandoFirmas ? 'Guardando...' : '💾 Guardar Firmas'}
+              </button>
+            )
+          ) : (
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Guardando...' : '💾 Guardar Cambios'}
+            </button>
+          )}
         </div>
       </form>
     </div>

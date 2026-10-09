@@ -6,6 +6,7 @@ import useOrdenesStore from '../../stores/ordenesStore'
 import { canViewPrices } from '../../utils/permissionsUtils'
 import { parseEnteroInput, aNumero, esValorVacio } from '../../utils/numberInputUtils'
 import { getFileUrl } from '../../config/api'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -88,12 +89,17 @@ const Materiales = () => {
   const [previewEditarMaterial, setPreviewEditarMaterial] = useState(null)
 
   useEffect(() => {
-    fetchMateriales()
     // Carga inicial: si es técnico, filtrar solo sus solicitudes
     const initialFilters = user?.role === 'tecnico' ? { technician: user.name } : {}
-    fetchSolicitudes(initialFilters)
-    fetchCategorias()
-    fetchOrdenes()
+    Promise.all([
+      fetchMateriales(),
+      fetchSolicitudes(initialFilters),
+      fetchCategorias(),
+      fetchOrdenes()
+    ]).catch((error) => {
+      console.error('Error al cargar los datos de materiales:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar los materiales, categorías y solicitudes')
+    })
   }, [fetchMateriales, fetchSolicitudes, fetchCategorias, fetchOrdenes, user])
 
   // Aplicar filtros del backend cuando cambien
@@ -248,33 +254,28 @@ const Materiales = () => {
           showConfirmButton: false
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo actualizar la solicitud',
-          icon: 'error'
-        })
+        notificationService.mostrarError(
+          error,
+          `No se pudo ${accion === 'approved' ? 'aprobar' : 'rechazar'} la solicitud #${solicitudId}`
+        )
       }
     }
   }
 
   const handleAddCategoria = async () => {
     if (!nuevaCategoria.nombre.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El nombre de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el nombre de la categoría',
+        'Escribe el nombre en el campo «Nombre de la categoría» de la sección «Agregar Nueva Categoría» (ventana «Gestión de Categorías»).'
+      )
       return
     }
 
     if (!nuevaCategoria.prefijo.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El prefijo de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el prefijo de la categoría',
+        'Escribe un prefijo de hasta 5 letras en el campo «Prefijo (para códigos)» de la sección «Agregar Nueva Categoría». Se usa para generar los códigos de los materiales (ej.: CAB-0001).'
+      )
       return
     }
 
@@ -289,33 +290,24 @@ const Materiales = () => {
       })
       setNuevaCategoria({ nombre: '', prefijo: '' })
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo crear la categoría',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo crear la categoría «${nuevaCategoria.nombre.trim()}»`)
     }
   }
 
   const handleEditCategoria = async () => {
     if (!categoriaEditandoNombre.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El nombre de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el nombre de la categoría',
+        `El campo «Nombre» de la categoría «${categoriaEditando?.nombre}» quedó vacío. Escribe un nombre en la lista «Categorías Existentes» o pulsa ✕ para cancelar la edición.`
+      )
       return
     }
 
     if (!categoriaEditandoPrefijo.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El prefijo de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el prefijo de la categoría',
+        `El campo «Prefijo» de la categoría «${categoriaEditando?.nombre}» quedó vacío. Escribe un prefijo de hasta 5 letras (se usa para generar los códigos de los materiales) o pulsa ✕ para cancelar la edición.`
+      )
       return
     }
 
@@ -332,12 +324,7 @@ const Materiales = () => {
       setCategoriaEditandoNombre('')
       setCategoriaEditandoPrefijo('')
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo actualizar la categoría',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo actualizar la categoría «${categoriaEditando.nombre}»`)
     }
   }
 
@@ -367,12 +354,7 @@ const Materiales = () => {
           showConfirmButton: false
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: error.message || 'No se pudo eliminar la categoría',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        notificationService.mostrarError(error, `No se pudo eliminar la categoría «${categoria.nombre}»`)
       }
     }
   }
@@ -425,22 +407,18 @@ const Materiales = () => {
 
   const handleSubmitNuevaSolicitud = async () => {
     if (!nuevaSolicitud.ordenId) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'Debe seleccionar una orden de trabajo',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta la orden de trabajo',
+        'Selecciona una orden en el campo «Orden de Trabajo» de la ventana «Nueva Solicitud de Materiales». Toda solicitud de materiales debe estar asociada a una orden.'
+      )
       return
     }
 
     if (selectedMaterials.length === 0) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'Debe seleccionar al menos un material',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'No hay materiales seleccionados',
+        'Agrega al menos un material desde la columna «Materiales Disponibles» con el botón «+ Agregar». Aparecerá en «Materiales Seleccionados», donde puedes ajustar la cantidad.'
+      )
       return
     }
 
@@ -475,14 +453,9 @@ const Materiales = () => {
       setNuevaSolicitud({ ordenId: '', prioridad: 'media', observaciones: '' })
       setSelectedMaterials([])
       setShowSolicitudModal(false)
-      
+
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo crear la solicitud de materiales',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo crear la solicitud de materiales para la orden ${nuevaSolicitud.ordenId}`)
     }
   }
 
@@ -490,7 +463,10 @@ const Materiales = () => {
     const file = e.target.files[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        MySwal.fire({ title: 'Error', text: 'Solo se permiten archivos de imagen', icon: 'error', confirmButtonColor: '#1e40af' })
+        notificationService.warning(
+          'El archivo no es una imagen',
+          `«${file.name}» no es una imagen. En «Imagen del Material» solo se admiten archivos de imagen (por ejemplo JPG, PNG o WEBP). Selecciona otro archivo.`
+        )
         return
       }
       setFile(file)
@@ -509,19 +485,19 @@ const Materiales = () => {
     const errores = []
 
     if (!nuevoMaterial.codigo?.trim()) {
-      errores.push('El código es requerido')
+      errores.push('Código: se genera automáticamente al elegir la «Categoría». Selecciona una categoría para generarlo.')
     }
 
     if (!nuevoMaterial.nombre?.trim()) {
-      errores.push('El nombre es requerido')
+      errores.push('«Nombre del Material»: escribe el nombre del material.')
     }
 
     if (!nuevoMaterial.unidadMedida) {
-      errores.push('La unidad de medida es requerida')
+      errores.push('«Unidad»: selecciona la unidad de medida (Unidad, Metro, Kilogramo, etc.).')
     }
 
     if (!nuevoMaterial.categoriaId) {
-      errores.push('Debe seleccionar una categoría')
+      errores.push('«Categoría»: selecciona la categoría a la que pertenece el material.')
     }
 
     return errores
@@ -532,8 +508,8 @@ const Materiales = () => {
     const errores = validarFormularioMaterial()
     if (errores.length > 0) {
       MySwal.fire({
-        title: 'Formulario incompleto',
-        html: `<ul style="text-align: left;">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
+        title: 'Faltan datos del material',
+        html: `<div style="text-align: left;"><p style="margin-bottom: 8px;">Completa estos campos en la ventana «Agregar Nuevo Material»:</p><ul style="list-style: disc; padding-left: 20px;">${errores.map(e => `<li>${e}</li>`).join('')}</ul></div>`,
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -573,14 +549,9 @@ const Materiales = () => {
       setPreviewNuevoMaterial(null)
       setCodigoPreview('')
       setShowNuevoMaterialModal(false)
-      
+
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo crear el material',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo crear el material «${nuevoMaterial.nombre.trim()}»`)
     }
   }
 
@@ -597,12 +568,10 @@ const Materiales = () => {
         : Math.abs(cantidadIngresada)
 
       if (cantidadIngresada === 0) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'La cantidad debe ser mayor a 0',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        notificationService.warning(
+          'Cantidad no válida',
+          `Escribe en el campo «Cantidad» de la ventana «Actualizar Stock» un número mayor que 0 para registrar el movimiento de «${materialParaActualizar.nombre}».`
+        )
         return
       }
 
@@ -610,12 +579,11 @@ const Materiales = () => {
 
       // Validate that we don't go negative
       if (nuevoStock < 0) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se puede reducir el stock por debajo de 0',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        const unidad = materialParaActualizar.unidadMedida || 'unidades'
+        notificationService.warning(
+          'Stock insuficiente',
+          `No puedes reducir ${Math.abs(cantidadIngresada)} ${unidad} de «${materialParaActualizar.nombre}»: el stock actual es ${stockActualNumerico} ${unidad} y quedaría en negativo. Escribe en «Cantidad» un valor de ${stockActualNumerico} o menos.`
+        )
         return
       }
 
@@ -640,14 +608,9 @@ const Materiales = () => {
       })
       setMaterialParaActualizar(null)
       setShowActualizarStockModal(false)
-      
+
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo actualizar el stock',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo actualizar el stock de «${materialParaActualizar.nombre}»`)
     }
   }
 
@@ -678,25 +641,25 @@ const Materiales = () => {
     const errores = []
 
     if (!materialParaEditar.nombre?.trim()) {
-      errores.push('Nombre del material')
+      errores.push('«Nombre del Material»: no puede quedar vacío.')
     }
     if (!materialParaEditar.categoriaId) {
-      errores.push('Categoría')
+      errores.push('«Categoría»: selecciona la categoría del material.')
     }
     if (!materialParaEditar.unidadMedida) {
-      errores.push('Unidad de medida')
+      errores.push('«Unidad»: selecciona la unidad de medida.')
     }
     if (materialParaEditar.stockMinimo === '' || materialParaEditar.stockMinimo === null || materialParaEditar.stockMinimo === undefined || isNaN(parseInt(materialParaEditar.stockMinimo)) || parseInt(materialParaEditar.stockMinimo) < 0) {
-      errores.push('Stock mínimo (debe ser un número válido >= 0)')
+      errores.push('«Stock Mínimo»: escribe un número entero igual o mayor que 0.')
     }
     if (materialParaEditar.precioUnitario === '' || materialParaEditar.precioUnitario === null || materialParaEditar.precioUnitario === undefined || isNaN(parseFloat(materialParaEditar.precioUnitario)) || parseFloat(materialParaEditar.precioUnitario) < 0) {
-      errores.push('Precio unitario (debe ser un número válido >= 0)')
+      errores.push('«Precio Unitario (S/)»: escribe un importe igual o mayor que 0 (ej.: 12.50).')
     }
 
     if (errores.length > 0) {
       MySwal.fire({
-        title: 'Campos incompletos',
-        html: `<div class="text-left"><p class="mb-2">Por favor complete los siguientes campos:</p><ul class="list-disc pl-5">${errores.map(e => `<li>${e}</li>`).join('')}</ul></div>`,
+        title: 'Revisa los datos del material',
+        html: `<div class="text-left"><p class="mb-2">Corrige estos campos en la ventana «Editar Material»:</p><ul class="list-disc pl-5">${errores.map(e => `<li>${e}</li>`).join('')}</ul></div>`,
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -732,12 +695,7 @@ const Materiales = () => {
       setShowEditMaterialModal(false)
 
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo actualizar el material',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo actualizar el material «${materialParaEditar.nombre.trim()}»`)
     }
   }
 
@@ -2573,7 +2531,7 @@ const Materiales = () => {
                                 await updateMaterial(materialParaEditar.id, {}, null, true)
                                 setMaterialParaEditar({ ...materialParaEditar, imagen: null })
                                 MySwal.fire({ title: 'Imagen eliminada', icon: 'success', timer: 1500, showConfirmButton: false })
-                              } catch (e) { MySwal.fire({ title: 'Error', text: e.message, icon: 'error' }) }
+                              } catch (e) { notificationService.mostrarError(e, `No se pudo eliminar la imagen del material «${materialParaEditar.nombre}»`) }
                             }
                           }}
                           className="bg-red-500 text-white rounded-lg px-3 py-1 text-sm hover:bg-red-600 shadow-lg"

@@ -41,7 +41,13 @@ const Permisos = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      await inicializarDatos()
+      try {
+        await inicializarDatos()
+      } catch (error) {
+        console.error('Error cargando permisos:', error)
+        notificationService.mostrarError(error, 'No se pudieron cargar las solicitudes de permiso')
+        return
+      }
       const users = await getAllUsers()
       setUsuariosDisponibles(users || [])
     }
@@ -109,7 +115,8 @@ const Permisos = () => {
       
       setShowModal(false)
     } catch (error) {
-      await notificationService.error('Error', 'No se pudo crear la solicitud')
+      console.error('Error al crear solicitud de permiso:', error)
+      await notificationService.mostrarError(error, 'No se pudo enviar la solicitud de permiso')
     }
   }
 
@@ -120,10 +127,15 @@ const Permisos = () => {
       'Aprobar',
       'Cancelar'
     )
-    
+
     if (result.isConfirmed) {
-      await aprobarPermiso(permiso.id, user.name)
-      await notificationService.success('Permiso aprobado', '', 2000)
+      try {
+        await aprobarPermiso(permiso.id, user.name)
+        await notificationService.success('Permiso aprobado', '', 2000)
+      } catch (error) {
+        console.error('Error al aprobar permiso:', error)
+        await notificationService.mostrarError(error, `No se pudo aprobar el permiso de ${permiso.empleadoNombre}`)
+      }
     }
   }
 
@@ -145,10 +157,20 @@ const Permisos = () => {
     )
     
     if (motivo) {
-      const motivoRechazo = document.getElementById('motivo-rechazo').value
-      if (motivoRechazo) {
-        await rechazarPermiso(permiso.id, user.name, motivoRechazo)
-        await notificationService.success('Permiso rechazado', '', 2000)
+      try {
+        const motivoRechazo = document.getElementById('motivo-rechazo').value
+        if (motivoRechazo) {
+          await rechazarPermiso(permiso.id, user.name, motivoRechazo)
+          await notificationService.success('Permiso rechazado', '', 2000)
+        } else {
+          await notificationService.warning(
+            'Falta el motivo del rechazo',
+            `El permiso de ${permiso.empleadoNombre} no se rechazó porque el cuadro «Motivo del rechazo» estaba vacío. Pulsa de nuevo «Rechazar» y escribe el motivo antes de confirmar: el empleado lo verá en su solicitud.`
+          )
+        }
+      } catch (error) {
+        console.error('Error al rechazar permiso:', error)
+        await notificationService.mostrarError(error, `No se pudo rechazar el permiso de ${permiso.empleadoNombre}`)
       }
     }
   }
@@ -171,11 +193,15 @@ const Permisos = () => {
     const file = e.target.files[0]
     if (!file || !permisoSeleccionado) return
 
+    // Qué paso estaba en curso, para explicar exactamente qué no se pudo hacer
+    let contextoError = `No se pudo subir el archivo «${file.name}»`
+
     try {
       // 1. Subir archivo a Wasabi S3
       const uploadResult = await uploadPermisoFile(file)
 
       // 2. Crear registro en tabla permit_attachments
+      contextoError = `No se pudo adjuntar el archivo «${file.name}» al permiso de ${permisoSeleccionado.empleadoNombre}`
       await agregarArchivoAdjunto(permisoSeleccionado.id, {
         nombre: uploadResult.name,
         tipo: uploadResult.type,
@@ -190,7 +216,7 @@ const Permisos = () => {
       await notificationService.success('Archivo adjuntado', '', 1000)
     } catch (error) {
       console.error('Error subiendo archivo:', error)
-      await notificationService.error('Error', 'No se pudo subir el archivo')
+      await notificationService.mostrarError(error, contextoError)
     }
 
     // Limpiar el input para permitir subir el mismo archivo de nuevo

@@ -5,6 +5,7 @@ import useTecnicosStore from '../../stores/tecnicosStore'
 import useHerramientasStore from '../../stores/herramientasStore'
 import useAuthStore from '../../stores/authStore'
 import { canViewPrices, canEditPrices } from '../../utils/permissionsUtils'
+import notificationService from '../../services/notificationService'
 
 const RecursosServicio = ({ recursos = {}, onRecursosChange, ordenId, readOnly = false }) => {
   const { materiales = [], fetchMateriales } = useMaterialesStore()
@@ -57,13 +58,18 @@ const RecursosServicio = ({ recursos = {}, onRecursosChange, ordenId, readOnly =
   const watchedValues = watch()
 
   useEffect(() => {
-    try {
-      if (typeof fetchMateriales === 'function') fetchMateriales()
-      if (typeof fetchTecnicos === 'function') fetchTecnicos()
-      if (typeof fetchHerramientas === 'function') fetchHerramientas()
-    } catch (error) {
+    // Las cargas son asíncronas: el error llega por la promesa, no por un try/catch síncrono
+    const cargas = []
+    if (typeof fetchMateriales === 'function') cargas.push(fetchMateriales())
+    if (typeof fetchTecnicos === 'function') cargas.push(fetchTecnicos())
+    if (typeof fetchHerramientas === 'function') cargas.push(fetchHerramientas())
+    Promise.all(cargas).catch((error) => {
       console.error('Error fetching data:', error)
-    }
+      // En modo solo lectura (orden cerrada) el inventario no se usa: no interrumpir al usuario
+      if (!readOnly) {
+        notificationService.mostrarError(error, 'No se pudieron cargar los materiales, herramientas y técnicos del inventario')
+      }
+    })
   }, [fetchMateriales, fetchTecnicos, fetchHerramientas])
 
   // Filtrar herramientas del inventario basadas en la búsqueda y que tengan stock disponible
@@ -110,7 +116,10 @@ const RecursosServicio = ({ recursos = {}, onRecursosChange, ordenId, readOnly =
 
       // Validar que no exceda el stock disponible
       if (newCantidad > material.stockActual) {
-        alert(`Stock máximo disponible: ${material.stockActual} ${material.unidadMedida || material.unidad || 'unidades'}`)
+        notificationService.warning(
+          'Stock insuficiente',
+          `No puedes agregar más «${material.nombre}»: la «Lista de Materiales» ya tiene ${currentCantidad} y el stock disponible es ${material.stockActual} ${material.unidadMedida || material.unidad || 'unidades'}.`
+        )
         return
       }
 
@@ -162,7 +171,10 @@ const RecursosServicio = ({ recursos = {}, onRecursosChange, ordenId, readOnly =
 
       // Validar que no exceda el stock disponible
       if (newCantidad > stockDisponible) {
-        alert(`Stock máximo disponible: ${stockDisponible} unidades`)
+        notificationService.warning(
+          'Stock insuficiente',
+          `No puedes agregar más «${herramienta.nombre || herramienta.name}»: la lista «Herramientas Necesarias» ya tiene ${currentCantidad} y solo hay ${stockDisponible} disponible(s) en el inventario.`
+        )
         setBusquedaHerramienta('')
         setMostrarDropdownHerramienta(false)
         return

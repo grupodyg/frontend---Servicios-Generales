@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { api, API_ENDPOINTS } from '../config/api'
 import { normalizarEstado, normalizarEstadoBackendAFrontend, normalizarEstadoFrontendABackend, estadoABackend, VISITA_ESTADOS } from '../constants/visitasTecnicasConstants'
-import { validarTransicion, validarReglaDeNegocio } from '../utils/visitasTecnicasValidations'
+import { validarTransicion, validarReglaDeNegocio, generarMensajeErrorTransicion } from '../utils/visitasTecnicasValidations'
 import { getCurrentTimestamp, getToday } from '../utils/dateUtils'
 
 // 🔄 FUNCIONES DE TRANSFORMACIÓN DE DATOS (Backend ↔ Frontend)
@@ -244,9 +244,7 @@ const useVisitasTecnicasStore = create(
               // Validar transición
               const transicionValida = validarTransicion(estadoActual, estadoNuevo)
               if (!transicionValida) {
-                throw new Error(
-                  `Transición de estado no permitida: ${estadoActual} → ${estadoNuevo}`
-                )
+                throw new Error(generarMensajeErrorTransicion(estadoActual, estadoNuevo))
               }
 
               // Validar reglas de negocio

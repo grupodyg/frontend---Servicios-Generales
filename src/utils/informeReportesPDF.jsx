@@ -551,7 +551,7 @@ const normalizarNombreArchivo = (texto) =>
 export const descargarInformeReportes = async ({ orden, reportes, reporte }) => {
   const seleccionados = reporte ? [reporte] : reportes || []
   if (seleccionados.length === 0) {
-    throw new Error('No hay reportes para exportar')
+    throw new Error('Esta orden todavía no tiene reportes diarios registrados, así que no hay nada que exportar. Registra al menos un reporte diario y vuelve a intentarlo.')
   }
 
   const [branding, fotosPreparadas] = await Promise.all([

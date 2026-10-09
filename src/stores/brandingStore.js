@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api, API_ENDPOINTS, getAuthToken, getFileUrl } from '../config/api'
+import { api, API_ENDPOINTS, getFileUrl } from '../config/api'
 
 const useBrandingStore = create((set, get) => ({
   companyName: '',
@@ -43,22 +43,11 @@ const useBrandingStore = create((set, get) => ({
   },
 
   uploadLogo: async (file) => {
-    const token = getAuthToken()
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await fetch(API_ENDPOINTS.APP_SETTINGS_LOGO, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData
-    })
-
-    const payload = await response.json().catch(() => ({}))
-    if (!response.ok) {
-      throw new Error(payload.error || payload.mensaje || 'Error al subir logo')
-    }
-
-    const data = payload.data || {}
+    const payload = await api.upload(API_ENDPOINTS.APP_SETTINGS_LOGO, formData)
+    const data = payload?.data || {}
     set({
       companyName: data.company_name || '',
       companySubtitle: data.company_subtitle || '',

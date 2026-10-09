@@ -59,6 +59,10 @@ const transformBackendToFrontend = (backendOrder) => {
   }
 }
 
+// Sin valores por defecto en los campos con estado: updateOrden envía solo lo que cambia y el
+// backend conserva el resto con COALESCE. Un default ('sin_visita', 'media', 0, 'unassigned', false)
+// pisaría el valor real en cada reasignación, aprobación o cambio de estado.
+// Al crear, el backend aplica esos mismos valores por defecto (workOrdersController.create).
 const transformFrontendToBackend = (frontendOrder) => {
   if (!frontendOrder) return null
 
@@ -66,18 +70,18 @@ const transformFrontendToBackend = (frontendOrder) => {
     client: frontendOrder.cliente,
     client_id: frontendOrder.clienteId || null,
     service_type: frontendOrder.tipoServicio,
-    visit_type: frontendOrder.tipoVisita || 'sin_visita',
+    visit_type: frontendOrder.tipoVisita,
     technical_visit_id: frontendOrder.visitaTecnicaId || null,
-    based_on_technical_visit: frontendOrder.basadoEnVisitaTecnica || false,
+    based_on_technical_visit: frontendOrder.basadoEnVisitaTecnica,
     description: frontendOrder.descripcion || null,
     location: frontendOrder.ubicacion || null,
-    priority: frontendOrder.prioridad || 'media',
+    priority: frontendOrder.prioridad,
     due_date: frontendOrder.fechaVencimiento || null,
     estimated_cost: frontendOrder.costoEstimado || null,
     assigned_technician: frontendOrder.tecnicoAsignado || null,
     requested_by: frontendOrder.solicitadoPor || null,
-    progress_percentage: frontendOrder.porcentajeAvance || 0,
-    approval_status: frontendOrder.estadoAprobacion || 'unassigned',
+    progress_percentage: frontendOrder.porcentajeAvance,
+    approval_status: frontendOrder.estadoAprobacion,
     estimation_date: frontendOrder.fechaEstimacion || null,
     approval_date: frontendOrder.fechaAprobacion || null,
     approved_by: frontendOrder.aprobadoPor || null,
@@ -92,7 +96,7 @@ const transformFrontendToBackend = (frontendOrder) => {
     personnel_list: frontendOrder.listaPersonal || null,
     purchase_order_number: frontendOrder.numeroOrdenCompra || null,
     purchase_order_document: frontendOrder.documentoOrdenCompra || null,
-    first_visit_completed: frontendOrder.primeraVisitaCompletada || false,
+    first_visit_completed: frontendOrder.primeraVisitaCompletada,
     first_visit_date: frontendOrder.fechaPrimeraVisita || null,
     reassignment_date: frontendOrder.fechaReasignacion || null,
     reassigned_by: frontendOrder.reasignadoPor || null,
@@ -102,7 +106,7 @@ const transformFrontendToBackend = (frontendOrder) => {
     solpe: frontendOrder.solpe || null,
     resources_update_date: frontendOrder.fechaActualizacionRecursos || null,
     status: frontendOrder.estado, // No usar valor por defecto - mantener undefined para que COALESCE preserve el valor actual
-    is_emergency: frontendOrder.esEmergencia || false,
+    is_emergency: frontendOrder.esEmergencia,
     // null cuando no se envía: updateOrden lo elimina y el backend conserva la configuración actual
     signature_config: frontendOrder.configFirmas || null,
     // '' se envía tal cual para poder borrar las observaciones; undefined las conserva

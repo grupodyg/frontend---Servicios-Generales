@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { API_ENDPOINTS, getAuthToken } from '../config/api'
+import { api, API_ENDPOINTS, getAuthToken, fetchConManejoErrores } from '../config/api'
 
 const useBackupStore = create((set, get) => ({
   backups: [],
@@ -10,18 +10,8 @@ const useBackupStore = create((set, get) => ({
   fetchBackups: async () => {
     set({ loading: true, error: null })
     try {
-      const token = getAuthToken()
-      const response = await fetch(API_ENDPOINTS.BACKUPS, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || 'Error al obtener backups')
-      }
-
-      const data = await response.json()
-      set({ backups: data, loading: false })
+      const data = await api.get(API_ENDPOINTS.BACKUPS)
+      set({ backups: data || [], loading: false })
     } catch (error) {
       set({ error: error.message, loading: false })
       throw error
@@ -31,21 +21,7 @@ const useBackupStore = create((set, get) => ({
   createBackup: async () => {
     set({ creating: true, error: null })
     try {
-      const token = getAuthToken()
-      const response = await fetch(API_ENDPOINTS.BACKUPS, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || 'Error al crear backup')
-      }
-
-      const data = await response.json()
+      const data = await api.post(API_ENDPOINTS.BACKUPS)
       set({ creating: false })
 
       // Refrescar la lista
@@ -59,15 +35,11 @@ const useBackupStore = create((set, get) => ({
 
   downloadBackup: async (filename) => {
     try {
+      // Descarga binaria: se usa fetch directo, pero con el mismo manejo de errores que el resto
       const token = getAuthToken()
-      const response = await fetch(API_ENDPOINTS.BACKUP_DOWNLOAD(filename), {
+      const response = await fetchConManejoErrores(API_ENDPOINTS.BACKUP_DOWNLOAD(filename), {
         headers: { Authorization: `Bearer ${token}` }
       })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || 'Error al descargar backup')
-      }
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -86,16 +58,7 @@ const useBackupStore = create((set, get) => ({
 
   deleteBackup: async (filename) => {
     try {
-      const token = getAuthToken()
-      const response = await fetch(API_ENDPOINTS.BACKUP_DELETE(filename), {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || 'Error al eliminar backup')
-      }
+      await api.delete(API_ENDPOINTS.BACKUP_DELETE(filename))
 
       // Refrescar la lista
       await get().fetchBackups()

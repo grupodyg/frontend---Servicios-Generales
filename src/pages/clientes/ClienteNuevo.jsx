@@ -57,9 +57,10 @@ const ClienteNuevo = () => {
       
       navigate('/clientes')
     } catch (error) {
-      await notificationService.error(
-        'Error',
-        'No se pudo crear el cliente'
+      console.error('Error al crear cliente:', error)
+      await notificationService.mostrarError(
+        error,
+        data?.nombre ? `No se pudo registrar el cliente «${data.nombre}»` : 'No se pudo registrar el cliente'
       )
     }
   }
@@ -168,10 +169,14 @@ const ClienteNuevo = () => {
                 type="text"
                 className={`input-field ${errors[tipoCliente === 'empresa' ? 'ruc' : 'dni'] ? 'border-red-500' : ''}`}
                 {...register(tipoCliente === 'empresa' ? 'ruc' : 'dni', { 
-                  required: `El ${tipoCliente === 'empresa' ? 'RUC' : 'DNI'} es requerido`,
+                  required: tipoCliente === 'empresa'
+                    ? 'El RUC es obligatorio para clientes de tipo Empresa. Ingresa los 11 dígitos o cambia el tipo a Persona Natural.'
+                    : 'El DNI es obligatorio para clientes de tipo Persona Natural. Ingresa los 8 dígitos o cambia el tipo a Empresa.',
                   pattern: {
                     value: tipoCliente === 'empresa' ? /^\d{11}$/ : /^\d{8}$/,
-                    message: `El ${tipoCliente === 'empresa' ? 'RUC debe tener 11 dígitos' : 'DNI debe tener 8 dígitos'}`
+                    message: tipoCliente === 'empresa'
+                      ? 'El RUC debe tener exactamente 11 dígitos, solo números (sin espacios, guiones ni letras).'
+                      : 'El DNI debe tener exactamente 8 dígitos, solo números (sin espacios, guiones ni letras).'
                   }
                 })}
                 placeholder={tipoCliente === 'empresa' ? '20123456789' : '12345678'}
@@ -223,7 +228,7 @@ const ClienteNuevo = () => {
                   required: 'El email es requerido',
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Email inválido'
+                    message: 'El email no tiene un formato válido. Escríbelo como nombre@dominio.com, sin espacios.'
                   }
                 })}
               />

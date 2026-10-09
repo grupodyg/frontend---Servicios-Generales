@@ -4,6 +4,7 @@ import { format, addDays, subDays, differenceInDays, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import useOrdenesStore from '../../stores/ordenesStore'
 import { getCurrentDate } from '../../utils/dateUtils'
+import notificationService from '../../services/notificationService'
 
 const Gantt = () => {
   const { ordenes, fetchOrdenes, isLoading } = useOrdenesStore()
@@ -14,6 +15,7 @@ const Gantt = () => {
   useEffect(() => {
     // Cargar todas las órdenes
     fetchOrdenes({ estado: selectedFilter === 'all' ? undefined : selectedFilter })
+      .catch(error => notificationService.mostrarError(error, 'No se pudieron cargar las órdenes de trabajo para el diagrama de Gantt'))
   }, [fetchOrdenes, selectedFilter])
 
   // Filtrar órdenes según selección

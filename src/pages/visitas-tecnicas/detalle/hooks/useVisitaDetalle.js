@@ -19,10 +19,20 @@ import {
   ESTADOS_FIRMABLES,
   getEstadoLabel
 } from '../../../../constants/visitasTecnicasConstants'
+import notificationService from '../../../../services/notificationService'
+import { describirErrorEnTexto } from '../../../../utils/errorUtils'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
 const MySwal = withReactContent(Swal)
+
+// Los motivos de error pueden incluir datos del servidor: escapar antes de insertarlos en HTML
+const escaparHtml = (texto) => String(texto ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
 
 const Toast = Swal.mixin({
   toast: true,
@@ -227,6 +237,7 @@ const useVisitaDetalle = () => {
         }
       } catch (error) {
         console.error('Error al cargar visita:', error)
+        notificationService.mostrarError(error, `No se pudo cargar la visita técnica ${id}`)
       }
     }
 
@@ -313,6 +324,7 @@ const useVisitaDetalle = () => {
       let fotosActualizadas = [...(estadoLugar.fotos || [])]
       const fotosNuevas = fotosActualizadas.filter(foto => foto.file && foto.url?.startsWith('blob:'))
       const fotosFallidas = []
+      let motivoFalloFotos = ''
 
       if (fotosNuevas.length > 0) {
         for (let i = 0; i < fotosNuevas.length; i++) {
@@ -332,6 +344,7 @@ const useVisitaDetalle = () => {
           } catch (uploadError) {
             console.error(`Error subiendo foto ${foto.name}:`, uploadError)
             fotosFallidas.push(foto.name || foto.nombre || 'foto sin nombre')
+            motivoFalloFotos = describirErrorEnTexto(uploadError, 'No se pudo subir la foto')
           }
         }
       }
@@ -372,7 +385,9 @@ const useVisitaDetalle = () => {
         MySwal.fire({
           icon: 'warning',
           title: 'Guardado con advertencias',
-          html: `El estado del lugar fue guardado, pero ${fotosFallidas.length} foto(s) no se pudieron subir y fueron descartadas:<br><strong>${fotosFallidas.join(', ')}</strong><br>Por favor, vuelva a agregarlas.`,
+          html: `El estado del lugar fue guardado, pero ${fotosFallidas.length} foto(s) no se pudieron subir y fueron descartadas:<br><strong>${escaparHtml(fotosFallidas.join(', '))}</strong>` +
+            (motivoFalloFotos ? `<br><br>Motivo: ${escaparHtml(motivoFalloFotos)}` : '') +
+            '<br><br>Pulsa «Editar» o «Llenar Formulario», vuelve a agregarlas en «Fotografías del lugar» (pestaña Estado del Lugar) y pulsa «Guardar».',
           confirmButtonText: 'Entendido'
         })
       } else {
@@ -386,11 +401,7 @@ const useVisitaDetalle = () => {
       }
     } catch (error) {
       console.error('Error al guardar estado del lugar:', error)
-      MySwal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo guardar el estado del lugar'
-      })
+      notificationService.mostrarError(error, `No se pudo guardar el estado del lugar de la visita técnica ${visitaActual?.id}`)
     }
   }, [estadoLugar, visitaActual, uploadVisitaPhoto, updateVisitaTecnica, fetchVisitas])
 
@@ -430,13 +441,21 @@ const useVisitaDetalle = () => {
 
   const handleAgregarMaterial = useCallback(async () => {
     if (!nuevoMaterial.nombre.trim()) {
-      MySwal.fire({ icon: 'warning', title: 'Nombre requerido', text: 'Ingrese el nombre del material' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Falta el nombre del material',
+        text: 'En «Agregar Material», escribe o busca el material en el campo «Nombre del material» y luego pulsa «+ Agregar».'
+      })
       return
     }
     // El campo de cantidad puede quedar vacío mientras se edita: se exige aquí
     const cantidad = aNumero(nuevoMaterial.cantidad)
     if (cantidad <= 0) {
-      MySwal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Cantidad no válida',
+        text: `La «Cantidad» de «${nuevoMaterial.nombre.trim()}» ${esValorVacio(nuevoMaterial.cantidad) ? 'está vacía' : `es ${nuevoMaterial.cantidad}`}. Ingresa un número mayor que 0 en «Agregar Material» y vuelve a pulsar «+ Agregar».`
+      })
       return
     }
 
@@ -444,7 +463,11 @@ const useVisitaDetalle = () => {
       m => m.nombre.toLowerCase() === nuevoMaterial.nombre.toLowerCase()
     )
     if (materialExistente) {
-      MySwal.fire({ icon: 'warning', title: 'Material duplicado', text: 'Este material ya está en la lista' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Material duplicado',
+        text: `«${materialExistente.nombre}» ya está en la lista de materiales estimados de esta visita. Si necesitas más unidades, pulsa el lápiz («Editar») de esa fila y cambia la «Cantidad» en lugar de agregarlo otra vez.`
+      })
       return
     }
 
@@ -473,11 +496,12 @@ const useVisitaDetalle = () => {
       Toast.fire({ icon: 'success', title: 'Material agregado' })
     } catch (error) {
       console.error('Error al agregar material:', error)
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar el material' })
+      notificationService.mostrarError(error, `No se pudo agregar el material «${nuevoMaterial.nombre}» a la visita`)
     }
   }, [nuevoMaterial, visitaActual, updateVisitaTecnica])
 
   const handleEliminarMaterial = useCallback(async (materialId) => {
+    const materialAEliminar = visitaActual?.materialesEstimados?.find(m => m.id === materialId)
     const result = await MySwal.fire({
       title: '¿Eliminar material?',
       text: 'Esta acción no se puede deshacer',
@@ -501,7 +525,12 @@ const useVisitaDetalle = () => {
         Toast.fire({ icon: 'success', title: 'Material eliminado' })
       } catch (error) {
         console.error('Error al eliminar material:', error)
-        MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el material' })
+        notificationService.mostrarError(
+          error,
+          materialAEliminar?.nombre
+            ? `No se pudo eliminar el material «${materialAEliminar.nombre}» de la visita`
+            : 'No se pudo eliminar el material de la visita'
+        )
       }
     }
   }, [visitaActual, updateVisitaTecnica, fetchVisitas])
@@ -522,7 +551,11 @@ const useVisitaDetalle = () => {
     // Los campos numéricos pueden quedar vacíos mientras se edita: se exige aquí
     const cantidad = aNumero(materialEditando.cantidad)
     if (cantidad <= 0) {
-      MySwal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Cantidad no válida',
+        text: `En la ventana «Editar Material», la «Cantidad» de «${materialEditando.nombre}» ${esValorVacio(materialEditando.cantidad) ? 'está vacía' : `es ${materialEditando.cantidad}`}. Ingresa un número mayor que 0 y pulsa «Guardar Cambios».`
+      })
       return
     }
     const precioUnitario = aNumero(materialEditando.precioUnitario)
@@ -550,7 +583,7 @@ const useVisitaDetalle = () => {
       Toast.fire({ icon: 'success', title: 'Material actualizado' })
     } catch (error) {
       console.error('Error al actualizar material:', error)
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el material' })
+      notificationService.mostrarError(error, `No se pudo actualizar el material «${materialEditando.nombre}» de la visita`)
     }
   }, [materialEditando, visitaActual, updateVisitaTecnica, fetchVisitas, handleCerrarModalEditarMaterial])
 
@@ -585,13 +618,21 @@ const useVisitaDetalle = () => {
 
   const handleAgregarHerramienta = useCallback(async () => {
     if (!nuevaHerramienta.nombre.trim()) {
-      MySwal.fire({ icon: 'warning', title: 'Nombre requerido', text: 'Ingrese el nombre de la herramienta' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Falta el nombre de la herramienta',
+        text: 'En «Agregar Herramienta», escribe o busca la herramienta en el campo «Nombre de la herramienta» y luego pulsa «+ Agregar».'
+      })
       return
     }
     // El campo de cantidad puede quedar vacío mientras se edita: se exige aquí
     const cantidad = aNumero(nuevaHerramienta.cantidad)
     if (cantidad <= 0) {
-      MySwal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Cantidad no válida',
+        text: `La «Cantidad» de «${nuevaHerramienta.nombre.trim()}» ${esValorVacio(nuevaHerramienta.cantidad) ? 'está vacía' : `es ${nuevaHerramienta.cantidad}`}. Ingresa un número mayor que 0 en «Agregar Herramienta» y vuelve a pulsar «+ Agregar».`
+      })
       return
     }
 
@@ -602,7 +643,7 @@ const useVisitaDetalle = () => {
         MySwal.fire({
           icon: 'warning',
           title: 'Stock insuficiente',
-          text: `Solo hay ${stockDisponible} unidades disponibles de "${nuevaHerramienta.nombre}"`
+          text: `Pediste ${cantidad} unidad(es) de «${nuevaHerramienta.nombre}», pero en el inventario de herramientas solo hay ${stockDisponible} disponible(s). Reduce la «Cantidad» a ${stockDisponible} o menos, o pide que se actualice el stock en Inventario > Herramientas.`
         })
         return
       }
@@ -612,7 +653,11 @@ const useVisitaDetalle = () => {
       h => h.nombre.toLowerCase() === nuevaHerramienta.nombre.toLowerCase()
     )
     if (herramientaExistente) {
-      MySwal.fire({ icon: 'warning', title: 'Herramienta duplicada', text: 'Esta herramienta ya está en la lista' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Herramienta duplicada',
+        text: `«${herramientaExistente.nombre}» ya está en la lista de herramientas requeridas de esta visita. Si necesitas otra cantidad, elimínala de la lista (botón «Eliminar» de su fila) y vuelve a agregarla con la cantidad correcta.`
+      })
       return
     }
 
@@ -649,11 +694,12 @@ const useVisitaDetalle = () => {
       Toast.fire({ icon: 'success', title: 'Herramienta agregada' })
     } catch (error) {
       console.error('Error al agregar herramienta:', error)
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar la herramienta' })
+      notificationService.mostrarError(error, `No se pudo agregar la herramienta «${nuevaHerramienta.nombre}» a la visita`)
     }
   }, [nuevaHerramienta, herramientas, herramientaSeleccionadaInventario, herramientasInventario, visitaActual, updateVisitaTecnica])
 
   const handleEliminarHerramienta = useCallback(async (id) => {
+    const herramientaAEliminar = herramientas.find(h => h.id === id)
     const result = await MySwal.fire({
       title: '¿Eliminar herramienta?',
       text: 'Esta acción no se puede deshacer',
@@ -677,7 +723,12 @@ const useVisitaDetalle = () => {
         Toast.fire({ icon: 'success', title: 'Herramienta eliminada' })
       } catch (error) {
         console.error('Error al eliminar herramienta:', error)
-        MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar la herramienta' })
+        notificationService.mostrarError(
+          error,
+          herramientaAEliminar?.nombre
+            ? `No se pudo eliminar la herramienta «${herramientaAEliminar.nombre}» de la visita`
+            : 'No se pudo eliminar la herramienta de la visita'
+        )
       }
     }
   }, [herramientas, visitaActual, updateVisitaTecnica])
@@ -692,7 +743,7 @@ const useVisitaDetalle = () => {
       Toast.fire({ icon: 'success', title: 'Herramientas guardadas' })
     } catch (error) {
       console.error('Error al guardar herramientas:', error)
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron guardar las herramientas' })
+      notificationService.mostrarError(error, `No se pudieron guardar las herramientas de la visita técnica ${visitaActual?.id}`)
     }
   }, [herramientas, visitaActual, updateVisitaTecnica, fetchVisitas])
 
@@ -711,14 +762,24 @@ const useVisitaDetalle = () => {
     const especialidadFinal = mostrarInputEspecialidad ? especialidadPersonalizada : nuevaPersona.especialidad
 
     if (!especialidadFinal.trim()) {
-      MySwal.fire({ icon: 'warning', title: 'Especialidad requerida', text: 'Seleccione o ingrese una especialidad' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Falta la especialidad',
+        text: mostrarInputEspecialidad
+          ? 'En «Agregar Personal», escribe la especialidad en el campo de especialidad personalizada y luego pulsa «+ Agregar».'
+          : 'En «Agregar Personal», elige una opción en «Especialidad» (o «Otros (especificar)» para escribirla) y luego pulsa «+ Agregar».'
+      })
       return
     }
 
     // El campo de días puede quedar vacío mientras se edita: se exige aquí
     const diasEstimados = aNumero(nuevaPersona.diasEstimados)
     if (diasEstimados < 1) {
-      MySwal.fire({ icon: 'warning', title: 'Días estimados requeridos', text: 'Ingrese los días estimados' })
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Días estimados no válidos',
+        text: `Los «Días estimados» para «${especialidadFinal.trim()}» ${esValorVacio(nuevaPersona.diasEstimados) ? 'están vacíos' : `son ${nuevaPersona.diasEstimados}`}. Ingresa al menos 1 día en «Agregar Personal» y vuelve a pulsar «+ Agregar».`
+      })
       return
     }
 
@@ -758,11 +819,12 @@ const useVisitaDetalle = () => {
       Toast.fire({ icon: 'success', title: 'Personal agregado' })
     } catch (error) {
       console.error('Error al agregar personal:', error)
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo agregar el personal' })
+      notificationService.mostrarError(error, `No se pudo agregar el personal «${especialidadFinal}» a la visita`)
     }
   }, [nuevaPersona, mostrarInputEspecialidad, especialidadPersonalizada, listaPersonal, requerimientosAdicionales, totalDiasEstimados, visitaActual, updateVisitaTecnica])
 
   const handleEliminarPersona = useCallback(async (id) => {
+    const personaAEliminar = listaPersonal.find(p => p.id === id)
     const result = await MySwal.fire({
       title: '¿Eliminar personal?',
       text: 'Esta acción no se puede deshacer',
@@ -803,7 +865,12 @@ const useVisitaDetalle = () => {
         Toast.fire({ icon: 'success', title: 'Personal eliminado' })
       } catch (error) {
         console.error('Error al eliminar personal:', error)
-        MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el personal' })
+        notificationService.mostrarError(
+          error,
+          personaAEliminar?.especialidad
+            ? `No se pudo eliminar el personal «${personaAEliminar.especialidad}» de la visita`
+            : 'No se pudo eliminar el personal de la visita'
+        )
       }
     }
   }, [listaPersonal, requerimientosAdicionales, totalDiasEstimados, visitaActual, updateVisitaTecnica])
@@ -830,7 +897,7 @@ const useVisitaDetalle = () => {
       MySwal.fire({ icon: 'success', title: 'Personal guardado', timer: 1500, showConfirmButton: false })
     } catch (error) {
       console.error('Error al guardar personal:', error)
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el personal' })
+      notificationService.mostrarError(error, `No se pudo guardar el personal de la visita técnica ${visitaActual?.id}`)
     }
   }, [listaPersonal, requerimientosAdicionales, totalDiasEstimados, visitaActual, updateVisitaTecnica, fetchVisitas])
 
@@ -882,7 +949,7 @@ const useVisitaDetalle = () => {
       MySwal.fire({ icon: 'success', title: 'Precios guardados', text: 'Los precios del personal han sido guardados correctamente', timer: 1500, showConfirmButton: false })
     } catch (error) {
       console.error('Error al guardar precios del personal:', error)
-      MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron guardar los precios del personal' })
+      notificationService.mostrarError(error, `No se pudieron guardar los precios del personal de la visita técnica ${visitaActual?.id}`)
     }
   }, [listaPersonal, visitaActual, updateVisitaTecnica, fetchVisitas])
 
@@ -893,13 +960,13 @@ const useVisitaDetalle = () => {
     if (!validacion.valido) {
       MySwal.fire({
         icon: 'warning',
-        title: 'Campos incompletos',
-        html: `<p>Por favor complete los siguientes campos:</p>
+        title: 'Faltan datos para completar la visita',
+        html: `<p>La visita no se puede completar hasta que registres estos datos:</p>
                <ul style="text-align: left; margin-top: 10px;">
-                 ${validacion.camposFaltantes.map(c => `<li>${c}</li>`).join('')}
+                 ${validacion.camposFaltantes.map(c => `<li>${escaparHtml(c)}</li>`).join('')}
                </ul>
                <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                 Por favor, revise las pestañas: <strong>${[...new Set(validacion.tabs)].map(t => {
+                 Revisa las pestañas: <strong>${[...new Set(validacion.tabs)].map(t => {
                    const nombres = {
                      'estado': 'Estado del Lugar',
                      'materiales': 'Materiales',
@@ -908,7 +975,8 @@ const useVisitaDetalle = () => {
                      'completar': 'Completar'
                    }
                    return nombres[t] || t
-                 }).join(', ')}</strong>
+                 }).join(', ')}</strong>.
+                 Para editar Estado del Lugar, Materiales, Herramientas o Personal, pulsa primero «Llenar Formulario» o «Editar» en la cabecera de la visita.
                </p>`,
         confirmButtonText: 'Entendido'
       })
@@ -943,6 +1011,7 @@ const useVisitaDetalle = () => {
       let fotosActualizadas = [...(estadoLugar.fotos || [])]
       const fotosNuevas = fotosActualizadas.filter(foto => foto.file && foto.url?.startsWith('blob:'))
       const fotosFallidas = []
+      let ultimoErrorFoto = null
 
       if (fotosNuevas.length > 0) {
         for (const foto of fotosNuevas) {
@@ -956,6 +1025,7 @@ const useVisitaDetalle = () => {
           } catch (uploadError) {
             console.error(`Error subiendo foto:`, uploadError)
             fotosFallidas.push(foto.name || foto.nombre || 'foto sin nombre')
+            ultimoErrorFoto = uploadError
           }
         }
       }
@@ -965,12 +1035,10 @@ const useVisitaDetalle = () => {
 
       // Si fallaron subidas y no queda ninguna foto, abortar (la foto es requisito para completar)
       if (fotosFallidas.length > 0 && fotosActualizadas.length === 0) {
-        MySwal.fire({
-          icon: 'error',
-          title: 'No se pudo completar',
-          html: `Ninguna foto pudo subirse al servidor:<br><strong>${fotosFallidas.join(', ')}</strong><br>Verifique su conexión e intente nuevamente.`,
-          confirmButtonText: 'Entendido'
-        })
+        notificationService.mostrarError(
+          ultimoErrorFoto,
+          `No se pudo completar la visita técnica ${visitaActual.id}: ninguna foto del lugar se pudo subir (${fotosFallidas.join(', ')}) y se necesita al menos una`
+        )
         return
       }
 
@@ -1012,7 +1080,8 @@ const useVisitaDetalle = () => {
         MySwal.fire({
           icon: 'warning',
           title: 'Visita completada con advertencias',
-          html: `La visita fue completada, pero ${fotosFallidas.length} foto(s) no se pudieron subir y fueron descartadas:<br><strong>${fotosFallidas.join(', ')}</strong>`,
+          html: `La visita fue completada, pero ${fotosFallidas.length} foto(s) no se pudieron subir y fueron descartadas:<br><strong>${escaparHtml(fotosFallidas.join(', '))}</strong>` +
+            (ultimoErrorFoto ? `<br><br>Motivo: ${escaparHtml(describirErrorEnTexto(ultimoErrorFoto, 'No se pudo subir la foto'))}` : ''),
           confirmButtonText: 'Entendido'
         })
       } else {
@@ -1026,11 +1095,7 @@ const useVisitaDetalle = () => {
       }
     } catch (error) {
       console.error('Error al completar visita:', error)
-      MySwal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error.message || 'No se pudo completar la visita técnica'
-      })
+      notificationService.mostrarError(error, `No se pudo completar la visita técnica ${visitaActual?.id}`)
     }
   }, [visitaActual, estadoLugar, datosCompletado, herramientas, listaPersonal,
       requerimientosAdicionales, uploadVisitaPhoto, updateVisitaTecnica, fetchVisitas])
@@ -1042,52 +1107,56 @@ const useVisitaDetalle = () => {
 
     // Estado del lugar
     if (!estadoLugar.descripcion?.trim()) {
-      camposFaltantes.push('Descripción del estado del lugar')
+      camposFaltantes.push('Estado del Lugar: escribe la «Descripción del estado actual».')
       tabs.push('estado')
     }
 
     if (!estadoLugar.fotos || estadoLugar.fotos.length === 0) {
-      camposFaltantes.push('Al menos una fotografía del lugar')
+      camposFaltantes.push('Estado del Lugar: agrega al menos una foto en «Fotografías del lugar» y pulsa «Guardar».')
       tabs.push('estado')
     }
 
     // Materiales
     if (!visitaActual.materialesEstimados || visitaActual.materialesEstimados.length === 0) {
-      camposFaltantes.push('Al menos un material estimado')
+      camposFaltantes.push('Materiales: agrega al menos un material estimado con «+ Agregar».')
       tabs.push('materiales')
     }
 
     // Herramientas
     if (!herramientas || herramientas.length === 0) {
-      camposFaltantes.push('Al menos una herramienta requerida')
+      camposFaltantes.push('Herramientas: agrega al menos una herramienta requerida con «+ Agregar».')
       tabs.push('herramientas')
     }
 
     // Personal
     if (!listaPersonal || listaPersonal.length === 0) {
-      camposFaltantes.push('Al menos una persona en el equipo')
+      camposFaltantes.push('Personal: agrega al menos una persona al equipo con «+ Agregar».')
       tabs.push('personal')
     } else {
       const sinDias = listaPersonal.some(p => !p.diasEstimados || p.diasEstimados <= 0)
       if (sinDias) {
-        camposFaltantes.push('Días estimados para todo el personal')
+        const especialidadesSinDias = listaPersonal
+          .filter(p => !p.diasEstimados || p.diasEstimados <= 0)
+          .map(p => p.especialidad || 'sin especialidad')
+          .join(', ')
+        camposFaltantes.push(`Personal: ${especialidadesSinDias} no tiene(n) «Días estimados». Elimina esa fila y vuelve a agregarla con al menos 1 día.`)
         tabs.push('personal')
       }
     }
 
     // Completar
     if (!datosCompletado.nombreProyecto?.trim()) {
-      camposFaltantes.push('Nombre del proyecto')
+      camposFaltantes.push('Nombre del proyecto: la visita no lo tiene registrado. Se ingresa al crear la visita técnica y no se puede editar desde esta pantalla; avisa a un administrador del sistema.')
       tabs.push('completar')
     }
 
     if (!datosCompletado.firmaTecnico) {
-      camposFaltantes.push('Firma del técnico')
+      camposFaltantes.push('Completar: falta la «Firma del Técnico». Pulsa «Agregar firma», firma en el recuadro y pulsa «Guardar Firma».')
       tabs.push('completar')
     }
 
     if (!datosCompletado.coordenadasGPS?.latitud || !datosCompletado.coordenadasGPS?.longitud) {
-      camposFaltantes.push('Ubicación GPS')
+      camposFaltantes.push('Completar: falta la «Ubicación GPS». Pulsa «Obtener ubicación actual» y permite el acceso a la ubicación en el navegador.')
       tabs.push('completar')
     }
 
@@ -1113,7 +1182,7 @@ const useVisitaDetalle = () => {
       preConfirm: () => {
         const ordenCompra = document.getElementById('ordenCompra').value
         if (!ordenCompra) {
-          Swal.showValidationMessage('Debe ingresar el número de orden de compra')
+          Swal.showValidationMessage('El campo «Número de orden de compra» está vacío. Escribe la orden de compra del cliente para poder aceptar la visita.')
           return false
         }
         return ordenCompra
@@ -1142,11 +1211,7 @@ const useVisitaDetalle = () => {
         })
       } catch (error) {
         console.error('Error al aceptar visita:', error)
-        MySwal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.message || 'No se pudo aceptar la visita técnica'
-        })
+        notificationService.mostrarError(error, `No se pudo aceptar la visita técnica ${visitaActual?.id}`)
       }
     }
   }, [visitaActual, user, aceptarVisitaTecnica])
@@ -1169,7 +1234,7 @@ const useVisitaDetalle = () => {
       preConfirm: () => {
         const motivo = document.getElementById('motivoRechazo').value
         if (!motivo) {
-          Swal.showValidationMessage('Debe ingresar el motivo del rechazo')
+          Swal.showValidationMessage('El motivo del rechazo está vacío. Escríbelo: el técnico lo verá para saber qué debe corregir.')
           return false
         }
         return motivo
@@ -1198,11 +1263,7 @@ const useVisitaDetalle = () => {
         })
       } catch (error) {
         console.error('Error al rechazar visita:', error)
-        MySwal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.message || 'No se pudo rechazar la visita técnica'
-        })
+        notificationService.mostrarError(error, `No se pudo rechazar la visita técnica ${visitaActual?.id}`)
       }
     }
   }, [visitaActual, user, rechazarVisitaTecnica])
@@ -1341,11 +1402,7 @@ const useVisitaDetalle = () => {
       navigate(`/presupuestos/${nuevaCotizacion.id}`)
     } catch (error) {
       console.error('Error al generar cotización:', error)
-      MySwal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo generar la cotización'
-      })
+      notificationService.mostrarError(error, `No se pudo generar la cotización de la visita técnica ${visitaActual?.id}`)
     }
   }, [visitaActual, listaPersonal, herramientas, user, createPresupuesto, updateVisitaTecnica, fetchVisitas, fetchPresupuestos, navigate])
 
@@ -1450,7 +1507,13 @@ const useVisitaDetalle = () => {
       datosActualizacion.tecnicosAsignados = tecnicosAsignados
     }
 
-    await updateVisitaTecnica(visitaActual.id, datosActualizacion)
+    try {
+      await updateVisitaTecnica(visitaActual.id, datosActualizacion)
+    } catch (error) {
+      console.error('Error al guardar edición general de la visita:', error)
+      notificationService.mostrarError(error, `No se pudieron guardar los cambios de la visita técnica ${visitaActual.id}`)
+      return
+    }
 
     const visitaActualizada = {
       ...visitaActual,

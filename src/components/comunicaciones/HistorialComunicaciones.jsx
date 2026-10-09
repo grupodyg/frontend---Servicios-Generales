@@ -66,26 +66,41 @@ const HistorialComunicaciones = ({ ordenId, cliente }) => {
         destinatario: formData.destinatario
       }
       
+      // await: si el servidor rechaza el registro, el error llega al catch en vez de mostrar un éxito falso
       if (modalType === 'correo') {
-        crearCorreoSalida(datos)
+        await crearCorreoSalida(datos)
         await notificationService.success('Correo registrado', 'El correo ha sido registrado en el historial', 2000)
       } else {
-        crearNotaInterna(datos)
+        await crearNotaInterna(datos)
         await notificationService.success('Nota agregada', 'La nota interna ha sido agregada', 2000)
       }
-      
+
       // Actualizar lista
       setComunicaciones(obtenerComunicacionesPorOrden(ordenId))
       setShowModal(false)
     } catch (error) {
-      await notificationService.error('Error', 'No se pudo registrar la comunicación')
+      console.error('Error al registrar comunicación:', error)
+      await notificationService.mostrarError(
+        error,
+        modalType === 'correo'
+          ? `No se pudo registrar el correo «${formData.asunto}» en el historial`
+          : `No se pudo agregar la nota interna «${formData.asunto}»`
+      )
     }
   }
 
   const handleCambiarEstado = async (comId, nuevoEstado) => {
-    actualizarEstadoComunicacion(comId, nuevoEstado)
-    setComunicaciones(obtenerComunicacionesPorOrden(ordenId))
-    await notificationService.success('Estado actualizado', '', 1000)
+    try {
+      await actualizarEstadoComunicacion(comId, nuevoEstado)
+      setComunicaciones(obtenerComunicacionesPorOrden(ordenId))
+      await notificationService.success('Estado actualizado', '', 1000)
+    } catch (error) {
+      console.error('Error al cambiar estado de la comunicación:', error)
+      await notificationService.mostrarError(
+        error,
+        `No se pudo cambiar el estado de la comunicación a «${estadosComunicacion[nuevoEstado]?.nombre || nuevoEstado}»`
+      )
+    }
   }
 
   const formatearFecha = (fecha) => {

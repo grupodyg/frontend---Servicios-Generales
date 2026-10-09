@@ -5,7 +5,7 @@
  * según las reglas de negocio del sistema.
  */
 
-import { VISITA_ESTADOS } from '../constants/visitasTecnicasConstants'
+import { VISITA_ESTADOS, getEstadoLabel } from '../constants/visitasTecnicasConstants'
 
 // ============================================
 // MÁQUINA DE ESTADOS
@@ -209,18 +209,23 @@ export const puedeEditar = (estadoActual, rol) => {
  * @returns {string} Mensaje de error
  */
 export const generarMensajeErrorTransicion = (estadoActual, estadoNuevo) => {
+  const actual = getEstadoLabel(estadoActual)
+  const nuevo = getEstadoLabel(estadoNuevo)
+
   if (esEstadoFinal(estadoActual)) {
-    return `No se puede cambiar el estado de una visita ${estadoActual}. Es un estado final.`
+    return `La visita está «${actual}», que es un estado final: ya no se puede pasar a «${nuevo}» ni modificar su estado. ` +
+           'Recarga la página para ver su estado actual.'
   }
 
   const transicionesValidas = obtenerTransicionesPermitidas(estadoActual)
 
   if (transicionesValidas.length === 0) {
-    return `El estado ${estadoActual} no permite ninguna transición.`
+    return `La visita está «${actual}» y desde ese estado no se puede cambiar a ningún otro. Recarga la página para ver su estado actual.`
   }
 
-  return `No se puede cambiar de ${estadoActual} a ${estadoNuevo}. ` +
-         `Transiciones válidas: ${transicionesValidas.join(', ')}`
+  return `La visita está «${actual}» y desde ese estado no puede pasar a «${nuevo}». ` +
+         `Solo puede pasar a: ${transicionesValidas.map(getEstadoLabel).join(', ')}. ` +
+         'Si otro usuario la modificó, recarga la página para ver su estado actual.'
 }
 
 // ============================================
@@ -241,7 +246,7 @@ export const validarReglaDeNegocio = (visita, estadoNuevo) => {
     if (!tieneTecnicos) {
       return {
         valido: false,
-        mensaje: 'No se puede asignar la visita sin técnicos. Debe asignar al menos un técnico.'
+        mensaje: 'La visita no tiene técnicos, por eso no puede pasar a «Asignada». Pulsa «Editar» en la cabecera de la visita, selecciona al menos uno en «Técnicos asignados» y pulsa «Guardar».'
       }
     }
   }
@@ -251,13 +256,13 @@ export const validarReglaDeNegocio = (visita, estadoNuevo) => {
     if (!visita.nombreProyecto) {
       return {
         valido: false,
-        mensaje: 'No se puede completar la visita sin el nombre del proyecto.'
+        mensaje: 'La visita no tiene «Nombre del proyecto», y es obligatorio para completarla. Ese dato se ingresa al crear la visita técnica y no se puede editar desde el detalle: avisa a un administrador del sistema.'
       }
     }
     if (!visita.firmaTecnico) {
       return {
         valido: false,
-        mensaje: 'No se puede completar la visita sin la firma del técnico.'
+        mensaje: 'Falta la firma del técnico, y es obligatoria para completar la visita. En la pestaña «Completar», pulsa «Agregar firma», firma en el recuadro y pulsa «Guardar Firma».'
       }
     }
   }

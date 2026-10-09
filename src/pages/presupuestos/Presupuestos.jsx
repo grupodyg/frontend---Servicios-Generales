@@ -5,6 +5,7 @@ import usePresupuestosStore, { getClienteNombre, limpiarDatosCorruptos } from '.
 import useAuthStore from '../../stores/authStore'
 import { formatDate, getCurrentDate } from '../../utils/dateUtils'
 import { canViewPrices } from '../../utils/permissionsUtils'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -71,7 +72,10 @@ const Presupuestos = () => {
   }, [])
 
   useEffect(() => {
-    fetchPresupuestos()
+    fetchPresupuestos().catch(error => {
+      console.error('Error al cargar presupuestos:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar los presupuestos')
+    })
   }, [fetchPresupuestos])
 
   useEffect(() => {
@@ -135,12 +139,8 @@ const Presupuestos = () => {
         })
         fetchPresupuestos()
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo aprobar el presupuesto',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al aprobar presupuesto:', error)
+        notificationService.mostrarError(error, `No se pudo aprobar el presupuesto ${presupuesto.numero || presupuesto.id}`)
       }
     }
   }
@@ -161,7 +161,7 @@ const Presupuestos = () => {
       cancelButtonText: 'Cancelar',
       inputValidator: (value) => {
         if (!value) {
-          return 'Debe ingresar un motivo'
+          return 'El motivo del rechazo está vacío. Escríbelo para poder rechazar el presupuesto.'
         }
       }
     })
@@ -177,12 +177,8 @@ const Presupuestos = () => {
         })
         fetchPresupuestos()
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo rechazar el presupuesto',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al rechazar presupuesto:', error)
+        notificationService.mostrarError(error, `No se pudo rechazar el presupuesto ${presupuesto.numero || presupuesto.id}`)
       }
     }
   }

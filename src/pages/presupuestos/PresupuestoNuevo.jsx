@@ -10,6 +10,7 @@ import useMaterialesStore from '../../stores/materialesStore'
 import useHerramientasStore from '../../stores/herramientasStore'
 import useSpecialtyRatesStore from '../../stores/specialtyRatesStore'
 import { canViewPrices, canEditPrices } from '../../utils/permissionsUtils'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -415,12 +416,22 @@ const PresupuestoNuevo = () => {
 
   // Effects
   useEffect(() => {
-    fetchClientes()
-    fetchMateriales()
-    fetchHerramientas()
-    if (user?.role === 'admin') fetchTarifas()
-    fetchCondicionesPago()
-    if (isEditing) fetchPresupuestos()
+    Promise.all([
+      fetchClientes(),
+      fetchMateriales(),
+      fetchHerramientas(),
+      user?.role === 'admin' ? fetchTarifas() : null,
+      fetchCondicionesPago(),
+      isEditing ? fetchPresupuestos() : null
+    ]).catch(error => {
+      console.error('Error cargando datos del formulario de presupuesto:', error)
+      notificationService.mostrarError(
+        error,
+        isEditing
+          ? `No se pudieron cargar los datos para editar el presupuesto ${id}`
+          : 'No se pudieron cargar los datos del formulario (clientes, materiales, herramientas o condiciones de pago)'
+      )
+    })
   }, [])
 
   useEffect(() => {
@@ -610,8 +621,8 @@ const PresupuestoNuevo = () => {
   const onSubmit = async (data) => {
     if (!clienteSeleccionado && !isEditing) {
       MySwal.fire({
-        title: 'Seleccione un cliente',
-        text: 'Debe seleccionar un cliente para continuar',
+        title: 'Falta seleccionar el cliente',
+        text: 'En el paso «Cliente», busca por nombre, RUC o DNI y selecciona el cliente del presupuesto. Si no aparece, regístralo primero en Clientes.',
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -621,8 +632,8 @@ const PresupuestoNuevo = () => {
 
     if (itemsFields.length === 0) {
       MySwal.fire({
-        title: 'Agregue items',
-        text: 'Debe agregar al menos un item al presupuesto',
+        title: 'El presupuesto no tiene items',
+        text: `En el paso «Items», agrega al menos un material, herramienta o mano de obra y vuelve a pulsar «${isEditing ? 'Guardar Cambios' : 'Crear Presupuesto'}».`,
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -696,12 +707,13 @@ const PresupuestoNuevo = () => {
         navigate(user?.role === 'supervisor' ? '/presupuestos' : `/presupuestos/${nuevo.id}`)
       }
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: isEditing ? 'No se pudo actualizar el presupuesto' : 'No se pudo crear el presupuesto',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error(isEditing ? 'Error al actualizar presupuesto:' : 'Error al crear presupuesto:', error)
+      notificationService.mostrarError(
+        error,
+        isEditing
+          ? `No se pudo actualizar el presupuesto ${presupuestoExistente?.numero || id}`
+          : `No se pudo crear el presupuesto${clienteSeleccionado?.nombre ? ` para «${clienteSeleccionado.nombre}»` : ''}`
+      )
     }
   }
 

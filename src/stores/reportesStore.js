@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api, API_ENDPOINTS, getAuthToken } from '../config/api'
+import { api, API_ENDPOINTS, API_BASE_URL } from '../config/api'
 import { getCurrentTimestamp, getToday } from '../utils/dateUtils'
 import { calcularEstadoFirmas, ESTADO_COMPLETADO, TIPOS_FIRMA } from '../utils/firmasUtils'
 import useOrdenesStore from './ordenesStore'
@@ -244,7 +244,7 @@ const useReportesStore = create((set, get) => ({
     set({ isLoading: true })
     try {
       if (!photos || photos.length === 0) {
-        throw new Error('No hay fotos para subir')
+        throw new Error('No seleccionaste ninguna foto. Agrega al menos una foto antes de subirlas.')
       }
 
       const formData = new FormData()
@@ -252,38 +252,14 @@ const useReportesStore = create((set, get) => ({
       // Agregar cada foto al FormData
       photos.forEach((photo, index) => {
         if (!photo.file) {
-          throw new Error(`Foto ${index + 1} no tiene File object`)
+          throw new Error(`La foto ${index + 1} (${photo.name || 'sin nombre'}) no se pudo leer desde tu dispositivo. Quítala y vuelve a seleccionarla.`)
         }
         formData.append('photos', photo.file, photo.name)
       })
 
       formData.append('photoType', photoType) // 'before' o 'after'
 
-      const token = getAuthToken()
-      const API_BASE_URL = import.meta.env.VITE_API_URL
-
-      if (!API_BASE_URL) {
-        throw new Error('VITE_API_URL no está definido en las variables de entorno')
-      }
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/report-photos/report/${reportId}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-            // NO incluir Content-Type - el navegador lo establece automáticamente para FormData
-          },
-          body: formData
-        }
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP ${response.status}`)
-      }
-
-      const result = await response.json()
+      const result = await api.upload(`${API_BASE_URL}/api/report-photos/report/${reportId}`, formData)
 
       set({ isLoading: false })
       return result.data || result
@@ -300,41 +276,18 @@ const useReportesStore = create((set, get) => ({
     set({ isLoading: true })
     try {
       if (!documentFile) {
-        throw new Error('No hay documento para subir')
+        throw new Error('No seleccionaste ningún documento. Elige el archivo antes de subirlo.')
       }
 
       if (!(documentFile instanceof File)) {
-        throw new Error('El documento debe ser un File object')
+        throw new Error('El documento seleccionado no se pudo leer desde tu dispositivo. Vuelve a seleccionarlo.')
       }
 
       const formData = new FormData()
       formData.append('file', documentFile, documentFile.name)
       formData.append('docType', docType) // 'ats', 'ptr', 'environmental_aspects'
 
-      const token = getAuthToken()
-      const API_BASE_URL = import.meta.env.VITE_API_URL
-
-      if (!API_BASE_URL) {
-        throw new Error('VITE_API_URL no está definido en las variables de entorno')
-      }
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/daily-reports/${reportId}/document`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          body: formData
-        }
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP ${response.status}`)
-      }
-
-      const result = await response.json()
+      const result = await api.upload(`${API_BASE_URL}/api/daily-reports/${reportId}/document`, formData)
 
       set({ isLoading: false })
       return result.data || result
@@ -549,7 +502,7 @@ const useReportesStore = create((set, get) => ({
 
       // Validación (preservada)
       if (reportesOrden.length === 0) {
-        throw new Error('No hay reportes para generar el informe final')
+        throw new Error(`La orden ${ordenId} todavía no tiene reportes diarios registrados. Para generar el informe final, primero registra al menos un reporte diario del trabajo realizado.`)
       }
 
       // Consolidar materiales manteniendo toda la información (nombre, cantidad, unidad)
@@ -661,7 +614,7 @@ const useReportesStore = create((set, get) => ({
     set({ isLoading: true })
     try {
       if (!TIPOS_FIRMA.includes(tipoFirma)) {
-        throw new Error('Tipo de firma inválido')
+        throw new Error('La firma que se intentó registrar no corresponde a ningún tipo válido (técnico, supervisor o administrador). Recarga la página e inténtalo de nuevo; si persiste, avisa al administrador del sistema.')
       }
 
       // Obtener informe actual para obtener las firmas existentes
@@ -677,7 +630,7 @@ const useReportesStore = create((set, get) => ({
       })
 
       if (!ordenIdKey || !informeActual) {
-        throw new Error('Informe final no encontrado en el estado local')
+        throw new Error('El informe final que intentas firmar ya no está cargado en pantalla; puede haber cambiado mientras lo tenías abierto. Recarga la página y vuelve a firmar.')
       }
 
       // Construir el nuevo objeto de firmas

@@ -45,11 +45,19 @@ const Boletas = () => {
 
   useEffect(() => {
     const cargarDatos = async () => {
+      let cargandoEmpleados = false
       try {
         await fetchBoletas()
+        cargandoEmpleados = true
         await fetchTecnicos()
       } catch (error) {
         console.error('Error cargando datos:', error)
+        if (!cargandoEmpleados) {
+          notificationService.mostrarError(error, 'No se pudieron cargar las boletas de pago')
+        } else if (hasAdminPermissions(user)) {
+          // La lista de empleados solo la usa el administrador al subir boletas
+          notificationService.mostrarError(error, 'No se pudo cargar la lista de empleados para asignar boletas')
+        }
       }
     }
     cargarDatos()
@@ -122,6 +130,10 @@ const Boletas = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // Qué paso estaba en curso, para explicar exactamente qué no se pudo hacer
+    const descripcionBoleta = `la boleta de ${formData.empleadoNombre || 'el empleado'} (${meses[parseInt(formData.mes) - 1] || formData.mes} ${formData.año})`
+    let contextoError = `No se pudo registrar ${descripcionBoleta}`
+
     try {
       // Calcular valor de la hora: (salarioBase / 30 dias) / 8 horas = salarioBase / 240
       const salarioBase = parseFloat(formData.salarioBase) || 0
@@ -140,12 +152,14 @@ const Boletas = () => {
       let archivoTamaño = null
 
       if (formData.archivo?.file) {
+        contextoError = `No se pudo subir el archivo «${formData.archivo.nombre}» de ${descripcionBoleta}`
         const uploadResult = await uploadBoletaFile(formData.archivo.file)
         archivoUrl = uploadResult.url
         archivoNombre = uploadResult.name
         archivoTamaño = uploadResult.size
       }
 
+      contextoError = `No se pudo registrar ${descripcionBoleta}`
       await subirBoleta({
         empleadoId: formData.empleadoId,
         empleadoNombre: formData.empleadoNombre,
@@ -171,7 +185,8 @@ const Boletas = () => {
 
       setShowModal(false)
     } catch (error) {
-      await notificationService.error('Error', 'No se pudo subir la boleta')
+      console.error('Error al subir boleta:', error)
+      await notificationService.mostrarError(error, contextoError)
     }
   }
 
@@ -199,7 +214,7 @@ const Boletas = () => {
         await notificationService.success('Boleta eliminada', 'La boleta se ha eliminado correctamente', 2000)
       } catch (error) {
         console.error('Error eliminando boleta:', error)
-        await notificationService.error('Error', 'No se pudo eliminar la boleta')
+        await notificationService.mostrarError(error, `No se pudo eliminar la boleta de ${boleta.empleadoNombre} (${boleta.periodo})`)
       }
     }
   }
@@ -226,7 +241,7 @@ const Boletas = () => {
       notificationService.success('PDF descargado', 'La boleta se ha descargado correctamente', 2000)
     } catch (error) {
       console.error('Error generando PDF:', error)
-      notificationService.error('Error', 'No se pudo generar el PDF de la boleta')
+      notificationService.mostrarError(error, `No se pudo generar el PDF de la boleta de ${boleta.empleadoNombre} (${boleta.periodo})`)
     }
   }
 

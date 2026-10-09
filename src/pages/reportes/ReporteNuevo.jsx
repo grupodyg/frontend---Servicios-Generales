@@ -7,6 +7,7 @@ import PhotoUpload from '../../components/ui/PhotoUpload'
 import SelectorMateriales from '../../components/materiales/SelectorMateriales'
 import { getCurrentTimestamp, getToday } from '../../utils/dateUtils'
 import { aNumero } from '../../utils/numberInputUtils'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -77,7 +78,7 @@ const ReporteNuevo = () => {
           setBloqueado(true)
           MySwal.fire({
             title: 'Informe bloqueado',
-            text: 'No se pueden crear nuevos reportes porque el informe final ya ha sido firmado por el supervisor',
+            text: `No se pueden crear nuevos reportes para la orden ${ordenId} porque su informe final ya fue firmado por el supervisor y quedó bloqueado. Si falta registrar algo, coordínalo con el supervisor o el administrador.`,
             icon: 'warning',
             confirmButtonColor: '#1e40af'
           }).then(() => {
@@ -106,6 +107,7 @@ const ReporteNuevo = () => {
           }
         } catch (error) {
           console.error('Error al cargar reportes:', error)
+          notificationService.mostrarError(error, `No se pudieron cargar los reportes anteriores de la orden ${ordenId} (se usan para calcular el avance previo)`)
         } finally {
           setCargandoReportes(false)
         }
@@ -135,8 +137,8 @@ const ReporteNuevo = () => {
     if (invalidType) {
       MySwal.fire({
         title: 'Archivo no válido',
-        text: `"${invalidType.name}" no es un formato permitido. Solo PDF o imágenes`,
-        icon: 'error',
+        text: `"${invalidType.name}" no es un PDF ni una imagen. En la sección ${docType === 'Aspectos' ? 'Aspectos Ambientales' : docType} solo se aceptan archivos PDF o imágenes (JPG, PNG, etc.). Conviértelo a uno de esos formatos o elige otro archivo.`,
+        icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
       e.target.value = ''
@@ -168,12 +170,16 @@ const ReporteNuevo = () => {
   }
 
   const onSubmit = async (data) => {
+    // Etapa en curso y archivo que se estaba subiendo: permiten explicar con precisión qué falló
+    let etapa = 'crear' // 'crear' | 'archivos' | 'recargar'
+    let archivoEnCurso = ''
+    let rollbackFallido = false
     try {
       // Validación de documentos obligatorios
       if (atsDocs.length === 0) {
         MySwal.fire({
-          title: 'Documento requerido',
-          text: 'Debe adjuntar al menos un documento ATS',
+          title: 'Falta el documento ATS',
+          text: 'Todo reporte diario necesita al menos un documento ATS. Adjúntalo (PDF o imagen) en la sección "ATS (Analisis de Trabajo Seguro)" y vuelve a guardar el reporte.',
           icon: 'warning',
           confirmButtonColor: '#1e40af'
         })
@@ -182,8 +188,8 @@ const ReporteNuevo = () => {
 
       if (trabajoEnAltura && ptrDocs.length === 0) {
         MySwal.fire({
-          title: 'Documento requerido',
-          text: 'El PTR es obligatorio cuando hay trabajo en altura',
+          title: 'Falta el documento PTR',
+          text: 'Marcaste "Este trabajo incluye actividades en altura", así que debes adjuntar al menos un documento en la sección "PTR (Permiso de Trabajo de Riesgo)". Si no hubo trabajo en altura, desmarca esa opción.',
           icon: 'warning',
           confirmButtonColor: '#1e40af'
         })
@@ -231,20 +237,24 @@ const ReporteNuevo = () => {
       // OPCIÓN C: Transacción para fotos y documentos
       // Si falla algo después de crear el reporte, se elimina (rollback)
       // ========================================
+      etapa = 'archivos'
       try {
         // PASO 2: Subir fotos ANTES (si existen)
         if (fotosAntes.length > 0) {
+          archivoEnCurso = 'las fotos de "Fotos Antes del Trabajo"'
           await uploadReportPhotos(reporteId, fotosAntes, 'before')
         }
 
         // PASO 3: Subir fotos DESPUÉS (si existen)
         if (fotosDespues.length > 0) {
+          archivoEnCurso = 'las fotos de "Fotos Después del Trabajo"'
           await uploadReportPhotos(reporteId, fotosDespues, 'after')
         }
 
         // PASO 4: Subir documentos ATS (múltiples)
         for (const doc of atsDocs) {
           if (doc.file) {
+            archivoEnCurso = `el documento ATS "${doc.name}"`
             await uploadReportDocument(reporteId, doc.file, 'ats')
           }
         }
@@ -252,6 +262,7 @@ const ReporteNuevo = () => {
         // PASO 5: Subir documentos PTR (múltiples)
         for (const doc of ptrDocs) {
           if (doc.file) {
+            archivoEnCurso = `el documento PTR "${doc.name}"`
             await uploadReportDocument(reporteId, doc.file, 'ptr')
           }
         }
@@ -259,6 +270,7 @@ const ReporteNuevo = () => {
         // PASO 6: Subir documentos Aspectos Ambientales (múltiples)
         for (const doc of aspectosAmbientalesDocs) {
           if (doc.file) {
+            archivoEnCurso = `el documento de Aspectos Ambientales "${doc.name}"`
             await uploadReportDocument(reporteId, doc.file, 'environmental_aspects')
           }
         }
@@ -270,11 +282,14 @@ const ReporteNuevo = () => {
           console.log('✅ Rollback ejecutado: reporte eliminado')
         } catch (rollbackError) {
           console.error('Error en rollback:', rollbackError)
+          rollbackFallido = true
         }
-        throw new Error('Error al subir archivos: ' + uploadError.message + '. El reporte no fue guardado.')
+        // Se relanza el error original para conservar el motivo real (servidor, conexión, validación...)
+        throw uploadError
       }
 
       // PASO 7: Recargar datos
+      etapa = 'recargar'
       if (ordenId) {
         await fetchReportesByOrden(ordenId)
       }
@@ -308,12 +323,16 @@ const ReporteNuevo = () => {
 
       MySwal.close()
 
-      MySwal.fire({
-        title: 'Error al guardar',
-        text: error.message || 'No se pudo crear el reporte. Por favor, intente nuevamente.',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      const ordenRef = ordenId || data.ordenId
+      const deLaOrden = ordenRef ? ` de la orden ${ordenRef}` : ''
+      const contextoPorEtapa = {
+        crear: `No se pudo guardar el reporte diario${deLaOrden}`,
+        archivos: rollbackFallido
+          ? `No se pudo subir ${archivoEnCurso}. El reporte quedó guardado sin todos sus archivos: revísalo en la lista de reportes`
+          : `No se pudo subir ${archivoEnCurso}, por eso el reporte no se guardó. Revisa ese archivo y vuelve a enviar el reporte`,
+        recargar: `No se pudo recargar la lista de reportes${deLaOrden} (el reporte sí se guardó)`
+      }
+      notificationService.mostrarError(error, contextoPorEtapa[etapa])
     }
   }
 
@@ -642,7 +661,7 @@ const ReporteNuevo = () => {
             placeholder="Describa detalladamente el trabajo realizado durante el día..."
             {...register('descripcion', { 
               required: 'La descripción es requerida',
-              minLength: { value: 20, message: 'Mínimo 20 caracteres' }
+              minLength: { value: 20, message: 'Describe el trabajo realizado con al menos 20 caracteres' }
             })}
           />
           {errors.descripcion && (

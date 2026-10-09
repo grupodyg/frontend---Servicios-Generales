@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react'
 import useBackupStore from '../../stores/backupStore'
 import Swal from 'sweetalert2'
+import notificationService from '../../services/notificationService'
 
 const BackupDatabase = () => {
   const { backups, loading, creating, fetchBackups, createBackup, downloadBackup, deleteBackup } = useBackupStore()
   const [downloadingFile, setDownloadingFile] = useState(null)
 
   useEffect(() => {
-    fetchBackups().catch(() => {})
+    fetchBackups().catch((error) => {
+      console.error('Error al cargar backups:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar las copias de seguridad')
+    })
   }, [])
 
   const formatFileSize = (bytes) => {
@@ -53,12 +57,8 @@ const BackupDatabase = () => {
         confirmButtonColor: '#2563eb'
       })
     } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo crear el backup.',
-        icon: 'error',
-        confirmButtonColor: '#2563eb'
-      })
+      console.error('Error al crear backup:', error)
+      notificationService.mostrarError(error, 'No se pudo crear la copia de seguridad de la base de datos')
     }
   }
 
@@ -67,12 +67,8 @@ const BackupDatabase = () => {
     try {
       await downloadBackup(filename)
     } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo descargar el backup.',
-        icon: 'error',
-        confirmButtonColor: '#2563eb'
-      })
+      console.error('Error al descargar backup:', error)
+      notificationService.mostrarError(error, `No se pudo descargar la copia de seguridad «${filename}»`)
     } finally {
       setDownloadingFile(null)
     }
@@ -101,12 +97,8 @@ const BackupDatabase = () => {
         confirmButtonColor: '#2563eb'
       })
     } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo eliminar el backup.',
-        icon: 'error',
-        confirmButtonColor: '#2563eb'
-      })
+      console.error('Error al eliminar backup:', error)
+      notificationService.mostrarError(error, `No se pudo eliminar la copia de seguridad «${filename}»`)
     }
   }
 

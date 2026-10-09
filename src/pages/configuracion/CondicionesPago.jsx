@@ -4,6 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import useConfigStore from '../../stores/configStore'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import notificationService from '../../services/notificationService'
 
 const MySwal = withReactContent(Swal)
 
@@ -22,7 +23,10 @@ const CondicionesPago = () => {
 
   // Cargar condiciones de pago al montar el componente
   useEffect(() => {
-    fetchCondicionesPago()
+    fetchCondicionesPago().catch((error) => {
+      console.error('Error al cargar condiciones de pago:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar las condiciones de pago')
+    })
   }, [fetchCondicionesPago])
 
   const [showModal, setShowModal] = useState(false)
@@ -65,9 +69,9 @@ const CondicionesPago = () => {
     
     if (!formData.nombre.trim()) {
       MySwal.fire({
-        title: 'Error',
-        text: 'El nombre es requerido',
-        icon: 'error',
+        title: 'Falta el nombre',
+        text: `El campo «Nombre» del formulario «${editingCondicion ? 'Editar Condición' : 'Nueva Condición'}» está vacío (o solo tiene espacios). Escribe el nombre de la condición de pago, por ejemplo «Pago a 45 días», y vuelve a guardar.`,
+        icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
       return
@@ -95,12 +99,13 @@ const CondicionesPago = () => {
       }
       handleCloseModal()
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo guardar la condición de pago',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al guardar condición de pago:', error)
+      notificationService.mostrarError(
+        error,
+        editingCondicion
+          ? `No se pudo actualizar la condición de pago «${editingCondicion.nombre}»`
+          : `No se pudo crear la condición de pago «${formData.nombre.trim()}»`
+      )
     }
   }
 
@@ -127,12 +132,8 @@ const CondicionesPago = () => {
           timer: 2000
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo desactivar la condición de pago',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al desactivar condición de pago:', error)
+        notificationService.mostrarError(error, `No se pudo desactivar la condición de pago «${condicion.nombre}»`)
       }
     }
   }
@@ -141,12 +142,11 @@ const CondicionesPago = () => {
     try {
       await toggleCondicionPago(condicion.id)
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo cambiar el estado de la condición',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al cambiar estado de condición de pago:', error)
+      notificationService.mostrarError(
+        error,
+        `No se pudo ${condicion.activo ? 'desactivar' : 'activar'} la condición de pago «${condicion.nombre}»`
+      )
     }
   }
 
@@ -159,12 +159,8 @@ const CondicionesPago = () => {
     try {
       await reorderCondicionesPago(newCondiciones)
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo reordenar las condiciones',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al reordenar condiciones de pago:', error)
+      notificationService.mostrarError(error, 'No se pudo guardar el nuevo orden de las condiciones de pago')
     }
   }
 

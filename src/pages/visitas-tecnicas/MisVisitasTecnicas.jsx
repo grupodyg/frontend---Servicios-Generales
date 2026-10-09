@@ -7,6 +7,7 @@ import { es } from 'date-fns/locale'
 import { openInBestMapApp } from '../../utils/mapUtils'
 import { VISITA_ESTADOS, getEstadoLabel, getEstadoColor } from '../../constants/visitasTecnicasConstants'
 import { getCurrentDate } from '../../utils/dateUtils'
+import notificationService from '../../services/notificationService'
 
 const MisVisitasTecnicas = () => {
   const navigate = useNavigate()
@@ -22,7 +23,10 @@ const MisVisitasTecnicas = () => {
   useEffect(() => {
     // El backend ahora filtra automáticamente por rol
     // No necesitamos pasar role ni name como parámetros
-    fetchVisitas({})
+    fetchVisitas({}).catch(error => {
+      console.error('Error al cargar mis visitas técnicas:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar tus visitas técnicas')
+    })
   }, [fetchVisitas])
 
   // Re-fetch cuando el componente gana foco (el usuario regresa a esta vista)

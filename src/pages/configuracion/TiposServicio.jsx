@@ -4,6 +4,7 @@ import useAuthStore from '../../stores/authStore'
 import { isAdmin } from '../../utils/roleUtils'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import notificationService from '../../services/notificationService'
 
 const MySwal = withReactContent(Swal)
 
@@ -29,7 +30,13 @@ const TiposServicio = () => {
 
   // Cargar tipos de servicio al montar el componente
   useEffect(() => {
-    fetchTiposServicio()
+    fetchTiposServicio().catch((error) => {
+      console.error('Error al cargar tipos de servicio:', error)
+      // Quien no es administrador ya ve el aviso de "Acceso Restringido"
+      if (isAdmin(user)) {
+        notificationService.mostrarError(error, 'No se pudieron cargar los tipos de servicio')
+      }
+    })
   }, [fetchTiposServicio])
 
   // Verificar que el usuario tiene permisos de administrador
@@ -48,9 +55,9 @@ const TiposServicio = () => {
     
     if (!formData.nombre.trim()) {
       MySwal.fire({
-        title: 'Error',
-        text: 'El nombre del tipo de servicio es requerido',
-        icon: 'error'
+        title: 'Falta el nombre',
+        text: `El campo «Nombre» del formulario «${editingTipo ? 'Editar Tipo de Servicio' : 'Nuevo Tipo de Servicio'}» está vacío (o solo tiene espacios). Escribe el nombre del tipo de servicio y vuelve a guardar.`,
+        icon: 'warning'
       })
       return
     }
@@ -80,11 +87,13 @@ const TiposServicio = () => {
       setEditingTipo(null)
       setFormData({ nombre: '', descripcion: '' })
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo guardar el tipo de servicio',
-        icon: 'error'
-      })
+      console.error('Error al guardar tipo de servicio:', error)
+      notificationService.mostrarError(
+        error,
+        editingTipo
+          ? `No se pudo actualizar el tipo de servicio «${editingTipo.nombre}»`
+          : `No se pudo crear el tipo de servicio «${formData.nombre.trim()}»`
+      )
     }
   }
 
@@ -120,11 +129,8 @@ const TiposServicio = () => {
           showConfirmButton: false
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo desactivar el tipo de servicio',
-          icon: 'error'
-        })
+        console.error('Error al desactivar tipo de servicio:', error)
+        notificationService.mostrarError(error, `No se pudo desactivar el tipo de servicio «${tipo.nombre}»`)
       }
     }
   }
@@ -140,11 +146,11 @@ const TiposServicio = () => {
         showConfirmButton: false
       })
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo cambiar el estado del tipo de servicio',
-        icon: 'error'
-      })
+      console.error('Error al cambiar estado del tipo de servicio:', error)
+      notificationService.mostrarError(
+        error,
+        `No se pudo ${tipo.activo ? 'desactivar' : 'activar'} el tipo de servicio «${tipo.nombre}»`
+      )
     }
   }
 
@@ -162,11 +168,8 @@ const TiposServicio = () => {
       try {
         await reorderTiposServicio(newTipos)
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo reordenar los tipos de servicio',
-          icon: 'error'
-        })
+        console.error('Error al reordenar tipos de servicio:', error)
+        notificationService.mostrarError(error, `No se pudo subir «${tipo.nombre}» en el orden de los tipos de servicio`)
       }
     }
   }
@@ -185,11 +188,8 @@ const TiposServicio = () => {
       try {
         await reorderTiposServicio(newTipos)
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo reordenar los tipos de servicio',
-          icon: 'error'
-        })
+        console.error('Error al reordenar tipos de servicio:', error)
+        notificationService.mostrarError(error, `No se pudo bajar «${tipo.nombre}» en el orden de los tipos de servicio`)
       }
     }
   }

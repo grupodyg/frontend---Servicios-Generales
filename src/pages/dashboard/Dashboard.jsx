@@ -6,6 +6,7 @@ import useOrdenesStore from '../../stores/ordenesStore'
 import useMaterialesStore from '../../stores/materialesStore'
 import { isAdminOrSupervisor } from '../../utils/roleUtils'
 import { getCurrentDate } from '../../utils/dateUtils'
+import notificationService from '../../services/notificationService'
 
 const Dashboard = () => {
   const { user, hasPermission, isAuthenticated } = useAuthStore()
@@ -26,6 +27,8 @@ const Dashboard = () => {
           fetchOrdenes(),
           fetchMateriales()
         ])
+      } catch (error) {
+        notificationService.mostrarError(error, 'No se pudieron cargar los datos del panel principal (órdenes de trabajo e inventario de materiales)')
       } finally {
         setLoading(false)
       }

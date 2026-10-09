@@ -1,7 +1,16 @@
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import { describirError } from '../utils/errorUtils'
 
 const MySwal = withReactContent(Swal)
+
+// Los mensajes del servidor pueden incluir datos ingresados por usuarios: escapar siempre
+const escaparHtml = (texto) => String(texto ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
 
 const COLORS = {
   primary: '#1e40af',
@@ -31,6 +40,48 @@ class NotificationService {
       text,
       icon: 'error',
       confirmButtonColor: COLORS.primary
+    })
+  }
+
+  /**
+   * Muestra un error explicando qué falló, por qué y qué puede hacer el usuario.
+   * Úsalo en TODOS los catch que informan un error al usuario.
+   *
+   * - Errores 4xx: título = lo que se intentaba hacer; cuerpo = motivo del servidor.
+   * - Errores 5xx: título "Error interno del servidor" + código de referencia.
+   * - Sin conexión, sesión expirada y fallos de la propia aplicación tienen su propio título.
+   *
+   * @param {unknown} error    Error capturado
+   * @param {string}  contexto Qué se intentaba hacer, ej: 'No se pudo actualizar la orden'
+   */
+  mostrarError(error, contexto) {
+    const d = describirError(error, contexto)
+
+    const partes = []
+    if (d.contexto) {
+      partes.push(`<p style="font-weight:600;color:#1f2937;margin:0 0 8px">${escaparHtml(d.contexto)}</p>`)
+    }
+    partes.push(`<p style="color:#374151;margin:0">${escaparHtml(d.mensaje)}</p>`)
+    if (d.sugerencia) {
+      partes.push(
+        `<div style="margin-top:12px;padding:10px 12px;border-radius:8px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:14px">` +
+        `<strong>¿Qué puedes hacer?</strong> ${escaparHtml(d.sugerencia)}</div>`
+      )
+    }
+    const pie = []
+    if (d.referencia) pie.push(`Código de referencia: <strong>${escaparHtml(d.referencia)}</strong>`)
+    if (d.esInterno && d.status) pie.push(`Código HTTP ${escaparHtml(d.status)}`)
+    if (d.detalleTecnico) pie.push(`Detalle técnico: ${escaparHtml(d.detalleTecnico)}`)
+    if (pie.length) {
+      partes.push(`<p style="margin:12px 0 0;font-size:12px;color:#6b7280">${pie.join(' · ')}</p>`)
+    }
+
+    return MySwal.fire({
+      title: d.titulo,
+      html: `<div style="text-align:left">${partes.join('')}</div>`,
+      icon: d.esInterno ? 'error' : 'warning',
+      confirmButtonColor: COLORS.primary,
+      confirmButtonText: 'Entendido'
     })
   }
 

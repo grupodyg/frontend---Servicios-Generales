@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getCurrentTimestamp } from '../../utils/dateUtils'
 import { getFileUrl } from '../../config/api'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -22,9 +23,10 @@ const CategorizedPhotoUpload = ({
     const archivosValidos = archivos.filter(archivo => archivo.type.startsWith('image/'))
 
     if (archivosValidos.length !== archivos.length) {
+      const noImagenes = archivos.filter(archivo => !archivo.type.startsWith('image/')).map(archivo => `"${archivo.name}"`)
       MySwal.fire({
         title: 'Formato no válido',
-        text: 'Solo se permiten archivos de imagen',
+        text: `Estos archivos no son imágenes: ${noImagenes.join(', ')}. En "Seleccionar fotos" solo se aceptan fotografías (JPG, PNG, etc.). Vuelve a seleccionar únicamente imágenes.`,
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -39,8 +41,8 @@ const CategorizedPhotoUpload = ({
     
     if (!categoriaTrimmed) {
       MySwal.fire({
-        title: 'Escriba una categoría',
-        text: 'Debe escribir el nombre de la categoría antes de subir fotos',
+        title: 'Falta la categoría',
+        text: 'Escribe el nombre de la categoría en el campo "Escriba el nombre de la categoría" (por ejemplo: Accesos o Equipos) y vuelve a pulsar "Agregar Fotos".',
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -50,7 +52,7 @@ const CategorizedPhotoUpload = ({
     if (archivosSeleccionados.length === 0) {
       MySwal.fire({
         title: 'No hay fotos seleccionadas',
-        text: 'Debe seleccionar al menos una foto para subir',
+        text: `Elige al menos una foto en "Seleccionar fotos" antes de agregarlas a la categoría "${categoriaTrimmed}".`,
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
@@ -106,12 +108,7 @@ const CategorizedPhotoUpload = ({
       })
 
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudieron procesar las fotos',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudieron procesar las fotos de la categoría "${categoriaTrimmed}"`)
     }
   }
 

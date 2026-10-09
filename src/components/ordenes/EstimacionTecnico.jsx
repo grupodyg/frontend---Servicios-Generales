@@ -57,10 +57,7 @@ const EstimacionTecnico = ({ orden, onClose }) => {
       
       onClose()
     } catch (error) {
-      await notificationService.error(
-        'Error',
-        'No se pudo enviar la estimación'
-      )
+      await notificationService.mostrarError(error, `No se pudo enviar la estimación de la orden ${orden.id}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -181,7 +178,7 @@ const EstimacionTecnico = ({ orden, onClose }) => {
                 className={`input-field ${errors.tiempoCantidad ? 'border-red-500' : ''}`}
                 {...register('tiempoCantidad', { 
                   required: 'La cantidad es requerida',
-                  min: { value: 1, message: 'Debe ser mayor a 0' }
+                  min: { value: 1, message: 'El tiempo estimado debe ser 1 o más' }
                 })}
               />
               {errors.tiempoCantidad && (

@@ -7,6 +7,7 @@ import useTecnicosStore from '../../stores/tecnicosStore'
 import useMaterialesStore from '../../stores/materialesStore'
 import useClientesStore from '../../stores/clientesStore'
 import useDoubleConfirmDelete from '../../hooks/useDoubleConfirmDelete'
+import notificationService from '../../services/notificationService'
 import { getToday } from '../../utils/dateUtils'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -29,9 +30,12 @@ const Ordenes = () => {
   const tecnicos = getNombresTecnicos()
 
   useEffect(() => {
-    fetchOrdenes({})
-    fetchClientes()
-    fetchTecnicos()
+    // Un solo aviso aunque fallen varias cargas a la vez (por ejemplo, sin conexión)
+    Promise.all([
+      fetchOrdenes({}),
+      fetchClientes(),
+      fetchTecnicos()
+    ]).catch(error => notificationService.mostrarError(error, 'No se pudieron cargar los datos de la lista de órdenes de trabajo (órdenes, clientes y técnicos)'))
   }, [fetchOrdenes, fetchClientes, fetchTecnicos, user])
 
   // Obtener lista única de clientes desde las órdenes
@@ -100,11 +104,10 @@ const Ordenes = () => {
 
   const handleReasignarTecnico = async (orden) => {
     if (user?.role !== 'supervisor' && user?.role !== 'admin') {
-      MySwal.fire({
-        title: 'Acceso denegado',
-        text: 'Solo supervisores y administradores pueden reasignar técnicos',
-        icon: 'error'
-      })
+      notificationService.warning(
+        'Sin permisos para reasignar',
+        'Solo los usuarios con rol Supervisor o Administrador pueden reasignar técnicos. Si esta orden necesita otro técnico, pídeselo a uno de ellos.'
+      )
       return
     }
 
@@ -132,7 +135,7 @@ const Ordenes = () => {
         const nuevoTecnico = select.value
 
         if (nuevoTecnico === orden.tecnicoAsignado) {
-          Swal.showValidationMessage('Debe seleccionar un técnico diferente al actual')
+          Swal.showValidationMessage(`${orden.tecnicoAsignado} ya es el técnico de esta orden. Elige otro técnico en "Seleccionar nuevo técnico".`)
           return false
         }
 
@@ -159,11 +162,7 @@ const Ordenes = () => {
         // Refrescar órdenes
         fetchOrdenes({})
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo reasignar el técnico',
-          icon: 'error'
-        })
+        notificationService.mostrarError(error, `No se pudo reasignar la orden ${orden.id} a ${nuevoTecnico}`)
       }
     }
   }

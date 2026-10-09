@@ -189,65 +189,185 @@ export const getAuthHeaders = () => {
   };
 };
 
+// ========================================
+// ERRORES DE LA API
+// ========================================
+
+/**
+ * Error de una llamada al backend. `message` siempre contiene una explicación pensada
+ * para el usuario (por qué falló y cómo corregirlo), así que `error.message` se puede
+ * mostrar directamente. Para mostrarlo con formato usar notificationService.mostrarError().
+ *
+ * tipo: 'validacion' | 'conflicto' | 'no_encontrado' | 'permiso' | 'sesion'
+ *       | 'interno' | 'no_disponible' | 'red'
+ */
+export class ApiError extends Error {
+  constructor({ message, titulo = null, status = 0, tipo = 'interno', referencia = null, datos = null, tieneExplicacion = false }) {
+    super(message)
+    this.name = 'ApiError'
+    this.titulo = titulo
+    this.status = status
+    this.tipo = tipo
+    this.referencia = referencia
+    this.datos = datos
+    // true cuando el backend ya explicó el motivo con detalle (campo `message`)
+    this.tieneExplicacion = tieneExplicacion
+  }
+}
+
+// Tipo de error por código HTTP cuando el backend no lo indica
+const tipoPorStatus = (status) => {
+  if (status === 400 || status === 413 || status === 422) return 'validacion'
+  if (status === 401) return 'sesion'
+  if (status === 403) return 'permiso'
+  if (status === 404) return 'no_encontrado'
+  if (status === 409) return 'conflicto'
+  if (status === 502 || status === 503 || status === 504) return 'no_disponible'
+  if (status >= 500) return 'interno'
+  return 'validacion'
+}
+
+// Explicación por defecto cuando la respuesta no trae ningún mensaje (proxy caído, HTML, etc.)
+const mensajePorStatus = (status) => {
+  if (status === 400) return 'El servidor rechazó los datos enviados. Revisa los campos del formulario.'
+  if (status === 403) return 'No tienes permisos para realizar esta acción. Si la necesitas, pide al administrador del sistema que revise el rol de tu usuario.'
+  if (status === 404) return 'El registro o la operación solicitada no existe. Es posible que otro usuario lo haya eliminado: recarga la página para ver la información actualizada.'
+  if (status === 409) return 'La operación entra en conflicto con información ya registrada. Recarga la página y revisa los datos.'
+  if (status === 413) return 'La información enviada es demasiado grande para el servidor. Si estás adjuntando archivos, súbelos en varias tandas.'
+  if (status === 502 || status === 503 || status === 504) {
+    return `El servidor no respondió (código ${status}). Puede estar reiniciándose o temporalmente fuera de servicio. Espera unos minutos y vuelve a intentarlo; si persiste, avisa al administrador del sistema.`
+  }
+  if (status >= 500) {
+    return `Ocurrió un fallo inesperado en el servidor (código ${status}). No es un problema de los datos que ingresaste. Vuelve a intentarlo en unos minutos; si persiste, avisa al administrador del sistema.`
+  }
+  return `El servidor respondió con un error inesperado (código ${status}).`
+}
+
+const textoNoVacio = (valor) => (typeof valor === 'string' && valor.trim() ? valor.trim() : null)
+
+/**
+ * Construye un ApiError a partir de una respuesta HTTP no exitosa.
+ * Acepta las formas de error del backend: { error, message, tipo, referencia }, { mensaje } o { details }.
+ */
+export const crearErrorDesdeRespuesta = async (response) => {
+  const datos = await response.json().catch(() => ({}))
+  const status = response.status
+  const titulo = textoNoVacio(datos.error)
+  const explicacion = textoNoVacio(datos.message) || textoNoVacio(datos.details)
+  const mensaje = explicacion || titulo || textoNoVacio(datos.mensaje) || mensajePorStatus(status)
+
+  return new ApiError({
+    message: mensaje,
+    titulo,
+    status,
+    tipo: datos.tipo || tipoPorStatus(status),
+    referencia: datos.referencia || null,
+    datos,
+    tieneExplicacion: Boolean(explicacion)
+  })
+}
+
+// fetch lanza TypeError cuando no hay conexión, el servidor no responde o CORS lo bloquea
+const crearErrorDeRed = (error) => new ApiError({
+  message: 'No se pudo conectar con el servidor. Comprueba tu conexión a internet y vuelve a intentarlo. Si tu conexión funciona, el servidor puede estar temporalmente fuera de servicio: espera unos minutos y, si persiste, avisa al administrador del sistema.',
+  titulo: 'Sin conexión con el servidor',
+  status: 0,
+  tipo: 'red',
+  datos: { detalleTecnico: error?.message }
+})
+
+const cerrarSesionExpirada = () => {
+  localStorage.removeItem('auth-storage')
+  if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
+    window.location.href = '/'
+  }
+}
+
+/**
+ * fetch con manejo homogéneo de errores. Devuelve la Response si fue exitosa;
+ * en cualquier otro caso lanza un ApiError con una explicación para el usuario.
+ * Úsalo directamente solo cuando la respuesta no es JSON (descargas de archivos).
+ */
+export const fetchConManejoErrores = async (url, options = {}) => {
+  let response
+  try {
+    response = await fetch(url, options)
+  } catch (error) {
+    throw crearErrorDeRed(error)
+  }
+
+  if (response.ok) return response
+
+  const apiError = await crearErrorDesdeRespuesta(response)
+  console.error('🔴 API Error Response:', response.status, apiError.datos)
+
+  // 401: en el login son credenciales incorrectas; en el resto, sesión expirada / token inválido
+  if (response.status === 401) {
+    if (url.includes('/auth/login')) throw apiError
+    cerrarSesionExpirada()
+    throw new ApiError({
+      message: 'Tu sesión expiró o ya no es válida. Vuelve a iniciar sesión para continuar; los cambios que no se guardaron deberán ingresarse de nuevo.',
+      titulo: 'Sesión expirada',
+      status: 401,
+      tipo: 'sesion',
+      datos: apiError.datos
+    })
+  }
+
+  // 403: sin permisos, pero la sesión sigue siendo válida (NO hacer logout)
+  throw apiError
+}
+
+// Lee el JSON de una respuesta exitosa
+const leerJson = async (response) => {
+  const texto = await response.text()
+  if (!texto) return null
+  try {
+    return JSON.parse(texto)
+  } catch {
+    throw new ApiError({
+      message: 'El servidor respondió con datos que la aplicación no puede leer. Recarga la página e inténtalo de nuevo; si persiste, avisa al administrador del sistema.',
+      titulo: 'Respuesta no válida del servidor',
+      status: response.status,
+      tipo: 'interno'
+    })
+  }
+}
+
 // API Request Helper with authentication
 export const apiRequest = async (url, options = {}) => {
-  const headers = {
-    ...getAuthHeaders(),
-    ...options.headers,
-  };
+  const response = await fetchConManejoErrores(url, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  })
+  return leerJson(response)
+}
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    // Handle 401 Unauthorized (sesión expirada / token inválido)
-    if (response.status === 401) {
-      const errorData = await response.json().catch(() => ({}));
-      const backendErrorMessage = errorData.error || errorData.mensaje || null;
-      const isLoginRequest = url.includes('/auth/login');
-
-      if (!isLoginRequest) {
-        localStorage.removeItem('auth-storage');
-        if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
-          window.location.href = '/';
-        }
-        throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
-      } else {
-        throw new Error(backendErrorMessage || 'Credenciales inválidas');
-      }
-    }
-
-    // Handle 403 Forbidden (sin permisos, pero sesión válida — NO hacer logout)
-    if (response.status === 403) {
-      const errorData = await response.json().catch(() => ({}));
-      const backendErrorMessage = errorData.error || errorData.mensaje || 'No tienes permisos para esta acción';
-      throw new Error(backendErrorMessage);
-    }
-
-    // Handle other errors
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('🔴 API Error Response:', errorData);
-      const errorMessage = errorData.details || errorData.error || errorData.mensaje || `Error: ${response.status}`;
-      throw new Error(errorMessage);
-    }
-
-    // Return JSON response
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    throw error;
+// Cabeceras para FormData: sin 'Content-Type' (fetch lo establece con el boundary)
+const getUploadHeaders = (extra = {}) => {
+  const token = getAuthToken()
+  return {
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...extra,
   }
-};
+}
+
+const enviarFormData = async (method, url, formData, options = {}) => {
+  const response = await fetchConManejoErrores(url, {
+    method,
+    body: formData,
+    ...options,
+    headers: getUploadHeaders(options.headers),
+  })
+  return leerJson(response)
+}
 
 // HTTP Methods helpers
 export const api = {
-  get: async (url, options = {}) => {
-    const result = await apiRequest(url, { method: 'GET', ...options })
-    return result
-  },
+  get: (url, options = {}) => apiRequest(url, { method: 'GET', ...options }),
 
   post: (url, data, options = {}) =>
     apiRequest(url, {
@@ -274,78 +394,9 @@ export const api = {
     apiRequest(url, { method: 'DELETE', ...options }),
 
   // Upload con FormData (para archivos)
-  upload: async (url, formData, options = {}) => {
-    const token = getAuthToken();
-    const headers = {
-      // NO incluir 'Content-Type' - fetch lo establece automáticamente con boundary
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    };
+  upload: (url, formData, options = {}) => enviarFormData('POST', url, formData, options),
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: formData,
-      ...options,
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem('auth-storage');
-      if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
-        window.location.href = '/';
-      }
-      throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
-    }
-
-    if (response.status === 403) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.mensaje || 'No tienes permisos para esta acción');
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.error || errorData.mensaje || `Error: ${response.status}`;
-      throw new Error(errorMessage);
-    }
-
-    return await response.json();
-  },
-
-  uploadPut: async (url, formData, options = {}) => {
-    const token = getAuthToken();
-    const headers = {
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    };
-
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers,
-      body: formData,
-      ...options,
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem('auth-storage');
-      if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
-        window.location.href = '/';
-      }
-      throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
-    }
-
-    if (response.status === 403) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.mensaje || 'No tienes permisos para esta acción');
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.error || errorData.mensaje || `Error: ${response.status}`;
-      throw new Error(errorMessage);
-    }
-
-    return await response.json();
-  },
+  uploadPut: (url, formData, options = {}) => enviarFormData('PUT', url, formData, options),
 };
 
 /**
@@ -371,4 +422,6 @@ export default {
   apiRequest,
   api,
   getFileUrl,
+  ApiError,
+  fetchConManejoErrores,
 };

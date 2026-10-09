@@ -6,6 +6,7 @@ import useNotificacionesStore from '../../stores/notificacionesStore'
 import { getDevQuickAccessUsers } from '../../config/devQuickAccess'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import notificationService from '../../services/notificationService'
 
 const MySwal = withReactContent(Swal)
 
@@ -86,12 +87,8 @@ const Login = () => {
 
       navigate('/dashboard')
     } catch (error) {
-      MySwal.fire({
-        title: 'Error de acceso',
-        text: error.message || 'Credenciales incorrectas',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al iniciar sesión:', error)
+      notificationService.mostrarError(error, 'No se pudo iniciar sesión')
     }
   }
 
@@ -136,7 +133,7 @@ const Login = () => {
               required: 'El correo es requerido',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'Correo electrónico inválido'
+                message: 'El correo no tiene un formato válido. Escríbelo como nombre@dominio.com, sin espacios.'
               }
             })}
           />

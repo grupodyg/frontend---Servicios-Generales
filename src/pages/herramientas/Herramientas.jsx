@@ -7,6 +7,7 @@ import { canViewPrices } from '../../utils/permissionsUtils'
 import { parseEnteroInput, parseDecimalInput, aNumero, esValorVacio } from '../../utils/numberInputUtils'
 import { getToday, formatDateTime, formatDate } from '../../utils/dateUtils'
 import { getFileUrl } from '../../config/api'
+import notificationService from '../../services/notificationService'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -81,11 +82,7 @@ const Herramientas = () => {
         ])
       } catch (error) {
         console.error('Error cargando datos:', error)
-        MySwal.fire({
-          icon: 'error',
-          title: 'Error al cargar datos',
-          text: 'No se pudieron cargar las herramientas. Verifique la conexión con el servidor.'
-        })
+        notificationService.mostrarError(error, 'No se pudieron cargar las herramientas, categorías y solicitudes')
       }
     }
 
@@ -133,32 +130,26 @@ const Herramientas = () => {
   // Handlers para gestión de categorías
   const handleAddCategoria = async () => {
     if (!nuevaCategoria.nombre.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El nombre de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el nombre de la categoría',
+        'Escribe el nombre en el campo «Nombre de la categoría» de la sección «Agregar Nueva Categoría» (ventana «Gestión de Categorías»).'
+      )
       return
     }
 
     if (!nuevaCategoria.prefijo.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El prefijo de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el prefijo de la categoría',
+        'Escribe un prefijo de hasta 4 letras en el campo «Prefijo (para códigos)» de la sección «Agregar Nueva Categoría». Se usa para generar los códigos de las herramientas.'
+      )
       return
     }
 
     if (nuevaCategoria.prefijo.trim().length > 4) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El prefijo no puede tener más de 4 caracteres',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Prefijo demasiado largo',
+        `El prefijo «${nuevaCategoria.prefijo.trim()}» tiene ${nuevaCategoria.prefijo.trim().length} caracteres y el máximo es 4. Acórtalo en el campo «Prefijo (para códigos)».`
+      )
       return
     }
 
@@ -176,43 +167,32 @@ const Herramientas = () => {
       })
       setNuevaCategoria({ nombre: '', prefijo: '' })
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo crear la categoría',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo crear la categoría «${nuevaCategoria.nombre.trim()}»`)
     }
   }
 
   const handleEditCategoria = async () => {
     if (!categoriaEditandoNombre.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El nombre de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el nombre de la categoría',
+        `El campo «Nombre» de la categoría «${categoriaEditando?.nombre}» quedó vacío. Escribe un nombre en la lista «Categorías Existentes» o pulsa ✕ para cancelar la edición.`
+      )
       return
     }
 
     if (!categoriaEditandoPrefijo.trim()) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El prefijo de la categoría no puede estar vacío',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta el prefijo de la categoría',
+        `El campo «Prefijo» de la categoría «${categoriaEditando?.nombre}» quedó vacío. Escribe un prefijo de hasta 4 letras (se usa para generar los códigos de las herramientas) o pulsa ✕ para cancelar la edición.`
+      )
       return
     }
 
     if (categoriaEditandoPrefijo.trim().length > 4) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'El prefijo no puede tener más de 4 caracteres',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Prefijo demasiado largo',
+        `El prefijo «${categoriaEditandoPrefijo.trim()}» tiene ${categoriaEditandoPrefijo.trim().length} caracteres y el máximo es 4. Acórtalo en el campo «Prefijo» de la categoría «${categoriaEditando?.nombre}».`
+      )
       return
     }
 
@@ -232,12 +212,7 @@ const Herramientas = () => {
       setCategoriaEditandoNombre('')
       setCategoriaEditandoPrefijo('')
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo actualizar la categoría',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, `No se pudo actualizar la categoría «${categoriaEditando.nombre}»`)
     }
   }
 
@@ -267,12 +242,7 @@ const Herramientas = () => {
           showConfirmButton: false
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: error.message || 'No se pudo eliminar la categoría',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        notificationService.mostrarError(error, `No se pudo eliminar la categoría «${categoria.nombre}»`)
       }
     }
   }
@@ -463,11 +433,7 @@ const Herramientas = () => {
             showConfirmButton: false
           })
         } catch (error) {
-          MySwal.fire({
-            title: 'Error',
-            text: error.message || 'No se pudo registrar la devolución de herramientas',
-            icon: 'error'
-          })
+          notificationService.mostrarError(error, `No se pudo registrar la devolución de las herramientas de la solicitud ${solicitudId}`)
         }
       }
       return
@@ -496,11 +462,8 @@ const Herramientas = () => {
           showConfirmButton: false
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo actualizar la solicitud',
-          icon: 'error'
-        })
+        const accionTexto = accion === 'approved' ? 'aprobar' : accion === 'delivered' ? 'marcar como entregada' : 'rechazar'
+        notificationService.mostrarError(error, `No se pudo ${accionTexto} la solicitud ${solicitudId}`)
       }
     }
   }
@@ -533,24 +496,20 @@ const Herramientas = () => {
 
   const handleSubmitNuevaSolicitudHerramienta = async () => {
     if (selectedHerramientas.length === 0) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'Debe seleccionar al menos una herramienta',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'No hay herramientas seleccionadas',
+        'Agrega al menos una herramienta desde la columna «Herramientas Disponibles» con el botón «+ Agregar». Aparecerá en «Herramientas Seleccionadas».'
+      )
       return
     }
 
     // Validate all selected tools have return dates
     const missingDates = selectedHerramientas.filter(h => !h.fechaDevolucionPrevista)
     if (missingDates.length > 0) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'Debe especificar la fecha de devolución prevista para todas las herramientas',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.warning(
+        'Falta la fecha de devolución',
+        `Indica la «Fecha de devolución prevista» de: ${missingDates.map(h => `«${h.nombre}»`).join(', ')}. Está en cada herramienta de la columna «Herramientas Seleccionadas».`
+      )
       return
     }
 
@@ -587,12 +546,7 @@ const Herramientas = () => {
       setShowSolicitudHerramientasModal(false)
 
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo crear la solicitud de herramientas',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      notificationService.mostrarError(error, 'No se pudo crear la solicitud de herramientas')
     }
   }
 
@@ -610,7 +564,10 @@ const Herramientas = () => {
     const file = e.target.files[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        MySwal.fire({ title: 'Error', text: 'Solo se permiten archivos de imagen', icon: 'error', confirmButtonColor: '#1e40af' })
+        notificationService.warning(
+          'El archivo no es una imagen',
+          `«${file.name}» no es una imagen. En la sección «Imagen» de «Editar Herramienta» solo se admiten archivos de imagen (por ejemplo JPG, PNG o WEBP). Selecciona otro archivo.`
+        )
         return
       }
       setImagenEditarFile(file)
@@ -623,7 +580,10 @@ const Herramientas = () => {
   const handleGuardarEdicion = async () => {
     // Los campos numéricos pueden quedar vacíos mientras se edita: se exige aquí
     if (esValorVacio(herramientaSeleccionada.cantidad) || aNumero(herramientaSeleccionada.cantidad) < 1) {
-      MySwal.fire({ title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0', icon: 'warning' })
+      notificationService.warning(
+        'Cantidad no válida',
+        'Escribe en «Cantidad» (sección «Detalles Técnicos» de «Editar Herramienta») cuántas unidades hay de esta herramienta. Debe ser 1 o más.'
+      )
       return
     }
 
@@ -654,11 +614,7 @@ const Herramientas = () => {
       setImagenEditarPreview(null)
     } catch (error) {
       console.error('Error actualizando herramienta:', error)
-      MySwal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo actualizar la herramienta',
-        icon: 'error'
-      })
+      notificationService.mostrarError(error, `No se pudo actualizar la herramienta «${herramientaSeleccionada.nombre}»`)
     }
   }
 
@@ -1766,7 +1722,7 @@ const Herramientas = () => {
                                 await updateHerramienta(herramientaSeleccionada.id, {}, null, true)
                                 setHerramientaSeleccionada({ ...herramientaSeleccionada, imagen: null })
                                 MySwal.fire({ title: 'Imagen eliminada', icon: 'success', timer: 1500, showConfirmButton: false })
-                              } catch (e) { MySwal.fire({ title: 'Error', text: e.message, icon: 'error' }) }
+                              } catch (e) { notificationService.mostrarError(e, `No se pudo eliminar la imagen de la herramienta «${herramientaSeleccionada.nombre}»`) }
                             }
                           }}
                           className="bg-red-500 text-white rounded-lg px-3 py-1 text-sm hover:bg-red-600 shadow-lg"

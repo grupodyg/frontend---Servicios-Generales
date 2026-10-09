@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import useNotificacionesStore from '../../stores/notificacionesStore'
 import useAuthStore from '../../stores/authStore'
 import { getCurrentDate } from '../../utils/dateUtils'
+import notificationService from '../../services/notificationService'
 
 const NotificationBell = () => {
   const navigate = useNavigate()
@@ -44,6 +45,7 @@ const NotificationBell = () => {
 
   const handleNotificationClick = (notificacion) => {
     marcarComoLeida(notificacion.id)
+      .catch(error => notificationService.mostrarError(error, 'No se pudo marcar la notificación como leída'))
     setShowDropdown(false)
     
     // Navegar según el tipo de notificación
@@ -56,7 +58,9 @@ const NotificationBell = () => {
     if (user) {
       const userId = user.role === 'admin' ? 'admin' : user.id
       const userNotifications = obtenerNotificacionesPorUsuario(userId)
-      userNotifications.forEach(notif => marcarComoLeida(notif.id))
+      // Un solo aviso aunque fallen varias a la vez
+      Promise.all(userNotifications.map(notif => marcarComoLeida(notif.id)))
+        .catch(error => notificationService.mostrarError(error, 'No se pudieron marcar todas las notificaciones como leídas'))
       setUnreadCount(0)
     }
   }

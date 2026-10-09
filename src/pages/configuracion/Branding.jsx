@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Swal from 'sweetalert2'
 import useBrandingStore from '../../stores/brandingStore'
 import { getFileUrl } from '../../config/api'
+import notificationService from '../../services/notificationService'
 
 const MAX_LOGO_SIZE = 2 * 1024 * 1024
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml']
@@ -57,9 +58,9 @@ const Branding = () => {
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       Swal.fire({
-        title: 'Formato no permitido',
-        text: 'Solo se permiten PNG, JPG o SVG',
-        icon: 'error',
+        title: 'Formato de logo no permitido',
+        text: `El archivo «${file.name}» no es una imagen PNG, JPG o SVG${file.type ? ` (es de tipo ${file.type})` : ''}. En «Logo de la empresa» solo se aceptan esos formatos: conviértelo a PNG, JPG o SVG y vuelve a seleccionarlo.`,
+        icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
       event.target.value = ''
@@ -68,9 +69,9 @@ const Branding = () => {
 
     if (file.size > MAX_LOGO_SIZE) {
       Swal.fire({
-        title: 'Archivo demasiado grande',
-        text: 'El logo no debe superar 2 MB',
-        icon: 'error',
+        title: 'Logo demasiado pesado',
+        text: `El archivo «${file.name}» pesa ${(file.size / (1024 * 1024)).toFixed(2)} MB y el logo admite como máximo 2 MB. Reduce su tamaño (por ejemplo, expórtalo con menor resolución o compresión) y vuelve a seleccionarlo en «Logo de la empresa».`,
+        icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
       event.target.value = ''
@@ -118,12 +119,8 @@ const Branding = () => {
         showConfirmButton: false
       })
     } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: error.message || 'No se pudo restablecer el logo',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al restablecer logo:', error)
+      notificationService.mostrarError(error, 'No se pudo restablecer el logo del login')
     } finally {
       setIsResetting(false)
     }
@@ -133,17 +130,21 @@ const Branding = () => {
     if (!formName.trim()) {
       Swal.fire({
         title: 'Nombre requerido',
-        text: 'El nombre de la empresa no puede estar vacío',
+        text: 'El campo «Nombre de la empresa» está vacío (o solo tiene espacios). Escribe el nombre que debe mostrarse en el login y en la barra lateral, y vuelve a guardar.',
         icon: 'warning',
         confirmButtonColor: '#1e40af'
       })
       return
     }
 
+    // Qué paso estaba en curso, para explicar exactamente qué no se guardó
+    let contextoError = 'No se pudo guardar la configuración del login'
+
     try {
       setIsSaving(true)
 
       if (hasTextChanges) {
+        contextoError = 'No se pudieron guardar el nombre y el subtítulo de la empresa'
         await updateTexts({
           company_name: formName.trim(),
           company_subtitle: formSubtitle.trim()
@@ -151,6 +152,9 @@ const Branding = () => {
       }
 
       if (pendingFile) {
+        contextoError = hasTextChanges
+          ? `No se pudo subir el logo «${pendingFile.name}» (el nombre y el subtítulo sí se guardaron)`
+          : `No se pudo subir el logo «${pendingFile.name}»`
         await uploadLogo(pendingFile)
         handleCancelPending()
       }
@@ -162,12 +166,8 @@ const Branding = () => {
         showConfirmButton: false
       })
     } catch (error) {
-      Swal.fire({
-        title: 'Error al guardar',
-        text: error.message || 'No se pudo guardar la configuración',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al guardar branding:', error)
+      notificationService.mostrarError(error, contextoError)
     } finally {
       setIsSaving(false)
     }

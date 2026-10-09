@@ -5,6 +5,7 @@ import useAuthStore from '../../stores/authStore'
 import { useForm } from 'react-hook-form'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import notificationService from '../../services/notificationService'
 
 const MySwal = withReactContent(Swal)
 
@@ -42,7 +43,10 @@ const Usuarios = () => {
   const watchRole = watch('role')
 
   useEffect(() => {
-    fetchUsuarios()
+    fetchUsuarios().catch((error) => {
+      console.error('Error al cargar usuarios:', error)
+      notificationService.mostrarError(error, 'No se pudieron cargar los usuarios')
+    })
   }, [fetchUsuarios])
 
   const usuariosFiltrados = getUsuariosFiltrados()
@@ -132,12 +136,13 @@ const Usuarios = () => {
       }
       handleCloseModal()
     } catch (error) {
-      MySwal.fire({
-        title: 'Error',
-        text: 'No se pudo procesar la solicitud',
-        icon: 'error',
-        confirmButtonColor: '#1e40af'
-      })
+      console.error('Error al guardar usuario:', error)
+      notificationService.mostrarError(
+        error,
+        modalMode === 'edit' && selectedUsuario
+          ? `No se pudo actualizar el usuario «${selectedUsuario.name}»`
+          : (data?.name ? `No se pudo crear el usuario «${data.name}»` : 'No se pudo crear el usuario')
+      )
     }
   }
 
@@ -163,12 +168,8 @@ const Usuarios = () => {
           confirmButtonColor: '#1e40af'
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo eliminar el usuario',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al eliminar usuario:', error)
+        notificationService.mostrarError(error, `No se pudo eliminar el usuario «${usuario.name}»`)
       }
     }
   }
@@ -196,12 +197,11 @@ const Usuarios = () => {
           confirmButtonColor: '#1e40af'
         })
       } catch (error) {
-        MySwal.fire({
-          title: 'Error',
-          text: 'No se pudo actualizar el estado del usuario',
-          icon: 'error',
-          confirmButtonColor: '#1e40af'
-        })
+        console.error('Error al cambiar estado del usuario:', error)
+        notificationService.mostrarError(
+          error,
+          `No se pudo ${nuevoEstado === 'active' ? 'activar' : 'desactivar'} al usuario «${usuario.name}»`
+        )
       }
     }
   }
@@ -814,7 +814,7 @@ const Usuarios = () => {
                             required: 'El email es requerido',
                             pattern: {
                               value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                              message: 'Email inválido'
+                              message: 'El email no tiene un formato válido. Escríbelo como nombre@dominio.com, sin espacios.'
                             }
                           })}
                         />
@@ -872,7 +872,7 @@ const Usuarios = () => {
                           {...register('dni', {
                             pattern: {
                               value: /^\d{8}$/,
-                              message: 'El DNI debe tener 8 dígitos'
+                              message: 'El DNI debe tener exactamente 8 dígitos, solo números (sin espacios, guiones ni letras). Si no lo conoces, deja el campo vacío.'
                             }
                           })}
                         />
@@ -887,7 +887,7 @@ const Usuarios = () => {
                         </label>
                         <select
                           className={`input-field ${errors.role ? 'border-red-500' : ''}`}
-                          {...register('role', { required: 'El rol es requerido' })}
+                          {...register('role', { required: 'Selecciona un rol: define a qué módulos podrá acceder el usuario.' })}
                           onChange={(e) => {
                             const role = e.target.value
                             setValue('role', role)
